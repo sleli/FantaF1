@@ -64,10 +64,10 @@ Questo prodotto è una piattaforma web per gestire un gioco personalizzato di Fa
 ### System Components
 
 * Frontend: Next.js + Tailwind CSS
-* Autenticazione: Clerk (componenti UI predefiniti, gestione ruoli via publicMetadata)
+* Autenticazione: NextAuth.js (componenti UI predefiniti, gestione ruoli via database)
 * Backend/API: API Routes integrate in Next.js
-* Database: Supabase (PostgreSQL integrato con autenticazione e storage)
-* ORM: Prisma per accesso dati (opzionale con Supabase)
+* Database: PostgreSQL (connessione diretta)
+* ORM: Prisma per accesso dati e gestione migrazioni
 * Stato client: Zustand o React Context
 * Deploy: Vercel (hosting frontend + backend)
 
@@ -89,10 +89,10 @@ Questo prodotto è una piattaforma web per gestire un gioco personalizzato di Fa
 ### Infrastructure Requirements
 
 * Hosting su Vercel (frontend + backend API)
-* Database gestito su Supabase
-* Clerk per gestione utenti, login, ruoli e sessioni
-* Sicurezza integrata via Clerk (token, ruoli, protezione route) (frontend + backend API)
-* Backup database automatico
+* Database PostgreSQL (connessione diretta tramite Prisma)
+* NextAuth.js per gestione utenti, login, ruoli e sessioni
+* Sicurezza integrata via NextAuth.js (token, ruoli, protezione route) (frontend + backend API)
+* Backup database gestito dal provider PostgreSQL
 * Sicurezza: bcrypt per password, JWT per sessioni
 
 # Development Roadmap
@@ -102,13 +102,13 @@ Questo prodotto è una piattaforma web per gestire un gioco personalizzato di Fa
 #### Fase 1 – Setup base
 
 1. Inizializzare progetto Next.js con TypeScript e Tailwind CSS
-2. Integrare Clerk per autenticazione (registrazione, login, gestione sessioni)
-3. Configurare Supabase e creare database PostgreSQL
+2. Integrare NextAuth.js per autenticazione (registrazione, login, gestione sessioni)
+3. Configurare connessione PostgreSQL e configurare Prisma ORM
 4. Definire schema iniziale del database: utenti, piloti, eventi, pronostici
 
 #### Fase 2 – Autenticazione e ruoli
 
-5. Aggiungere logica per distinguere ruoli (admin/giocatore) via `publicMetadata` di Clerk
+5. Aggiungere logica per distinguere ruoli (admin/giocatore) via database utenti con NextAuth.js
 6. Proteggere le route (pagina admin, invio pronostico) in base al ruolo
 
 #### Fase 3 – Gestione dati base
