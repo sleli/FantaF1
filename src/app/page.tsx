@@ -1,22 +1,19 @@
 'use client';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import TestTailwind from '../components/TestTailwind';
+import AuthStatus from '@/components/auth/AuthStatus';
 
 export default function Home() {
-  const { data: session } = useSession();
-
-  if (!session) {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-f1-red to-red-800">
         <div className="card max-w-md mx-auto text-center">
           <h1 className="text-4xl font-bold text-f1-dark mb-4">FantaF1</h1>
           <p className="text-gray-600 mb-6">Benvenuto nella piattaforma Fantasy Formula 1</p>
-          <button 
-            onClick={() => signIn()}
-            className="btn-primary w-full"
-          >
-            Accedi con Google
-          </button>
+          <AuthStatus />
         </div>
       </div>
     );
@@ -28,15 +25,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold text-f1-red">FantaF1</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Ciao, {session.user?.name}!</span>
-              <button 
-                onClick={() => signOut()}
-                className="btn-secondary"
-              >
-                Logout
-              </button>
-            </div>
+            <AuthStatus />
           </div>
         </div>
       </nav>
