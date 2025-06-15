@@ -8,21 +8,17 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?  @unique
+  email         String?      @unique
   emailVerified DateTime?
   image         String?
-  role          UserRole @default(PLAYER)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // NextAuth relations
+  role          UserRole     @default(PLAYER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   accounts      Account[]
-  sessions      Session[]
-  
-  // FantaF1 relations
   predictions   Prediction[]
+  sessions      Session[]
 
   @@map("users")
 }
@@ -40,8 +36,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -52,8 +47,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -67,64 +61,39 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// FantaF1 specific models
-enum UserRole {
-  ADMIN
-  PLAYER
-}
-
-enum EventType {
-  RACE
-  SPRINT
-}
-
-enum EventStatus {
-  UPCOMING    // Evento futuro, pronostici aperti
-  CLOSED      // Pronostici chiusi, evento in corso
-  COMPLETED   // Evento terminato, risultati inseriti
-}
-
 model Driver {
-  id          String @id @default(cuid())
-  name        String
-  team        String
-  number      Int    @unique
-  active      Boolean @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  firstPlacePredictions   Prediction[] @relation("FirstPlace")
-  secondPlacePredictions  Prediction[] @relation("SecondPlace")
-  thirdPlacePredictions   Prediction[] @relation("ThirdPlace")
-  
-  firstPlaceResults   Event[] @relation("FirstPlaceResult")
-  secondPlaceResults  Event[] @relation("SecondPlaceResult")
-  thirdPlaceResults   Event[] @relation("ThirdPlaceResult")
+  id                     String       @id @default(cuid())
+  name                   String
+  team                   String
+  number                 Int          @unique
+  active                 Boolean      @default(true)
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+  firstPlaceResults      Event[]      @relation("FirstPlaceResult")
+  secondPlaceResults     Event[]      @relation("SecondPlaceResult")
+  thirdPlaceResults      Event[]      @relation("ThirdPlaceResult")
+  firstPlacePredictions  Prediction[] @relation("FirstPlace")
+  secondPlacePredictions Prediction[] @relation("SecondPlace")
+  thirdPlacePredictions  Prediction[] @relation("ThirdPlace")
 
   @@map("drivers")
 }
 
 model Event {
-  id            String      @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String
   type          EventType
   date          DateTime
-  closingDate   DateTime    // Data limite per inviare pronostici
-  status        EventStatus @default(UPCOMING)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  // Risultati ufficiali (opzionali, solo quando completato)
+  closingDate   DateTime
+  status        EventStatus  @default(UPCOMING)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   firstPlaceId  String?
   secondPlaceId String?
   thirdPlaceId  String?
-
-  // Relations
-  firstPlace    Driver? @relation("FirstPlaceResult", fields: [firstPlaceId], references: [id])
-  secondPlace   Driver? @relation("SecondPlaceResult", fields: [secondPlaceId], references: [id])
-  thirdPlace    Driver? @relation("ThirdPlaceResult", fields: [thirdPlaceId], references: [id])
-  
+  firstPlace    Driver?      @relation("FirstPlaceResult", fields: [firstPlaceId], references: [id])
+  secondPlace   Driver?      @relation("SecondPlaceResult", fields: [secondPlaceId], references: [id])
+  thirdPlace    Driver?      @relation("ThirdPlaceResult", fields: [thirdPlaceId], references: [id])
   predictions   Prediction[]
 
   @@map("events")
@@ -136,24 +105,32 @@ model Prediction {
   eventId       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
-  // Pronostici utente
   firstPlaceId  String
   secondPlaceId String
   thirdPlaceId  String
-  
-  // Punteggio calcolato (null fino a quando evento non è completato)
   points        Int?
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  firstPlace    Driver   @relation("FirstPlace", fields: [firstPlaceId], references: [id])
+  secondPlace   Driver   @relation("SecondPlace", fields: [secondPlaceId], references: [id])
+  thirdPlace    Driver   @relation("ThirdPlace", fields: [thirdPlaceId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event         Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
-  firstPlace    Driver @relation("FirstPlace", fields: [firstPlaceId], references: [id])
-  secondPlace   Driver @relation("SecondPlace", fields: [secondPlaceId], references: [id])
-  thirdPlace    Driver @relation("ThirdPlace", fields: [thirdPlaceId], references: [id])
-
-  // Un utente può avere solo un pronostico per evento
   @@unique([userId, eventId])
   @@map("predictions")
+}
+
+enum UserRole {
+  ADMIN
+  PLAYER
+}
+
+enum EventType {
+  RACE
+  SPRINT
+}
+
+enum EventStatus {
+  UPCOMING
+  CLOSED
+  COMPLETED
 }

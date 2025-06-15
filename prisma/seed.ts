@@ -3,45 +3,53 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const drivers2025 = [
-  // Red Bull Racing
-  { name: "Max Verstappen", team: "Red Bull Racing", number: 1 },
-  { name: "Sergio Perez", team: "Red Bull Racing", number: 11 },
+  // McLaren Formula 1 Team
+  { name: "Oscar Piastri", team: "McLaren", number: 81, active: true },
+  { name: "Lando Norris", team: "McLaren", number: 4, active: true },
   
-  // Mercedes
-  { name: "Lewis Hamilton", team: "Mercedes", number: 44 },
-  { name: "George Russell", team: "Mercedes", number: 63 },
+  // Scuderia Ferrari HP
+  { name: "Charles Leclerc", team: "Ferrari", number: 16, active: true },
+  { name: "Lewis Hamilton", team: "Ferrari", number: 44, active: true },
   
-  // Ferrari
-  { name: "Charles Leclerc", team: "Ferrari", number: 16 },
-  { name: "Carlos Sainz Jr.", team: "Ferrari", number: 55 },
+  // Oracle Red Bull Racing
+  { name: "Max Verstappen", team: "Red Bull Racing", number: 1, active: true },
+  { name: "Liam Lawson", team: "Red Bull Racing", number: 30, active: true },
+  { name: "Yuki Tsunoda", team: "Red Bull Racing", number: 22, active: true },
   
-  // McLaren
-  { name: "Lando Norris", team: "McLaren", number: 4 },
-  { name: "Oscar Piastri", team: "McLaren", number: 81 },
+  // Mercedes-AMG PETRONAS F1 Team
+  { name: "George Russell", team: "Mercedes", number: 63, active: true },
+  { name: "Andrea Kimi Antonelli", team: "Mercedes", number: 12, active: true },
   
-  // Aston Martin
-  { name: "Fernando Alonso", team: "Aston Martin", number: 14 },
-  { name: "Lance Stroll", team: "Aston Martin", number: 18 },
+  // Aston Martin Aramco F1 Team
+  { name: "Lance Stroll", team: "Aston Martin", number: 18, active: true },
+  { name: "Fernando Alonso", team: "Aston Martin", number: 14, active: true },
   
-  // Alpine
-  { name: "Esteban Ocon", team: "Alpine", number: 31 },
-  { name: "Pierre Gasly", team: "Alpine", number: 10 },
+  // BWT Alpine F1 Team
+  { name: "Pierre Gasly", team: "Alpine", number: 10, active: true },
+  { name: "Jack Doohan", team: "Alpine", number: 7, active: true },
+  { name: "Franco Colapinto", team: "Alpine", number: 43, active: true },
   
-  // Williams
-  { name: "Alex Albon", team: "Williams", number: 23 },
-  { name: "Logan Sargeant", team: "Williams", number: 2 },
+  // MoneyGram Haas F1 Team
+  { name: "Esteban Ocon", team: "Haas", number: 31, active: true },
+  { name: "Oliver Bearman", team: "Haas", number: 87, active: true },
   
-  // AlphaTauri
-  { name: "Yuki Tsunoda", team: "AlphaTauri", number: 22 },
-  { name: "Nyck de Vries", team: "AlphaTauri", number: 21 },
+  // Visa Cash App Racing Bulls F1 Team
+  { name: "Isack Hadjar", team: "Racing Bulls", number: 6, active: true },
   
-  // Alfa Romeo
-  { name: "Valtteri Bottas", team: "Alfa Romeo", number: 77 },
-  { name: "Zhou Guanyu", team: "Alfa Romeo", number: 24 },
+  // Atlassian Williams Racing
+  { name: "Alexander Albon", team: "Williams", number: 23, active: true },
+  { name: "Carlos Sainz Jr.", team: "Williams", number: 55, active: true },
   
-  // Haas
-  { name: "Kevin Magnussen", team: "Haas", number: 20 },
-  { name: "Nico Hulkenberg", team: "Haas", number: 27 }
+  // Stake F1 Team Kick Sauber
+  { name: "Nico Hulkenberg", team: "Kick Sauber", number: 27, active: true },
+  { name: "Gabriel Bortoleto", team: "Kick Sauber", number: 5, active: true },
+
+  // Piloti non più attivi ma che hanno corso nel 2025
+  { name: "Sergio Perez", team: "Red Bull Racing", number: 11, active: false },
+  { name: "Logan Sargeant", team: "Williams", number: 2, active: false },
+  { name: "Kevin Magnussen", team: "Haas", number: 20, active: false },
+  { name: "Valtteri Bottas", team: "Kick Sauber", number: 77, active: false },
+  { name: "Zhou Guanyu", team: "Kick Sauber", number: 24, active: false },
 ]
 
 async function main() {
@@ -49,22 +57,48 @@ async function main() {
   
   // Create drivers
   console.log('📝 Creating drivers...')
+  
+  // First, deactivate all existing drivers
+  await prisma.driver.updateMany({
+    data: {
+      active: false
+    }
+  })
+  
   for (const driver of drivers2025) {
-    await prisma.driver.upsert({
-      where: { number: driver.number },
-      update: {
-        name: driver.name,
-        team: driver.team,
-        active: true
-      },
-      create: {
-        name: driver.name,
-        team: driver.team,
-        number: driver.number,
-        active: true
+    // Find existing driver by name or number
+    const existingDriver = await prisma.driver.findFirst({
+      where: { 
+        OR: [
+          { name: driver.name },
+          { number: driver.number }
+        ]
       }
     })
-    console.log(`   ✅ Created/Updated: ${driver.name} (#${driver.number})`)
+    
+    if (existingDriver) {
+      // Update existing driver
+      await prisma.driver.update({
+        where: { id: existingDriver.id },
+        data: {
+          name: driver.name,
+          team: driver.team,
+          number: driver.number,
+          active: driver.active
+        }
+      })
+    } else {
+      // Create new driver
+      await prisma.driver.create({
+        data: {
+          name: driver.name,
+          team: driver.team,
+          number: driver.number,
+          active: driver.active
+        }
+      })
+    }
+    console.log(`   ✅ Created/Updated: ${driver.name} (#${driver.number}) - ${driver.team} ${driver.active ? '🟢' : '🔴'}`)
   }
   
   // Create admin user (optional - you can create this manually later)
