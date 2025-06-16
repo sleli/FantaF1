@@ -3,13 +3,73 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation, eventStatusValidation, eventUpdateValidation } from '@/lib/validation/event';
+import { calculatePoints } from '@/lib/scoring';
+
+// Helper function per calcolare automaticamente i punteggi di un evento
+async function calculateScoresForEvent(eventId: string): Promise<void> {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: {
+      firstPlace: true,
+      secondPlace: true,
+      thirdPlace: true,
+      predictions: {
+        include: {
+          firstPlace: true,
+          secondPlace: true,
+          thirdPlace: true
+        }
+      }
+    }
+  });
+
+  if (!event || !event.firstPlace || !event.secondPlace || !event.thirdPlace) {
+    throw new Error('Evento o risultati non trovati');
+  }
+
+  const eventResult = {
+    firstPlaceId: event.firstPlace.id,
+    secondPlaceId: event.secondPlace.id,
+    thirdPlaceId: event.thirdPlace.id
+  };
+
+  const scoreUpdates = [];
+
+  for (const prediction of event.predictions) {
+    if (!prediction.firstPlace || !prediction.secondPlace || !prediction.thirdPlace) {
+      continue; // Salta pronostici incompleti
+    }
+
+    const predictionResult = {
+      firstPlaceId: prediction.firstPlace.id,
+      secondPlaceId: prediction.secondPlace.id,
+      thirdPlaceId: prediction.thirdPlace.id
+    };
+
+    const points = calculatePoints(predictionResult, eventResult, event.type);
+    scoreUpdates.push({ id: prediction.id, points });
+  }
+
+  // Aggiorna tutti i punteggi in una transazione
+  if (scoreUpdates.length > 0) {
+    await prisma.$transaction(
+      scoreUpdates.map(update => 
+        prisma.prediction.update({
+          where: { id: update.id },
+          data: { points: update.points }
+        })
+      )
+    );
+  }
+}
 
 // GET /api/admin/events/[id] - Ottieni evento singolo
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -63,9 +123,10 @@ export async function GET(
 // PUT /api/admin/events/[id] - Aggiorna evento
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -190,6 +251,15 @@ export async function PUT(
           }
         }
       });
+
+      // Automaticamente calcola i punteggi dopo aver inserito i risultati
+      try {
+        await calculateScoresForEvent(params.id);
+        console.log(`Punteggi calcolati automaticamente per l'evento ${event.name}`);
+      } catch (error) {
+        console.error('Errore nel calcolo automatico punteggi:', error);
+        // Non blocchiamo l'operazione se il calcolo punteggi fallisce
+      }
 
       return NextResponse.json({ event });
     }
@@ -347,9 +417,10 @@ export async function PUT(
 // DELETE /api/admin/events/[id] - Elimina evento
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
     const session = await getServerSession(authOptions);
     
     if (!session?.user || session.user.role !== 'ADMIN') {

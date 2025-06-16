@@ -8,19 +8,22 @@ interface Driver {
   name: string;
   team: string;
   number: number;
+  active: boolean;
 }
 
 interface Event {
   id: string;
   name: string;
   type: 'RACE' | 'SPRINT';
-  date: string;
-  closingDate: string;
+  date: Date;
+  closingDate: Date;
   status: 'UPCOMING' | 'CLOSED' | 'COMPLETED';
   firstPlace?: Driver;
   secondPlace?: Driver;
   thirdPlace?: Driver;
   _count: { predictions: number };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface EventFormProps {

@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { 
   PencilIcon, 
@@ -11,32 +9,17 @@ import {
   ChevronDownIcon,
   ChevronUpIcon
 } from '@heroicons/react/24/outline';
+import { Driver } from '@prisma/client';
+import { EventWithResults } from '@/lib/types';
 
-interface Driver {
-  id: string;
-  name: string;
-  team: string;
-  number: number;
-}
-
-interface Event {
-  id: string;
-  name: string;
-  type: 'RACE' | 'SPRINT';
-  date: string;
-  closingDate: string;
-  status: 'UPCOMING' | 'CLOSED' | 'COMPLETED';
-  firstPlace?: Driver;
-  secondPlace?: Driver;
-  thirdPlace?: Driver;
+// Tipo per eventi con conteggio pronostici per la lista admin
+type EventListItem = EventWithResults & {
   _count: { predictions: number };
-  createdAt: string;
-  updatedAt: string;
-}
+};
 
 interface EventListProps {
-  events: Event[];
-  onEdit: (event: Event) => void;
+  events: EventListItem[];
+  onEdit: (event: EventListItem) => void;
   onDelete: (eventId: string) => void;
   onRefresh: () => void;
 }
@@ -45,8 +28,8 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return date.toLocaleString('it-IT', {
       day: '2-digit',
       month: '2-digit',
@@ -142,11 +125,11 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
     }
   };
 
-  const canDelete = (event: Event) => {
+  const canDelete = (event: EventListItem) => {
     return event._count.predictions === 0;
   };
 
-  const canEdit = (event: Event) => {
+  const canEdit = (event: EventListItem) => {
     return true; // Sempre modificabile, ma con limitazioni nel form
   };
 
