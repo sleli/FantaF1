@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import EventForm from '@/components/admin/EventForm';
 
 interface AdminStats {
   totalUsers: number;
@@ -23,6 +24,8 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -73,6 +76,17 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditEvent = (event: any) => {
+    setEditingEvent(event);
+    setShowEventForm(true);
+  };
+
+  const handleEventSaved = () => {
+    setShowEventForm(false);
+    setEditingEvent(null);
+    fetchStats(); // Ricarica i dati
   };
 
   return (
@@ -273,13 +287,13 @@ export default function AdminDashboard() {
                       </div>
                       
                       <div className="flex items-center space-x-3">
-                        <Link
-                          href={`/admin/events`}
+                        <button
+                          onClick={() => handleEditEvent(event)}
                           className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         >
                           <span className="mr-2">✏️</span>
                           Gestisci
-                        </Link>
+                        </button>
                         
                         <Link
                           href={`/predictions?event=${event.id}`}
@@ -312,6 +326,18 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Form Modal per Modifica Evento */}
+      {showEventForm && (
+        <EventForm
+          event={editingEvent}
+          onSave={handleEventSaved}
+          onCancel={() => {
+            setShowEventForm(false);
+            setEditingEvent(null);
+          }}
+        />
+      )}
     </div>
   );
 }
