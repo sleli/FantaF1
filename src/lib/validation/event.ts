@@ -4,8 +4,8 @@ export const eventValidation = z.object({
   name: z.string()
     .min(1, 'Il nome è obbligatorio')
     .max(100, 'Il nome non può superare i 100 caratteri')
-    .regex(/^[a-zA-Z0-9\s\-_àáâäèéêëìíîïòóôöùúûüñç]+$/, 
-           'Il nome può contenere solo lettere, numeri, spazi e trattini'),
+    .regex(/^[a-zA-Z0-9\s\-_'àáâäèéêëìíîïòóôöùúûüñç]+$/,
+           'Il nome può contenere solo lettere, numeri, spazi, trattini e apostrofi'),
   
   type: z.enum(['RACE', 'SPRINT'], {
     errorMap: () => ({ message: 'Il tipo deve essere RACE o SPRINT' })
@@ -52,29 +52,29 @@ export const eventStatusValidation = z.object({
   })
 });
 
-// Validazione per aggiornamento evento esistente
+// Validazione per aggiornamento evento esistente (senza restrizioni di data)
 export const eventUpdateValidation = z.object({
   name: z.string()
     .min(1, 'Il nome è obbligatorio')
     .max(100, 'Il nome non può superare i 100 caratteri')
-    .regex(/^[a-zA-Z0-9\s\-_àáâäèéêëìíîïòóôöùúûüñç]+$/, 
-           'Il nome può contenere solo lettere, numeri, spazi e trattini')
+    .regex(/^[a-zA-Z0-9\s\-_'àáâäèéêëìíîïòóôöùúûüñç]+$/,
+           'Il nome può contenere solo lettere, numeri, spazi, trattini e apostrofi')
     .optional(),
-  
+
   type: z.enum(['RACE', 'SPRINT'], {
     errorMap: () => ({ message: 'Il tipo deve essere RACE o SPRINT' })
   }).optional(),
-  
+
   date: z.string()
     .datetime('Formato data non valido')
     .optional(),
-  
+
   closingDate: z.string()
     .datetime('Formato data di chiusura non valido')
     .optional(),
-    
+
   status: z.enum(['UPCOMING', 'CLOSED', 'COMPLETED']).optional(),
-  
+
   // Campi per risultati
   firstPlaceId: z.string().cuid('ID pilota primo posto non valido').optional(),
   secondPlaceId: z.string().cuid('ID pilota secondo posto non valido').optional(),

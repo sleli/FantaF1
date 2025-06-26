@@ -48,7 +48,6 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
   const [activeTab, setActiveTab] = useState<'basic' | 'results'>('basic');
 
   const isEditing = !!event;
-  const isCompleted = event?.status === 'COMPLETED';
   const hasResults = event?.firstPlace || event?.secondPlace || event?.thirdPlace;
   const hasPredictions = (event?._count?.predictions || 0) > 0;
 
@@ -169,14 +168,19 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
       if (!formData.name.trim()) return 'Il nome è obbligatorio';
       if (!formData.date) return 'La data è obbligatoria';
       if (!formData.closingDate) return 'La data di chiusura è obbligatoria';
-      
+
       const eventDate = new Date(formData.date);
       const closingDate = new Date(formData.closingDate);
-      const now = new Date();
-      
-      if (eventDate <= now) return 'La data dell\'evento deve essere futura';
+
+      // For new events, still require future dates. For editing, allow any dates.
+      if (!isEditing) {
+        const now = new Date();
+        if (eventDate <= now) return 'La data dell\'evento deve essere futura';
+        if (closingDate <= now) return 'La data di chiusura deve essere futura';
+      }
+
+      // Always validate that closing date is before event date
       if (closingDate >= eventDate) return 'La data di chiusura deve essere prima dell\'evento';
-      if (closingDate <= now) return 'La data di chiusura deve essere futura';
     } else {
       // Validazione risultati
       const positions = [formData.firstPlaceId, formData.secondPlaceId, formData.thirdPlaceId]
@@ -191,8 +195,6 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
     return null;
   };
 
-  const canEditBasic = !isEditing || (!isCompleted && !hasPredictions);
-  const canEditResults = isEditing && event?.status !== 'UPCOMING';
   const formError = validateForm();
 
   return (
@@ -232,7 +234,6 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                     ? 'border-red-500 text-red-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
-                disabled={event?.status === 'UPCOMING'}
               >
                 Risultati
                 {hasResults && (
@@ -265,16 +266,10 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  disabled={!canEditBasic}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   placeholder="es. Gran Premio di Monaco"
                   maxLength={100}
                 />
-                {!canEditBasic && (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Non modificabile: evento completato o con pronostici esistenti
-                  </p>
-                )}
               </div>
 
               {/* Tipo */}
@@ -285,8 +280,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 <select
                   value={formData.type}
                   onChange={(e) => handleInputChange('type', e.target.value)}
-                  disabled={!canEditBasic}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 >
                   <option value="RACE">Gara</option>
                   <option value="SPRINT">Sprint</option>
@@ -303,8 +297,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                     type="datetime-local"
                     value={formData.date}
                     onChange={(e) => handleInputChange('date', e.target.value)}
-                    disabled={!canEditBasic}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
 
@@ -316,18 +309,17 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                     type="datetime-local"
                     value={formData.closingDate}
                     onChange={(e) => handleInputChange('closingDate', e.target.value)}
-                    disabled={!canEditBasic}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               {/* Info Predizioni */}
               {isEditing && hasPredictions && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Attenzione:</strong> Questo evento ha già {event?._count?.predictions} pronostici.
-                    Le modifiche a tipo e date sono bloccate per mantenere l'integrità dei dati.
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Informazione:</strong> Questo evento ha già {event?._count?.predictions} pronostici.
+                    Le modifiche sono ora consentite per tutti gli eventi.
                   </p>
                 </div>
               )}

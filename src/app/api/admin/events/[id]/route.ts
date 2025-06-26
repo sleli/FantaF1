@@ -166,23 +166,7 @@ export async function PUT(
       );
     }
 
-    // Se l'evento è completato, non permettere modifiche ai dati base
-    if (existingEvent.status === 'COMPLETED' && 
-        (body.name || body.type || body.date || body.closingDate)) {
-      return NextResponse.json(
-        { error: 'Non è possibile modificare i dati base di un evento completato' },
-        { status: 400 }
-      );
-    }
-
-    // Se ci sono pronostici e si tenta di cambiare date/tipo, blocca
-    if (existingEvent.predictions.length > 0 && 
-        (body.type || body.date || body.closingDate)) {
-      return NextResponse.json(
-        { error: 'Non è possibile modificare tipo e date di un evento con pronostici esistenti' },
-        { status: 400 }
-      );
-    }
+    // Restrictions removed: Allow editing all events regardless of status or predictions
 
     // Validazione per aggiornamento risultati
     if (body.firstPlaceId || body.secondPlaceId || body.thirdPlaceId) {
