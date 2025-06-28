@@ -52,21 +52,21 @@ const testEvents = [
     name: "Gran Premio d'Australia 2025",
     type: "RACE" as const,
     date: new Date('2025-03-16T05:00:00Z'), // Domenica 16 marzo, gara ore 05:00 UTC
-    closingDate: new Date('2025-03-14T22:59:59Z'), // Venerdì 14 marzo alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-03-14T23:59:59Z'), // Venerdì 14 marzo alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio di Cina 2025",
     type: "RACE" as const,
     date: new Date('2025-03-23T08:00:00Z'), // Domenica 23 marzo, gara ore 08:00 UTC
-    closingDate: new Date('2025-03-20T22:59:59Z'), // Giovedì 20 marzo alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-03-21T23:59:59Z'), // Venerdì 21 marzo alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "COMPLETED" as const
   },
   {
     name: "Sprint Cina 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-03-22T08:30:00Z'), // Sabato 22 marzo, sprint ore 08:30 UTC
-    closingDate: new Date('2025-03-20T22:59:59Z'), // Giovedì 20 marzo alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-03-22T04:00:00Z'), // Sabato 22 marzo, sprint ore 08:30 UTC
+    closingDate: new Date('2025-03-21T23:59:59Z'), // Venerdì 21 marzo alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "COMPLETED" as const
   },
 
@@ -82,14 +82,14 @@ const testEvents = [
     name: "Gran Premio del Bahrain 2025",
     type: "RACE" as const,
     date: new Date('2025-04-13T17:00:00Z'), // Domenica 13 aprile, gara ore 17:00 UTC
-    closingDate: new Date('2025-04-11T22:59:59Z'), // Venerdì 11 aprile alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-04-11T23:59:59Z'), // Venerdì 11 aprile alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio dell'Arabia Saudita 2025",
     type: "RACE" as const,
     date: new Date('2025-04-20T19:00:00Z'), // Domenica 20 aprile, gara ore 19:00 UTC
-    closingDate: new Date('2025-04-18T22:59:59Z'), // Venerdì 18 aprile alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-04-17T23:59:59Z'), // Venerdì 18 aprile alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
 
@@ -98,28 +98,28 @@ const testEvents = [
     name: "Gran Premio di Miami 2025",
     type: "RACE" as const,
     date: new Date('2025-05-04T22:00:00Z'), // Domenica 4 maggio, gara ore 22:00 UTC
-    closingDate: new Date('2025-05-01T22:59:59Z'), // Giovedì 1 maggio alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-05-02T23:59:59Z'), // Venerdì 2 maggio alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "COMPLETED" as const
   },
   {
     name: "Sprint Miami 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-05-03T22:30:00Z'), // Sabato 3 maggio, sprint ore 22:30 UTC
-    closingDate: new Date('2025-05-01T22:59:59Z'), // Giovedì 1 maggio alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-05-04T22:00:00Z'), // Sabato 3 maggio, sprint ore 22:30 UTC
+    closingDate: new Date('2025-05-02T23:59:59Z'), // Venerdì 2 maggio alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio dell'Emilia Romagna 2025",
     type: "RACE" as const,
     date: new Date('2025-05-18T15:00:00Z'), // Domenica 18 maggio, gara ore 15:00 UTC
-    closingDate: new Date('2025-05-16T22:59:59Z'), // Venerdì 16 maggio alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-05-16T23:59:59Z'), // Venerdì 16 maggio alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio di Monaco 2025",
     type: "RACE" as const,
     date: new Date('2025-05-25T15:00:00Z'), // Domenica 25 maggio, gara ore 15:00 UTC
-    closingDate: new Date('2025-05-23T22:59:59Z'), // Venerdì 23 maggio alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-05-23T23:59:59Z'), // Venerdì 23 maggio alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
 
@@ -128,21 +128,21 @@ const testEvents = [
     name: "Gran Premio di Spagna 2025",
     type: "RACE" as const,
     date: new Date('2025-06-01T15:00:00Z'), // Domenica 1 giugno, gara ore 15:00 UTC
-    closingDate: new Date('2025-05-30T22:59:59Z'), // Venerdì 30 maggio alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-05-30T23:59:59Z'), // Venerdì 30 maggio alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio del Canada 2025",
     type: "RACE" as const,
     date: new Date('2025-06-15T20:00:00Z'), // Domenica 15 giugno, gara ore 20:00 UTC (oggi!)
-    closingDate: new Date('2025-06-13T22:59:59Z'), // Venerdì 13 giugno alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-06-13T23:59:59Z'), // Venerdì 13 giugno alle 23:59:59 (giorno prima delle qualifiche)
     status: "COMPLETED" as const
   },
   {
     name: "Gran Premio d'Austria 2025",
     type: "RACE" as const,
     date: new Date('2025-06-29T15:00:00Z'), // Domenica 29 giugno, gara ore 15:00 UTC
-    closingDate: new Date('2025-06-27T22:59:59Z'), // Venerdì 27 giugno alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-06-27T23:59:59Z'), // Venerdì 27 giugno alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
 
@@ -151,21 +151,21 @@ const testEvents = [
     name: "Gran Premio di Gran Bretagna 2025",
     type: "RACE" as const,
     date: new Date('2025-07-06T16:00:00Z'), // Domenica 6 luglio, gara ore 16:00 UTC
-    closingDate: new Date('2025-07-04T22:59:59Z'), // Venerdì 4 luglio alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-07-04T23:59:59Z'), // Venerdì 4 luglio alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio del Belgio 2025",
     type: "RACE" as const,
     date: new Date('2025-07-27T15:00:00Z'), // Domenica 27 luglio, gara ore 15:00 UTC
-    closingDate: new Date('2025-07-24T22:59:59Z'), // Giovedì 24 luglio alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-07-25T23:59:59Z'), // Venerdì 25 luglio alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Sprint Belgio 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-07-26T16:30:00Z'), // Sabato 26 luglio, sprint ore 16:30 UTC
-    closingDate: new Date('2025-07-24T22:59:59Z'), // Giovedì 24 luglio alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-07-26T16:00:00Z'), // Sabato 26 luglio, sprint ore 16:30 UTC
+    closingDate: new Date('2025-07-25T23:59:59Z'), // Venerdì 25 luglio alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
 
@@ -174,14 +174,14 @@ const testEvents = [
     name: "Gran Premio d'Ungheria 2025",
     type: "RACE" as const,
     date: new Date('2025-08-03T15:00:00Z'), // Domenica 3 agosto, gara ore 15:00 UTC
-    closingDate: new Date('2025-08-01T22:59:59Z'), // Venerdì 1 agosto alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-08-01T23:59:59Z'), // Venerdì 1 agosto alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio d'Olanda 2025",
     type: "RACE" as const,
     date: new Date('2025-08-31T15:00:00Z'), // Domenica 31 agosto, gara ore 15:00 UTC
-    closingDate: new Date('2025-08-29T22:59:59Z'), // Venerdì 29 agosto alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-08-29T23:59:59Z'), // Venerdì 29 agosto alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
 
@@ -190,14 +190,14 @@ const testEvents = [
     name: "Gran Premio d'Italia 2025",
     type: "RACE" as const,
     date: new Date('2025-09-07T15:00:00Z'), // Domenica 7 settembre, gara ore 15:00 UTC
-    closingDate: new Date('2025-09-05T22:59:59Z'), // Venerdì 5 settembre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-09-05T23:59:59Z'), // Venerdì 5 settembre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio dell'Azerbaijan 2025",
     type: "RACE" as const,
     date: new Date('2025-09-21T13:00:00Z'), // Domenica 21 settembre, gara ore 13:00 UTC
-    closingDate: new Date('2025-09-19T22:59:59Z'), // Venerdì 19 settembre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-09-19T23:59:59Z'), // Venerdì 19 settembre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
 
@@ -206,28 +206,28 @@ const testEvents = [
     name: "Gran Premio di Singapore 2025",
     type: "RACE" as const,
     date: new Date('2025-10-05T14:00:00Z'), // Domenica 5 ottobre, gara ore 14:00 UTC
-    closingDate: new Date('2025-10-03T22:59:59Z'), // Venerdì 3 ottobre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-10-03T23:59:59Z'), // Venerdì 3 ottobre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio degli Stati Uniti 2025",
     type: "RACE" as const,
     date: new Date('2025-10-19T21:00:00Z'), // Domenica 19 ottobre, gara ore 21:00 UTC
-    closingDate: new Date('2025-10-16T22:59:59Z'), // Giovedì 16 ottobre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-10-17T23:59:59Z'), // Venerdì 17 ottobre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Sprint Stati Uniti 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-10-18T23:30:00Z'), // Sabato 18 ottobre, sprint ore 23:30 UTC
-    closingDate: new Date('2025-10-16T22:59:59Z'), // Giovedì 16 ottobre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-10-18T00:00:00Z'), // Sabato 18 ottobre, sprint ore 23:30 UTC
+    closingDate: new Date('2025-10-17T23:59:59Z'), // Venerdì 17 ottobre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio del Messico 2025",
     type: "RACE" as const,
     date: new Date('2025-10-26T21:00:00Z'), // Domenica 26 ottobre, gara ore 21:00 UTC
-    closingDate: new Date('2025-10-24T22:59:59Z'), // Venerdì 24 ottobre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-10-24T23:59:59Z'), // Venerdì 24 ottobre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
 
@@ -236,35 +236,35 @@ const testEvents = [
     name: "Gran Premio del Brasile 2025",
     type: "RACE" as const,
     date: new Date('2025-11-09T18:00:00Z'), // Domenica 9 novembre, gara ore 18:00 UTC
-    closingDate: new Date('2025-11-06T22:59:59Z'), // Giovedì 6 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-11-07T23:59:59Z'), // Venerdì 7 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Sprint Brasile 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-11-08T19:30:00Z'), // Sabato 8 novembre, sprint ore 19:30 UTC
-    closingDate: new Date('2025-11-06T22:59:59Z'), // Giovedì 6 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-11-08T19:00:00Z'), // Sabato 8 novembre, sprint ore 19:30 UTC
+    closingDate: new Date('2025-11-07T23:59:59Z'), // Venerdì 7 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio di Las Vegas 2025",
     type: "RACE" as const,
     date: new Date('2025-11-22T05:00:00Z'), // Domenica 22 novembre, gara ore 05:00 UTC
-    closingDate: new Date('2025-11-20T22:59:59Z'), // Venerdì 20 novembre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-11-20T23:59:59Z'), // Venerdì 20 novembre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   },
   {
     name: "Gran Premio del Qatar 2025",
     type: "RACE" as const,
     date: new Date('2025-11-30T17:00:00Z'), // Domenica 30 novembre, gara ore 17:00 UTC
-    closingDate: new Date('2025-11-27T22:59:59Z'), // Giovedì 27 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    closingDate: new Date('2025-11-28T23:59:59Z'), // Venerdì 28 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
   {
     name: "Sprint Qatar 2025",
     type: "SPRINT" as const,
-    date: new Date('2025-11-29T18:30:00Z'), // Sabato 29 novembre, sprint ore 18:30 UTC
-    closingDate: new Date('2025-11-27T22:59:59Z'), // Giovedì 27 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
+    date: new Date('2025-11-29T19:00:00Z'), // Sabato 29 novembre, sprint ore 18:30 UTC
+    closingDate: new Date('2025-11-28T23:59:59Z'), // Venerdì 28 novembre alle 23:59:59 (giorno prima delle qualifiche sprint)
     status: "UPCOMING" as const
   },
 
@@ -273,7 +273,7 @@ const testEvents = [
     name: "Gran Premio di Abu Dhabi 2025",
     type: "RACE" as const,
     date: new Date('2025-12-07T14:00:00Z'), // Domenica 7 dicembre, gara ore 14:00 UTC
-    closingDate: new Date('2025-12-05T22:59:59Z'), // Venerdì 5 dicembre alle 23:59:59 (giorno prima delle qualifiche)
+    closingDate: new Date('2025-12-05T23:59:59Z'), // Venerdì 5 dicembre alle 23:59:59 (giorno prima delle qualifiche)
     status: "UPCOMING" as const
   }
 ]
