@@ -136,7 +136,7 @@ const testEvents = [
     type: "RACE" as const,
     date: new Date('2025-06-15T20:00:00Z'), // Domenica 15 giugno, gara ore 20:00 UTC (oggi!)
     closingDate: new Date('2025-06-13T22:59:59Z'), // Venerdì 13 giugno alle 23:59:59 (giorno prima delle qualifiche)
-    status: "CLOSED" as const
+    status: "COMPLETED" as const
   },
   {
     name: "Gran Premio d'Austria 2025",

@@ -119,16 +119,12 @@ export function canMakePrediction(event: { closingDate: Date; status: string }):
 }
 
 /**
- * Formatta una data per la visualizzazione
+ * Formatta una data per la visualizzazione (mostra UTC raw)
  */
-export function formatEventDate(date: Date): string {
-  return new Intl.DateTimeFormat('it-IT', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
+export function formatEventDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  // Mostra la data UTC esattamente come salvata nel DB
+  return dateObj.toISOString().slice(0, 16).replace('T', ' ')
 }
 
 /**

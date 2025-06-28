@@ -133,7 +133,7 @@ export default function PredictionForm({
         <div className="text-gray-600">
           <p className="font-semibold">{event.name}</p>
           <p className="text-sm">
-            {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
+            {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toISOString().slice(0, 16).replace('T', ' ')}
           </p>
           {isEventOpen ? (
             <p className="text-sm text-green-600 font-medium">

@@ -51,13 +51,8 @@ export default function PredictionList({
 
   const formatDate = (date: string | Date) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('it-IT', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    // Mostra la data UTC esattamente come salvata nel DB
+    return dateObj.toISOString().slice(0, 16).replace('T', ' ');
   }
 
   if (predictions.length === 0) {
@@ -183,9 +178,9 @@ export default function PredictionList({
               )}
             </div>
             <div className="flex gap-4">
-              <span>Creato: {new Date(prediction.createdAt).toLocaleDateString('it-IT')}</span>
+              <span>Creato: {new Date(prediction.createdAt).toISOString().slice(0, 16).replace('T', ' ')}</span>
               {prediction.updatedAt !== prediction.createdAt && (
-                <span>Modificato: {new Date(prediction.updatedAt).toLocaleDateString('it-IT')}</span>
+                <span>Modificato: {new Date(prediction.updatedAt).toISOString().slice(0, 16).replace('T', ' ')}</span>
               )}
             </div>
           </div>

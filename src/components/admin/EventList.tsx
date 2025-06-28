@@ -30,13 +30,8 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
 
   const formatDate = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return date.toLocaleString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Mostra la data UTC esattamente come salvata nel DB
+    return date.toISOString().slice(0, 16).replace('T', ' ');
   };
 
   const getStatusIcon = (status: string) => {

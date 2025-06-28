@@ -76,13 +76,8 @@ export default function UserForm({ user, onSave, onCancel }: UserFormProps) {
   const hasChanges = formData.name !== user.name || formData.role !== user.role;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('it-IT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Mostra la data UTC esattamente come salvata nel DB
+    return new Date(dateString).toISOString().slice(0, 16).replace('T', ' ');
   };
 
   return (

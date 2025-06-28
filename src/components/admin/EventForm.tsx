@@ -72,15 +72,15 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
         setActiveTab('results');
       }
     } else {
-      // Default per nuovo evento: chiusura 1 ora prima dell'evento
-      const now = new Date();
-      const eventTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // +24h
-      const closingTime = new Date(eventTime.getTime() - 60 * 60 * 1000); // -1h
-      
+      // Default per nuovo evento: chiusura 1 ora prima dell'evento (tutto in UTC)
+      const nowUTC = new Date();
+      const eventTimeUTC = new Date(nowUTC.getTime() + 24 * 60 * 60 * 1000); // +24h UTC
+      const closingTimeUTC = new Date(eventTimeUTC.getTime() - 60 * 60 * 1000); // -1h UTC
+
       setFormData(prev => ({
         ...prev,
-        date: eventTime.toISOString().slice(0, 16),
-        closingDate: closingTime.toISOString().slice(0, 16)
+        date: eventTimeUTC.toISOString().slice(0, 16),
+        closingDate: closingTimeUTC.toISOString().slice(0, 16)
       }));
     }
   }, [event, hasResults]);
@@ -152,13 +152,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Auto-calcolo data chiusura quando cambia data evento
+    // Auto-calcolo data chiusura quando cambia data evento (mantieni UTC)
     if (field === 'date' && value && !isEditing) {
-      const eventDate = new Date(value);
-      const closingDate = new Date(eventDate.getTime() - 60 * 60 * 1000); // 1 ora prima
+      const eventDateUTC = new Date(value);
+      const closingDateUTC = new Date(eventDateUTC.getTime() - 60 * 60 * 1000); // 1 ora prima UTC
       setFormData(prev => ({
         ...prev,
-        closingDate: closingDate.toISOString().slice(0, 16)
+        closingDate: closingDateUTC.toISOString().slice(0, 16)
       }));
     }
   };
