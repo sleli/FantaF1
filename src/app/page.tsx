@@ -1,7 +1,7 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import TestTailwind from '../components/TestTailwind';
+
 import AuthStatus from '@/components/auth/AuthStatus';
 
 export default function Home() {
@@ -77,8 +77,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-        
-        <TestTailwind />
       </main>
     </div>
   );
