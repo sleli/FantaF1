@@ -11,7 +11,8 @@ import {
   HomeIcon,
   ChartBarIcon,
   TrophyIcon,
-  UserIcon
+  UserIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 
 interface MobileMenuProps {
@@ -22,6 +23,8 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ isOpen, onToggle, onClose }: MobileMenuProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   // Swipe to close menu
   const swipeRef = useSwipe<HTMLDivElement>({
@@ -99,6 +102,15 @@ export default function MobileMenu({ isOpen, onToggle, onClose }: MobileMenuProp
     },
   ];
 
+  // Aggiungi Admin se l'utente è amministratore
+  if (isAdmin) {
+    navigationItems.push({
+      name: 'Admin',
+      href: '/admin',
+      icon: Cog6ToothIcon,
+    });
+  }
+
   return (
     <div className="mobile-menu-container">
       {/* Hamburger Button */}
@@ -138,6 +150,37 @@ export default function MobileMenu({ isOpen, onToggle, onClose }: MobileMenuProp
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
+
+            {/* User Profile Section */}
+            {session && (
+              <div className="px-4 py-4 border-b border-gray-200">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={onClose}
+                >
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'Profile'}
+                      className="w-12 h-12 rounded-full border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center border-2 border-gray-200">
+                      <UserIcon className="w-6 h-6 text-gray-600" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-medium text-gray-900 truncate">
+                      {session.user.name}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      Vai al profilo
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            )}
 
 
 
