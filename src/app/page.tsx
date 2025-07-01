@@ -3,10 +3,22 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
 import AuthStatus from '@/components/auth/AuthStatus';
+import PublicLayout from '@/components/layout/PublicLayout';
+import { usePullToRefresh } from '@/hooks/useSwipe';
 
 export default function Home() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
+
+  // Pull to refresh functionality
+  const handleRefresh = async () => {
+    window.location.reload();
+  };
+
+  const pullToRefreshRef = usePullToRefresh(handleRefresh, {
+    threshold: 80,
+    enabled: true
+  });
   
   if (!isAuthenticated) {
     return (
@@ -55,39 +67,9 @@ export default function Home() {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-md border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-2xl font-bold text-f1-red">FantaF1</h1>
-              <div className="hidden md:flex space-x-6">
-                <Link 
-                  href="/"
-                  className="text-gray-600 hover:text-f1-red transition-colors font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link 
-                  href="/predictions"
-                  className="text-gray-600 hover:text-f1-red transition-colors font-medium"
-                >
-                  Pronostici
-                </Link>
-                <Link 
-                  href="/leaderboard"
-                  className="text-gray-600 hover:text-f1-red transition-colors font-medium"
-                >
-                  Classifica
-                </Link>
-              </div>
-            </div>
-            <AuthStatus />
-          </div>
-        </div>
-      </nav>
+    <PublicLayout>
       
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <main ref={pullToRefreshRef} className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 transition-transform duration-300">
         <div className="card mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Dashboard FantaF1</h2>
           <p className="text-gray-600 mb-6">
@@ -112,6 +94,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-    </div>
+    </PublicLayout>
   );
 }

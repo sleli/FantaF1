@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Leaderboard from '@/components/Leaderboard'
+import PublicLayout from '@/components/layout/PublicLayout'
 
 export default function LeaderboardPage() {
   const { data: session, status } = useSession()
@@ -28,8 +29,8 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <PublicLayout>
       <Leaderboard currentUserId={session?.user?.id || ''} />
-    </div>
+    </PublicLayout>
   )
 }

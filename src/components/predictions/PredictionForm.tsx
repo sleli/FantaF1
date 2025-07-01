@@ -155,16 +155,16 @@ export default function PredictionForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
         {/* 1° Posto */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
             🥇 1° Posto (25 punti)
           </label>
           <select
             value={firstPlaceId}
             onChange={(e) => setFirstPlaceId(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-f1-red focus:border-f1-red"
+            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
             disabled={!isEventOpen || isLoading}
           >
             <option value="">Seleziona un pilota...</option>
@@ -178,13 +178,13 @@ export default function PredictionForm({
 
         {/* 2° Posto */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
             🥈 2° Posto (15 punti)
           </label>
           <select
             value={secondPlaceId}
             onChange={(e) => setSecondPlaceId(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-f1-red focus:border-f1-red"
+            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
             disabled={!isEventOpen || isLoading}
           >
             <option value="">Seleziona un pilota...</option>
@@ -198,13 +198,13 @@ export default function PredictionForm({
 
         {/* 3° Posto */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
             🥉 3° Posto (10 punti)
           </label>
           <select
             value={thirdPlaceId}
             onChange={(e) => setThirdPlaceId(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-f1-red focus:border-f1-red"
+            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
             disabled={!isEventOpen || isLoading}
           >
             <option value="">Seleziona un pilota...</option>
@@ -249,21 +249,21 @@ export default function PredictionForm({
         )}
 
         {/* Bottoni */}
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <button
             type="submit"
             disabled={!isEventOpen || isLoading}
-            className="flex-1 bg-f1-red text-white py-3 px-6 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+            className="flex-1 bg-f1-red text-white py-4 sm:py-3 px-6 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors text-base sm:text-sm touch-button"
           >
             {isLoading ? 'Salvando...' : (isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico')}
           </button>
-          
+
           {(firstPlaceId || secondPlaceId || thirdPlaceId) && (
             <button
               type="button"
               onClick={resetForm}
               disabled={isLoading}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-4 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-base sm:text-sm touch-button"
             >
               Reset
             </button>

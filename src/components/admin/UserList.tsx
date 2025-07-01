@@ -224,8 +224,66 @@ export default function UserList({ users, onEdit, onDelete, onRefresh }: UserLis
         </div>
       </div>
 
-      {/* Tabella utenti */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Mobile Card Layout */}
+      <div className="block lg:hidden space-y-4">
+        {sortedUsers.map((user) => (
+          <div key={user.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+            {/* Card Header */}
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getRoleIcon(user.role)}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium text-gray-900 truncate">{user.name}</h3>
+                    <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onEdit(user)}
+                    className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 touch-target"
+                    aria-label="Edit user"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(user.id)}
+                    className="p-2 rounded-md text-red-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 touch-target"
+                    aria-label="Delete user"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Card Content */}
+              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Ruolo:</span>
+                  <p className="font-medium">
+                    {user.role === 'ADMIN' ? 'Amministratore' : 'Giocatore'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Pronostici:</span>
+                  <p className="font-medium">{user._count.predictions}</p>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-500">Registrato il:</span>
+                  <p className="font-medium">{formatDate(user.createdAt)}</p>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-500">ID:</span>
+                  <p className="font-medium text-xs">{user.id.slice(-8)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table Layout */}
+      <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -355,6 +413,7 @@ export default function UserList({ users, onEdit, onDelete, onRefresh }: UserLis
             <p className="text-gray-500">Nessun utente trovato con i filtri applicati</p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

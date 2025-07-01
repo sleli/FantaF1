@@ -64,9 +64,9 @@ export function DriverForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="name" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
           Nome Pilota *
         </label>
         <input
@@ -74,7 +74,7 @@ export function DriverForm({
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 touch-button ${
             errors.name ? 'border-red-500' : 'border-gray-300'
           }`}
           placeholder="Es. Max Verstappen"
@@ -84,7 +84,7 @@ export function DriverForm({
       </div>
       
       <div className="relative">
-        <label htmlFor="team" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="team" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
           Team *
         </label>
         <input
@@ -96,7 +96,7 @@ export function DriverForm({
             setShowTeamSuggestions(true)
           }}
           onFocus={() => setShowTeamSuggestions(true)}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 touch-button ${
             errors.team ? 'border-red-500' : 'border-gray-300'
           }`}
           placeholder="Es. Red Bull Racing"

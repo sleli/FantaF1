@@ -2,12 +2,14 @@
 
 import { useSession } from 'next-auth/react';
 import { withAuth } from '@/components/auth/withAuth';
+import PublicLayout from '@/components/layout/PublicLayout';
 
 function ProfilePage() {
   const { data: session } = useSession();
   
   return (
-    <div className="container mx-auto py-8 px-4">
+    <PublicLayout>
+      <div className="container mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Il tuo profilo</h1>
       
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -36,7 +38,8 @@ function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PublicLayout>
   );
 }
 

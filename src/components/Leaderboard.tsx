@@ -141,33 +141,35 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('general')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+              className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap touch-button ${
                 activeTab === 'general'
                   ? 'border-f1-red text-f1-red'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <ChartBarIcon className="h-4 w-4" />
-              Classifica Generale
+              <ChartBarIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Classifica Generale</span>
+              <span className="sm:hidden">Generale</span>
             </button>
             <button
               onClick={() => setActiveTab('event')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+              className={`py-4 px-2 sm:px-1 ml-6 sm:ml-8 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap touch-button ${
                 activeTab === 'event'
                   ? 'border-f1-red text-f1-red'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <CalendarIcon className="h-4 w-4" />
-              Classifica per Evento
+              <CalendarIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Classifica per Evento</span>
+              <span className="sm:hidden">Per Evento</span>
             </button>
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Classifica Generale */}
           {activeTab === 'general' && (
             <div>

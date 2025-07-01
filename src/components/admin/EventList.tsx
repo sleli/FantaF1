@@ -143,9 +143,106 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+    <div className="space-y-6">
+      {/* Mobile Card Layout */}
+      <div className="block lg:hidden space-y-4">
+        {events.map((event) => (
+          <div key={event.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+            {/* Card Header */}
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getStatusIcon(event.status)}
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{event.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} • {event._count.predictions} pronostici
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                  className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 touch-target"
+                  aria-label="Toggle details"
+                >
+                  {expandedEvent === event.id ? (
+                    <ChevronUpIcon className="h-5 w-5" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Data Evento:</span>
+                  <p className="font-medium">{formatDate(event.date)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Chiusura:</span>
+                  <p className="font-medium">{formatDate(event.closingDate)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Status:</span>
+                  <p className="font-medium">{getStatusText(event.status)}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Pronostici:</span>
+                  <p className="font-medium">{event._count.predictions}</p>
+                </div>
+              </div>
+
+              {/* Expanded Details */}
+              {expandedEvent === event.id && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Creato il:</span>
+                      <p className="font-medium">{formatDate(event.createdAt)}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ultima modifica:</span>
+                      <p className="font-medium">{formatDate(event.updatedAt)}</p>
+                    </div>
+                    {!canDelete(event) && (
+                      <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                        ⚠️ Non eliminabile: evento con pronostici esistenti
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+                <button
+                  onClick={() => onEdit(event)}
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-button"
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Modifica
+                </button>
+                <button
+                  onClick={() => onDelete(event.id)}
+                  disabled={!canDelete(event)}
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed touch-button"
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  Elimina
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table Layout */}
+      <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -329,6 +426,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
