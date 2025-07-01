@@ -413,7 +413,6 @@ export default function UserList({ users, onEdit, onDelete, onRefresh }: UserLis
             <p className="text-gray-500">Nessun utente trovato con i filtri applicati</p>
           </div>
         )}
-        </div>
       </div>
     </div>
   );

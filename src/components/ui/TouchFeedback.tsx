@@ -96,7 +96,7 @@ export function useTouchFeedback(
 ) {
   const { rippleColor = 'rgba(0, 0, 0, 0.1)', duration = 600, disabled = false } = options;
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
   const nextRippleId = useRef(0);
 
   const createRipple = (event: MouseEvent | TouchEvent) => {

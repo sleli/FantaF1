@@ -18,8 +18,8 @@ interface SwipeOptions {
 export function useSwipe<T extends HTMLElement>(
   handlers: SwipeHandlers,
   options: SwipeOptions = {}
-): RefObject<T> {
-  const ref = useRef<T>(null);
+): RefObject<T | null> {
+  const ref = useRef<T | null>(null);
   const {
     threshold = 50,
     preventDefaultTouchmoveEvent = false,
@@ -145,7 +145,7 @@ export function usePullToRefresh(
   options: { threshold?: number; enabled?: boolean } = {}
 ) {
   const { threshold = 100, enabled = true } = options;
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
