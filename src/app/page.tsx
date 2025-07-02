@@ -1,14 +1,23 @@
 'use client';
 import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 import Link from 'next/link';
 
 import AuthStatus from '@/components/auth/AuthStatus';
 import PublicLayout from '@/components/layout/PublicLayout';
+import UpcomingEvents from '@/components/events/UpcomingEvents';
+import EventForm from '@/components/admin/EventForm';
 import { usePullToRefresh } from '@/hooks/useSwipe';
 
 export default function Home() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === 'authenticated';
+  const isAdmin = session?.user?.role === 'ADMIN';
+
+  // State for event editing (admin only)
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Pull to refresh functionality
   const handleRefresh = async () => {
@@ -19,6 +28,20 @@ export default function Home() {
     threshold: 80,
     enabled: true
   });
+
+  // Event editing handlers (admin only)
+  const handleEditEvent = (event: any) => {
+    if (isAdmin) {
+      setEditingEvent(event);
+      setShowEventForm(true);
+    }
+  };
+
+  const handleEventSaved = () => {
+    setShowEventForm(false);
+    setEditingEvent(null);
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh of UpcomingEvents
+  };
   
   if (!isAuthenticated) {
     return (
@@ -93,6 +116,21 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Upcoming Events Section */}
+        <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+
+        {/* Event Form Modal (Admin only) */}
+        {isAdmin && showEventForm && (
+          <EventForm
+            event={editingEvent}
+            onSave={handleEventSaved}
+            onCancel={() => {
+              setShowEventForm(false);
+              setEditingEvent(null);
+            }}
+          />
+        )}
       </main>
     </PublicLayout>
   );

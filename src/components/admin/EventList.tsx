@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  PencilIcon, 
-  TrashIcon, 
-  CalendarIcon, 
+import {
+  PencilIcon,
+  TrashIcon,
+  CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon
 } from '@heroicons/react/24/outline';
-import { Driver } from '@prisma/client';
 import { EventWithResults } from '@/lib/types';
 
 // Tipo per eventi con conteggio pronostici per la lista admin
@@ -124,7 +123,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
     return event._count.predictions === 0;
   };
 
-  const canEdit = (event: EventListItem) => {
+  const canEdit = (_event: EventListItem) => {
     return true; // Sempre modificabile, ma con limitazioni nel form
   };
 
