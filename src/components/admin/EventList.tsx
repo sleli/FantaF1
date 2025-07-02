@@ -241,29 +241,28 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
 
       {/* Desktop Table Layout */}
       <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        <table className="w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-1/4 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Evento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Tipo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data Evento
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Data
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Chiusura
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Pronostici
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Pred.
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="w-24 px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Azioni
               </th>
             </tr>
@@ -272,90 +271,99 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
             {events.map((event) => (
               <React.Fragment key={event.id}>
                 <tr className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <div className="flex items-center">
                       <button
                         onClick={() => setExpandedEvent(
                           expandedEvent === event.id ? null : event.id
                         )}
-                        className="mr-2 text-gray-400 hover:text-gray-600"
+                        className="mr-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
                       >
                         {expandedEvent === event.id ? (
-                          <ChevronUpIcon className="h-4 w-4" />
+                          <ChevronUpIcon className="h-3 w-3" />
                         ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
+                          <ChevronDownIcon className="h-3 w-3" />
                         )}
                       </button>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate" title={event.name}>
                           {event.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs text-gray-500">
                           ID: {event.id.slice(-8)}
                         </div>
                       </div>
                     </div>
                   </td>
                   
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(event.type)}`}>
-                      {event.type}
+                  <td className="px-2 py-3 whitespace-nowrap text-center">
+                    <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded ${getTypeColor(event.type)}`}>
+                      {event.type === 'RACE' ? 'GP' : 'SP'}
                     </span>
                   </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(event.date)}
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(event.closingDate)}
-                  </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(event.status)}
-                      <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(event.status)}`}>
-                        {getStatusText(event.status)}
-                      </span>
+
+                  <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-900">
+                    <div className="truncate" title={formatDate(event.date)}>
+                      {new Date(event.date).toLocaleDateString('it-IT', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </div>
                   </td>
-                  
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center">
-                      <span className="font-medium">{event._count.predictions}</span>
-                      {event._count.predictions > 0 && (
-                        <span className="ml-1 text-gray-500">pronostici</span>
-                      )}
+
+                  <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-900">
+                    <div className="truncate" title={formatDate(event.closingDate)}>
+                      {new Date(event.closingDate).toLocaleDateString('it-IT', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </div>
                   </td>
+
+                  <td className="px-2 py-3 whitespace-nowrap">
+                    {event.status !== 'COMPLETED' ? (
+                      <select
+                        value={event.status}
+                        onChange={(e) => handleStatusUpdate(event.id, e.target.value)}
+                        disabled={updatingStatus === event.id}
+                        className="text-xs border border-gray-300 rounded px-1 py-0.5 w-full focus:ring-1 focus:ring-red-500 focus:border-transparent"
+                      >
+                        <option value="UPCOMING">In Arrivo</option>
+                        <option value="CLOSED">Chiuso</option>
+                        <option value="COMPLETED">Completato</option>
+                      </select>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        {getStatusIcon(event.status)}
+                        <span className={`ml-1 inline-flex px-1 py-0.5 text-xs font-semibold rounded ${getStatusColor(event.status)}`}>
+                          Comp.
+                        </span>
+                      </div>
+                    )}
+                  </td>
                   
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
-                      {/* Status Update */}
-                      {event.status !== 'COMPLETED' && (
-                        <select
-                          value={event.status}
-                          onChange={(e) => handleStatusUpdate(event.id, e.target.value)}
-                          disabled={updatingStatus === event.id}
-                          className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        >
-                          <option value="UPCOMING">In Arrivo</option>
-                          <option value="CLOSED">Chiuso</option>
-                          <option value="COMPLETED">Completato</option>
-                        </select>
-                      )}
-                      
+                  <td className="px-2 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                    <span className="font-medium">{event._count.predictions}</span>
+                  </td>
+
+                  <td className="px-2 py-3 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-1">
                       {/* Edit */}
                       {canEdit(event) && (
                         <button
                           onClick={() => onEdit(event)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1"
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:ring-1 focus:ring-red-500"
                           title="Modifica evento"
                         >
-                          <PencilIcon className="h-4 w-4" />
+                          <span className="mr-1">✏️</span>
+                          Edit
                         </button>
                       )}
-                      
+
                       {/* Delete */}
                       {canDelete(event) && (
                         <button
@@ -363,7 +371,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                           className="text-red-600 hover:text-red-900 p-1"
                           title="Elimina evento"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-3 w-3" />
                         </button>
                       )}
                     </div>
@@ -426,7 +434,6 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
             ))}
           </tbody>
         </table>
-        </div>
       </div>
     </div>
   );
