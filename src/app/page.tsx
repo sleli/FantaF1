@@ -99,17 +99,22 @@ export default function Home() {
             Benvenuto nella tua dashboard! Qui potrai gestire i tuoi pronostici per le gare di Formula 1.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Link href="/predictions" className="card bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer">
               <h3 className="text-lg font-semibold text-blue-900 mb-2">📊 I Miei Pronostici</h3>
               <p className="text-blue-700">Gestisci i tuoi pronostici per le gare di Formula 1</p>
             </Link>
-            
+
+            <Link href="/all-predictions" className="card bg-purple-50 border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer">
+              <h3 className="text-lg font-semibold text-purple-900 mb-2">👥 Tutti i Pronostici</h3>
+              <p className="text-purple-700">Vedi i pronostici di tutti i giocatori</p>
+            </Link>
+
             <Link href="/leaderboard" className="card bg-green-50 border-green-200 hover:bg-green-100 transition-colors cursor-pointer">
               <h3 className="text-lg font-semibold text-green-900 mb-2">🏆 Classifica</h3>
               <p className="text-green-700">Vedi la classifica generale e i tuoi punti</p>
             </Link>
-            
+
             <div className="card bg-yellow-50 border-yellow-200">
               <h3 className="text-lg font-semibold text-yellow-900 mb-2">🏁 Prossima Gara</h3>
               <p className="text-yellow-700">Controlla i prossimi eventi in programma</p>

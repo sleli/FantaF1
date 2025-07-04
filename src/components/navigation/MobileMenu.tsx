@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -91,8 +91,13 @@ export default function MobileMenu({ isOpen, onToggle, onClose }: MobileMenuProp
       icon: HomeIcon,
     },
     {
-      name: 'Pronostici',
+      name: 'I Miei Pronostici',
       href: '/predictions',
+      icon: ChartBarIcon,
+    },
+    {
+      name: 'Tutti i Pronostici',
+      href: '/all-predictions',
       icon: ChartBarIcon,
     },
     {

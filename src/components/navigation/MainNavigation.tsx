@@ -34,8 +34,12 @@ export default function MainNavigation() {
       href: '/',
     },
     {
-      name: 'Pronostici',
+      name: 'I Miei Pronostici',
       href: '/predictions',
+    },
+    {
+      name: 'Tutti i Pronostici',
+      href: '/all-predictions',
     },
     {
       name: 'Classifica',
