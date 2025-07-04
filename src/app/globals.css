@@ -439,3 +439,19 @@ body {
   ring: 2px solid var(--f1-red);
   border-color: transparent;
 }
+
+/* Force visibility for prediction submit button */
+.prediction-submit-button {
+  background-color: var(--f1-red) !important;
+  color: white !important;
+  border: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.prediction-submit-button:disabled {
+  background-color: #9CA3AF !important;
+  color: white !important;
+  cursor: not-allowed !important;
+}

@@ -33,7 +33,6 @@ export default function PredictionForm({
 
   // Verifica se l'evento è ancora aperto
   const isEventOpen = event.status === 'UPCOMING' && new Date() < new Date(event.closingDate)
-  const timeUntilClosing = new Date(event.closingDate).getTime() - new Date().getTime()
   
   // Filtra i piloti disponibili per ogni posizione
   const getAvailableDrivers = (position: 'first' | 'second' | 'third') => {
@@ -253,7 +252,16 @@ export default function PredictionForm({
           <button
             type="submit"
             disabled={!isEventOpen || isLoading}
-            className="flex-1 bg-f1-red text-white py-4 sm:py-3 px-6 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors text-base sm:text-sm touch-button"
+            className="prediction-submit-button flex-1 py-4 sm:py-3 px-6 rounded-lg font-medium text-base sm:text-sm"
+            style={{
+              backgroundColor: (!isEventOpen || isLoading) ? '#9CA3AF' : '#E10600',
+              color: 'white',
+              border: 'none',
+              cursor: (!isEventOpen || isLoading) ? 'not-allowed' : 'pointer',
+              display: 'block',
+              visibility: 'visible',
+              opacity: 1
+            }}
           >
             {isLoading ? 'Salvando...' : (isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico')}
           </button>
@@ -263,7 +271,16 @@ export default function PredictionForm({
               type="button"
               onClick={resetForm}
               disabled={isLoading}
-              className="px-6 py-4 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-base sm:text-sm touch-button"
+              className={`px-6 py-4 sm:py-3 border rounded-lg transition-colors text-base sm:text-sm touch-button ${
+                isLoading
+                  ? 'border-gray-200 bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+              style={{
+                backgroundColor: isLoading ? '#E5E7EB' : 'white',
+                borderColor: isLoading ? '#E5E7EB' : '#D1D5DB',
+                color: isLoading ? '#6B7280' : '#374151'
+              }}
             >
               Reset
             </button>
