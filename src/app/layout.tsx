@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Providers } from './providers';
+import MaintenanceWrapper from '@/components/MaintenanceWrapper';
 import './globals.css';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -25,7 +26,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="dns-prefetch" href="//lh3.googleusercontent.com" />
       </head>
       <body className="min-h-screen bg-gray-50 mobile-tap-highlight smooth-scroll">
-        <Providers>{children}</Providers>
+        <Providers>
+          <MaintenanceWrapper>
+            {children}
+          </MaintenanceWrapper>
+        </Providers>
       </body>
     </html>
   );
