@@ -108,7 +108,7 @@ model Prediction {
   firstPlaceId  String
   secondPlaceId String
   thirdPlaceId  String
-  points        Int?
+  points        Float?
   event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   firstPlace    Driver   @relation("FirstPlace", fields: [firstPlaceId], references: [id])
   secondPlace   Driver   @relation("SecondPlace", fields: [secondPlaceId], references: [id])
