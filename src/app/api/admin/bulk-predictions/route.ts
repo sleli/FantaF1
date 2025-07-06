@@ -168,7 +168,7 @@ async function handleBulkUpdate(body: any) {
   }
 
   // Validate that all drivers exist
-  const driverIds = new Set();
+  const driverIds = new Set<string>();
   predictions.forEach(p => {
     driverIds.add(p.firstPlaceId);
     driverIds.add(p.secondPlaceId);
