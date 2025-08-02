@@ -11,11 +11,11 @@ yarn-error.log*
 .DS_Store
 prisma/migrations
 
-# Added by Claude Task Master
 # Logs
 logs
 *.log
 dev-debug.log
+CLAUDE.md
 # Dependency directories
 node_modules/
 # Environment variables
