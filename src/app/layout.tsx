@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Providers } from './providers';
-import MaintenanceWrapper from '@/components/MaintenanceWrapper';
 import './globals.css';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -27,9 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="min-h-screen bg-gray-50 mobile-tap-highlight smooth-scroll">
         <Providers>
-          <MaintenanceWrapper>
-            {children}
-          </MaintenanceWrapper>
+          {children}
         </Providers>
       </body>
     </html>
