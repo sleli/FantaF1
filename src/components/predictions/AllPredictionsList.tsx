@@ -193,24 +193,39 @@ function PredictionCard({
 
       {/* Pronostico */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-yellow-600">🥇</span>
-          <span className="text-sm text-gray-900">
-            #{prediction.firstPlace.number} {prediction.firstPlace.name}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-gray-500">🥈</span>
-          <span className="text-sm text-gray-900">
-            #{prediction.secondPlace.number} {prediction.secondPlace.name}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-orange-600">🥉</span>
-          <span className="text-sm text-gray-900">
-            #{prediction.thirdPlace.number} {prediction.thirdPlace.name}
-          </span>
-        </div>
+        {prediction.isHidden ? (
+          // Mostra placeholder per pronostici nascosti
+          <div className="text-center py-4">
+            <div className="text-gray-500 text-sm">
+              🔒 Pronostico nascosto
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              I dettagli saranno visibili al termine dell'evento
+            </div>
+          </div>
+        ) : (
+          // Mostra i dettagli del pronostico
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-yellow-600">🥇</span>
+              <span className="text-sm text-gray-900">
+                #{prediction.firstPlace?.number} {prediction.firstPlace?.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500">🥈</span>
+              <span className="text-sm text-gray-900">
+                #{prediction.secondPlace?.number} {prediction.secondPlace?.name}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-orange-600">🥉</span>
+              <span className="text-sm text-gray-900">
+                #{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Footer con data */}

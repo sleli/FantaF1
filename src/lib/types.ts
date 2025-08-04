@@ -8,9 +8,10 @@ export type UserWithPredictions = User & {
 export type PredictionWithDetails = Prediction & {
   user: User
   event: Event
-  firstPlace: Driver
-  secondPlace: Driver
-  thirdPlace: Driver
+  firstPlace: Driver | null
+  secondPlace: Driver | null
+  thirdPlace: Driver | null
+  isHidden?: boolean
 }
 
 export type EventWithPredictions = Event & {

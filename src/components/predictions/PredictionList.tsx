@@ -132,8 +132,8 @@ export default function PredictionList({
                 </span>
               </div>
               <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.firstPlace.number} {prediction.firstPlace.name}</p>
-                <p className="text-sm text-gray-600">{prediction.firstPlace.team}</p>
+                <p className="font-semibold">#{prediction.firstPlace?.number} {prediction.firstPlace?.name}</p>
+                <p className="text-sm text-gray-600">{prediction.firstPlace?.team}</p>
               </div>
             </div>
 
@@ -146,8 +146,8 @@ export default function PredictionList({
                 </span>
               </div>
               <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.secondPlace.number} {prediction.secondPlace.name}</p>
-                <p className="text-sm text-gray-600">{prediction.secondPlace.team}</p>
+                <p className="font-semibold">#{prediction.secondPlace?.number} {prediction.secondPlace?.name}</p>
+                <p className="text-sm text-gray-600">{prediction.secondPlace?.team}</p>
               </div>
             </div>
 
@@ -160,8 +160,8 @@ export default function PredictionList({
                 </span>
               </div>
               <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.thirdPlace.number} {prediction.thirdPlace.name}</p>
-                <p className="text-sm text-gray-600">{prediction.thirdPlace.team}</p>
+                <p className="font-semibold">#{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}</p>
+                <p className="text-sm text-gray-600">{prediction.thirdPlace?.team}</p>
               </div>
             </div>
           </div>

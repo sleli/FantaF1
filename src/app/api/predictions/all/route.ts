@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
+    const isAdmin = session.user.role === 'ADMIN'
 
     const whereClause: any = {}
 
@@ -72,6 +73,29 @@ export async function GET(request: NextRequest) {
         { createdAt: 'desc' }
       ]
     })
+
+    // Se non è admin, nascondi i dettagli dei piloti per eventi non completati
+    if (!isAdmin) {
+      const filteredPredictions = predictions.map(prediction => {
+        const isEventCompleted = prediction.event.status === 'COMPLETED'
+        
+        if (!isEventCompleted) {
+          // Per eventi non completati, nascondi i dettagli dei piloti
+          return {
+            ...prediction,
+            firstPlace: null,
+            secondPlace: null,
+            thirdPlace: null,
+            // Aggiungi un flag per indicare che la predizione esiste ma è nascosta
+            isHidden: true
+          }
+        }
+        
+        return prediction
+      })
+      
+      return NextResponse.json(filteredPredictions)
+    }
 
     return NextResponse.json(predictions)
   } catch (error) {
