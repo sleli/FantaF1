@@ -20,7 +20,7 @@ interface Event {
   firstPlace?: Driver;
   secondPlace?: Driver;
   thirdPlace?: Driver;
-  results?: string[]; // Array di driver IDs
+  results?: any; // Array di driver IDs (Json from Prisma)
   season?: Season;
   _count: { predictions: number };
   createdAt: Date;

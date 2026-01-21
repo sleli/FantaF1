@@ -363,11 +363,13 @@ export default function PredictionForm({
           </div>
         )}
 
-        {/* Note sui punteggi */}
-        {event.type === 'SPRINT' && scoringType === ScoringType.LEGACY_TOP3 && (
+        {/* Note sui punteggi Sprint */}
+        {event.type === 'SPRINT' && (
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <p className="text-blue-800 text-sm">
-              <strong>Sprint:</strong> I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)
+              <strong>Sprint:</strong> {scoringType === ScoringType.FULL_GRID_DIFF 
+                ? 'Le penalità saranno dimezzate (x 0.5)' 
+                : 'I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)'}
             </p>
           </div>
         )}

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation, eventStatusValidation, eventUpdateValidation } from '@/lib/validation/event';
-import { calculatePoints, calculateAbsoluteDifferenceScore } from '@/lib/scoring';
+import { calculateScore } from '@/lib/scoring';
 import { ScoringType } from '@prisma/client';
 
 // Helper function per calcolare automaticamente i punteggi di un evento
@@ -66,26 +66,7 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
       rankings: prediction.rankings
     };
 
-    let points = 0;
-    if (scoringType === ScoringType.FULL_GRID_DIFF) {
-       // @ts-ignore - rankings and results are Json types but we know they are string[]
-       points = calculateAbsoluteDifferenceScore(predictionResult.rankings as string[], eventResult.results as string[]);
-    } else {
-       // @ts-ignore - casting params to match expected interface
-       points = calculatePoints(
-          { 
-            firstPlaceId: predictionResult.firstPlaceId!, 
-            secondPlaceId: predictionResult.secondPlaceId!, 
-            thirdPlaceId: predictionResult.thirdPlaceId! 
-          }, 
-          { 
-            firstPlaceId: eventResult.firstPlaceId!, 
-            secondPlaceId: eventResult.secondPlaceId!, 
-            thirdPlaceId: eventResult.thirdPlaceId! 
-          }, 
-          event.type
-       );
-    }
+    const points = calculateScore(predictionResult, eventResult, event.type, scoringType);
     
     scoreUpdates.push({ id: prediction.id, points });
   }

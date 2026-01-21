@@ -58,7 +58,14 @@ export function calculateScore(
     // Fallback per migrazione: se non ci sono ranking JSON, usa i vecchi campi se possibile
     // Ma per il nuovo sistema FULL_GRID_DIFF ci aspettiamo il JSON.
     
-    return calculateAbsoluteDifferenceScore(predRankings, resRankings)
+    let score = calculateAbsoluteDifferenceScore(predRankings, resRankings)
+
+    // Se è una gara SPRINT, dimezza il punteggio (penalità)
+    if (eventType === 'SPRINT') {
+      score = score * 0.5
+    }
+
+    return score
   }
 
   // Legacy Logic
