@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import SortableDriverList from '../predictions/SortableDriverList';
+import type { Driver } from '@prisma/client';
 
-interface Driver {
+interface Season {
   id: string;
-  name: string;
-  team: string;
-  number: number;
-  active: boolean;
+  scoringType: 'LEGACY_TOP3' | 'FULL_GRID_DIFF';
 }
 
 interface Event {
@@ -21,6 +20,8 @@ interface Event {
   firstPlace?: Driver;
   secondPlace?: Driver;
   thirdPlace?: Driver;
+  results?: string[]; // Array di driver IDs
+  season?: Season;
   _count: { predictions: number };
   createdAt: Date;
   updatedAt: Date;
@@ -42,47 +43,81 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
     secondPlaceId: '',
     thirdPlaceId: ''
   });
+  const [results, setResults] = useState<string[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [scoringType, setScoringType] = useState<'LEGACY_TOP3' | 'FULL_GRID_DIFF'>('LEGACY_TOP3');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'results'>('basic');
 
   const isEditing = !!event;
-  const hasResults = event?.firstPlace || event?.secondPlace || event?.thirdPlace;
+  // Check if has results based on scoring type logic later, or just check existence
+  const hasResults = (event?.results && event.results.length > 0) || 
+                     event?.firstPlace || event?.secondPlace || event?.thirdPlace;
   const hasPredictions = (event?._count?.predictions || 0) > 0;
 
   // Carica dati iniziali
   useEffect(() => {
-    if (event) {
-      const eventDate = new Date(event.date);
-      const closingDate = new Date(event.closingDate);
+    const initData = async () => {
+      // Determine scoring type
+      let currentScoringType: 'LEGACY_TOP3' | 'FULL_GRID_DIFF' = 'LEGACY_TOP3';
       
-      setFormData({
-        name: event.name,
-        type: event.type,
-        date: eventDate.toISOString().slice(0, 16),
-        closingDate: closingDate.toISOString().slice(0, 16),
-        firstPlaceId: event.firstPlace?.id || '',
-        secondPlaceId: event.secondPlace?.id || '',
-        thirdPlaceId: event.thirdPlace?.id || ''
-      });
-      
-      // Se l'evento ha risultati, mostra il tab risultati
-      if (hasResults) {
-        setActiveTab('results');
+      if (event?.season) {
+        currentScoringType = event.season.scoringType;
+      } else {
+        // Fetch active season if new event or missing season info
+        try {
+          const res = await fetch('/api/seasons?active=true');
+          if (res.ok) {
+            const data = await res.json();
+            const activeSeason = data.seasons?.find((s: any) => s.isActive);
+            if (activeSeason) {
+              currentScoringType = activeSeason.scoringType;
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching active season:', e);
+        }
       }
-    } else {
-      // Default per nuovo evento: chiusura 1 ora prima dell'evento (tutto in UTC)
-      const nowUTC = new Date();
-      const eventTimeUTC = new Date(nowUTC.getTime() + 24 * 60 * 60 * 1000); // +24h UTC
-      const closingTimeUTC = new Date(eventTimeUTC.getTime() - 60 * 60 * 1000); // -1h UTC
+      setScoringType(currentScoringType);
 
-      setFormData(prev => ({
-        ...prev,
-        date: eventTimeUTC.toISOString().slice(0, 16),
-        closingDate: closingTimeUTC.toISOString().slice(0, 16)
-      }));
-    }
+      if (event) {
+        const eventDate = new Date(event.date);
+        const closingDate = new Date(event.closingDate);
+        
+        setFormData({
+          name: event.name,
+          type: event.type,
+          date: eventDate.toISOString().slice(0, 16),
+          closingDate: closingDate.toISOString().slice(0, 16),
+          firstPlaceId: event.firstPlace?.id || '',
+          secondPlaceId: event.secondPlace?.id || '',
+          thirdPlaceId: event.thirdPlace?.id || ''
+        });
+
+        if (event.results && Array.isArray(event.results)) {
+          setResults(event.results);
+        }
+        
+        // Se l'evento ha risultati, mostra il tab risultati
+        if (hasResults) {
+          setActiveTab('results');
+        }
+      } else {
+        // Default per nuovo evento: chiusura 1 ora prima dell'evento (tutto in UTC)
+        const nowUTC = new Date();
+        const eventTimeUTC = new Date(nowUTC.getTime() + 24 * 60 * 60 * 1000); // +24h UTC
+        const closingTimeUTC = new Date(eventTimeUTC.getTime() - 60 * 60 * 1000); // -1h UTC
+
+        setFormData(prev => ({
+          ...prev,
+          date: eventTimeUTC.toISOString().slice(0, 16),
+          closingDate: closingTimeUTC.toISOString().slice(0, 16)
+        }));
+      }
+    };
+
+    initData();
   }, [event, hasResults]);
 
   // Carica piloti per i risultati
@@ -97,7 +132,20 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
       const response = await fetch('/api/drivers');
       if (response.ok) {
         const data = await response.json();
-        setDrivers(data.drivers.filter((d: Driver) => d.active));
+        const activeDrivers = data.drivers.filter((d: Driver) => d.active);
+        setDrivers(activeDrivers);
+        
+        // Initialize results for full grid if empty
+        if (scoringType === 'FULL_GRID_DIFF' && results.length === 0) {
+           // Default order: number order or name order? 
+           // Usually we want the user to order them. 
+           // If we have no results yet, maybe just list them in default order.
+           // However, if we are editing and have no results, we should populate.
+           // If we are creating/editing and have results, we use them.
+           if (!event?.results || event.results.length === 0) {
+             setResults(activeDrivers.map((d: Driver) => d.id));
+           }
+        }
       }
     } catch (err) {
       console.error('Errore nel caricamento piloti:', err);
@@ -119,9 +167,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
         submitData.closingDate = new Date(formData.closingDate).toISOString();
       } else {
         // Tab risultati
-        if (formData.firstPlaceId) submitData.firstPlaceId = formData.firstPlaceId;
-        if (formData.secondPlaceId) submitData.secondPlaceId = formData.secondPlaceId;
-        if (formData.thirdPlaceId) submitData.thirdPlaceId = formData.thirdPlaceId;
+        if (scoringType === 'FULL_GRID_DIFF') {
+           submitData.results = results;
+        } else {
+           if (formData.firstPlaceId) submitData.firstPlaceId = formData.firstPlaceId;
+           if (formData.secondPlaceId) submitData.secondPlaceId = formData.secondPlaceId;
+           if (formData.thirdPlaceId) submitData.thirdPlaceId = formData.thirdPlaceId;
+        }
       }
 
       const url = isEditing ? `/api/admin/events/${event.id}` : '/api/admin/events';
@@ -183,17 +235,23 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
       if (closingDate >= eventDate) return 'La data di chiusura deve essere prima dell\'evento';
     } else {
       // Validazione risultati
-      const positions = [formData.firstPlaceId, formData.secondPlaceId, formData.thirdPlaceId]
-        .filter(Boolean);
-      
-      if (positions.length === 0) return 'Inserisci almeno un risultato';
-      if (new Set(positions).size !== positions.length) {
-        return 'Lo stesso pilota non può occupare più posizioni';
+      if (scoringType === 'FULL_GRID_DIFF') {
+        if (results.length === 0) return 'La griglia non può essere vuota';
+        // Check duplicates? Sortable list handles order, uniqueness is guaranteed if source is unique
+      } else {
+        const positions = [formData.firstPlaceId, formData.secondPlaceId, formData.thirdPlaceId]
+          .filter(Boolean);
+        
+        if (positions.length === 0) return 'Inserisci almeno un risultato';
+        if (new Set(positions).size !== positions.length) {
+          return 'Lo stesso pilota non può occupare più posizioni';
+        }
       }
     }
     
     return null;
   };
+
 
   const formError = validateForm();
 
@@ -330,71 +388,86 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div className="space-y-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  Inserisci i risultati ufficiali dell'evento. Questo cambierà automaticamente 
-                  lo stato dell'evento a "Completato" e attiverà il calcolo dei punteggi.
+                  {scoringType === 'FULL_GRID_DIFF' 
+                    ? 'Ordina la griglia di arrivo completa. Il primo pilota in alto è il vincitore.' 
+                    : 'Inserisci i risultati ufficiali dell\'evento.'}
+                  {' '}Questo cambierà automaticamente lo stato dell'evento a "Completato" e attiverà il calcolo dei punteggi.
                 </p>
               </div>
 
-              {/* Primo Posto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🥇 Primo Posto
-                </label>
-                <select
-                  value={formData.firstPlaceId}
-                  onChange={(e) => handleInputChange('firstPlaceId', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">Seleziona pilota...</option>
-                  {drivers.map(driver => (
-                    <option key={driver.id} value={driver.id}>
-                      #{driver.number} {driver.name} ({driver.team})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {scoringType === 'FULL_GRID_DIFF' ? (
+                <div className="space-y-4">
+                  <h3 className="font-medium text-gray-900">Ordine di Arrivo Completo</h3>
+                  <SortableDriverList 
+                    drivers={drivers}
+                    orderedDriverIds={results}
+                    onChange={setResults}
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Primo Posto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      🥇 Primo Posto
+                    </label>
+                    <select
+                      value={formData.firstPlaceId}
+                      onChange={(e) => handleInputChange('firstPlaceId', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Seleziona pilota...</option>
+                      {drivers.map(driver => (
+                        <option key={driver.id} value={driver.id}>
+                          #{driver.number} {driver.name} ({driver.team})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Secondo Posto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🥈 Secondo Posto
-                </label>
-                <select
-                  value={formData.secondPlaceId}
-                  onChange={(e) => handleInputChange('secondPlaceId', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">Seleziona pilota...</option>
-                  {drivers
-                    .filter(d => d.id !== formData.firstPlaceId)
-                    .map(driver => (
-                    <option key={driver.id} value={driver.id}>
-                      #{driver.number} {driver.name} ({driver.team})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {/* Secondo Posto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      🥈 Secondo Posto
+                    </label>
+                    <select
+                      value={formData.secondPlaceId}
+                      onChange={(e) => handleInputChange('secondPlaceId', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Seleziona pilota...</option>
+                      {drivers
+                        .filter(d => d.id !== formData.firstPlaceId)
+                        .map(driver => (
+                        <option key={driver.id} value={driver.id}>
+                          #{driver.number} {driver.name} ({driver.team})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Terzo Posto */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🥉 Terzo Posto
-                </label>
-                <select
-                  value={formData.thirdPlaceId}
-                  onChange={(e) => handleInputChange('thirdPlaceId', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                >
-                  <option value="">Seleziona pilota...</option>
-                  {drivers
-                    .filter(d => d.id !== formData.firstPlaceId && d.id !== formData.secondPlaceId)
-                    .map(driver => (
-                    <option key={driver.id} value={driver.id}>
-                      #{driver.number} {driver.name} ({driver.team})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {/* Terzo Posto */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      🥉 Terzo Posto
+                    </label>
+                    <select
+                      value={formData.thirdPlaceId}
+                      onChange={(e) => handleInputChange('thirdPlaceId', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Seleziona pilota...</option>
+                      {drivers
+                        .filter(d => d.id !== formData.firstPlaceId && d.id !== formData.secondPlaceId)
+                        .map(driver => (
+                        <option key={driver.id} value={driver.id}>
+                          #{driver.number} {driver.name} ({driver.team})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </form>

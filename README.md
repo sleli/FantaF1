@@ -120,8 +120,15 @@ prisma/
 - 📋 Task 010: Dashboard classifiche  
 - 📋 Task 011: UI/UX ottimizzazione
 
-## Contribuire
+## Ottimizzazioni UI/UX
+### Visualizzazione Pronostici (Griglia Completa)
+Per gestire efficacemente la visualizzazione dei pronostici basati sull'ordine completo della griglia (`FULL_GRID_DIFF`), è stata implementata una soluzione ottimizzata che bilancia performance e usabilità:
 
+1.  **Rendering Lazy**: I dettagli completi della griglia (20+ piloti) vengono renderizzati nel DOM solo su richiesta dell'utente (click su "Vedi tutti"), riducendo il carico iniziale della pagina.
+2.  **Anteprima Intelligente**: Nello stato collassato, le card mostrano automaticamente un'anteprima compatta della "Top 3", fornendo le informazioni più rilevanti a colpo d'occhio senza occupare spazio verticale eccessivo.
+3.  **Scroll Virtuale (Ready)**: La lista espansa utilizza un contenitore con scroll interno per mantenere il layout della pagina pulito e gestibile anche con molti pronostici aperti.
+
+## Contribuire
 1. Fork del progetto
 2. Crea feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit modifiche (`git commit -m 'Add AmazingFeature'`)

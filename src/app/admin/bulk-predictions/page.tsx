@@ -410,6 +410,7 @@ export default function BulkPredictionsPage() {
               onPredictionChange={handlePredictionChange}
               isLoading={isLoading}
               hasUnsavedChanges={hasUnsavedChanges}
+              scoringType={(selectedEvent as any)?.season?.scoringType}
             />
           </div>
         </>

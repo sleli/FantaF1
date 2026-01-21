@@ -49,7 +49,12 @@ export async function GET(request: NextRequest) {
             type: true,
             date: true,
             closingDate: true,
-            status: true
+            status: true,
+            season: {
+              select: {
+                scoringType: true
+              }
+            }
           }
         },
         firstPlace: {
@@ -89,12 +94,13 @@ export async function GET(request: NextRequest) {
         const isEventCompleted = prediction.event.status === 'COMPLETED'
         
         if (!isEventCompleted) {
-          // Per eventi non completati, nascondi i dettagli dei piloti
+          // Per eventi non completati, nascondi i dettagli dei piloti e rankings
           return {
             ...prediction,
             firstPlace: null,
             secondPlace: null,
             thirdPlace: null,
+            rankings: [], // Nascondi rankings
             // Aggiungi un flag per indicare che la predizione esiste ma è nascosta
             isHidden: true
           }

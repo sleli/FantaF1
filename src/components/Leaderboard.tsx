@@ -21,9 +21,9 @@ type EventLeaderboardEntry = {
   }
   prediction: {
     id: string
-    firstPlace: { name: string; number: number; team: string }
-    secondPlace: { name: string; number: number; team: string }
-    thirdPlace: { name: string; number: number; team: string }
+    firstPlace: { name: string; number: number; team: string } | null
+    secondPlace: { name: string; number: number; team: string } | null
+    thirdPlace: { name: string; number: number; team: string } | null
     points: number | null
   } | null
   points: number | null
@@ -320,9 +320,15 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                                   </h4>
                                   {entry.prediction && (
                                     <div className="text-xs text-gray-600 mt-1">
-                                      1° {entry.prediction.firstPlace.name} • 
-                                      2° {entry.prediction.secondPlace.name} • 
-                                      3° {entry.prediction.thirdPlace.name}
+                                      {entry.prediction.firstPlace ? (
+                                        <>
+                                          1° {entry.prediction.firstPlace.name} • 
+                                          2° {entry.prediction.secondPlace?.name} • 
+                                          3° {entry.prediction.thirdPlace?.name}
+                                        </>
+                                      ) : (
+                                        <span>Pronostico completo (Grid)</span>
+                                      )}
                                     </div>
                                   )}
                                 </div>

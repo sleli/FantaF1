@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { PredictionWithDetails } from '@/lib/types'
+import { Driver, ScoringType } from '@prisma/client'
+import PredictionDisplay from './PredictionDisplay'
 
 interface AllPredictionsListProps {
   predictions: PredictionWithDetails[]
+  drivers?: Driver[]
   isLoading?: boolean
   selectedEventId: string
 }
 
 export default function AllPredictionsList({
   predictions,
+  drivers = [],
   isLoading = false,
   selectedEventId
 }: AllPredictionsListProps) {
@@ -125,7 +129,7 @@ export default function AllPredictionsList({
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {eventPredictions.map((prediction) => (
-                <PredictionCard key={prediction.id} prediction={prediction} />
+                <PredictionCard key={prediction.id} prediction={prediction} drivers={drivers} />
               ))}
             </div>
           </div>
@@ -146,14 +150,20 @@ export default function AllPredictionsList({
   )
 }
 
+
+
 // Componente per singola carta pronostico
 function PredictionCard({ 
   prediction, 
+  drivers = [],
   showEventInfo = false 
 }: { 
   prediction: PredictionWithDetails
+  drivers?: Driver[]
   showEventInfo?: boolean 
 }) {
+  const scoringType = (prediction.event as any).season?.scoringType || ScoringType.LEGACY_TOP3
+
   const formatDate = (date: Date | string) => {
     const d = date instanceof Date ? date : new Date(date)
     return d.toLocaleDateString('it-IT', {
@@ -164,74 +174,65 @@ function PredictionCard({
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow duration-200">
       {/* Header con info utente */}
       <div className="flex items-center gap-3 mb-4">
-        {prediction.user.image && (
+        {prediction.user.image ? (
           <img 
             src={prediction.user.image} 
             alt={prediction.user.name || 'User'} 
-            className="w-8 h-8 rounded-full"
+            className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
+            loading="lazy"
           />
+        ) : (
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white shadow-sm">
+                <span className="text-gray-500 font-bold text-sm">
+                    {(prediction.user.name || 'U').charAt(0).toUpperCase()}
+                </span>
+            </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 truncate">
+          <p className="font-semibold text-gray-900 truncate">
             {prediction.user.name || 'Utente Anonimo'}
           </p>
           {showEventInfo && (
-            <p className="text-xs text-gray-600 truncate">
+            <p className="text-xs text-gray-500 truncate mt-0.5">
               {prediction.event.name}
             </p>
           )}
         </div>
         {prediction.points !== null && (
-          <span className="text-sm font-semibold text-green-600">
-            {prediction.points} pt
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="text-lg font-bold text-green-600 leading-none">
+                {prediction.points}
+            </span>
+            <span className="text-[10px] text-green-700 uppercase font-medium">punti</span>
+          </div>
         )}
       </div>
 
       {/* Pronostico */}
-      <div className="space-y-2">
+      <div className="space-y-2 min-h-[120px]">
         {prediction.isHidden ? (
           // Mostra placeholder per pronostici nascosti
-          <div className="text-center py-4">
-            <div className="text-gray-500 text-sm">
-              🔒 Pronostico nascosto
+          <div className="flex flex-col items-center justify-center h-full py-6 bg-gray-100/50 rounded-lg border border-dashed border-gray-300">
+            <div className="text-2xl mb-2">🔒</div>
+            <div className="text-gray-500 text-sm font-medium">
+              Pronostico nascosto
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              I dettagli saranno visibili al termine dell'evento
+            <div className="text-xs text-gray-400 mt-1 px-4 text-center">
+              Visibile al termine dell'evento
             </div>
           </div>
         ) : (
-          // Mostra i dettagli del pronostico
-          <>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-yellow-600">🥇</span>
-              <span className="text-sm text-gray-900">
-                #{prediction.firstPlace?.number} {prediction.firstPlace?.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500">🥈</span>
-              <span className="text-sm text-gray-900">
-                #{prediction.secondPlace?.number} {prediction.secondPlace?.name}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-orange-600">🥉</span>
-              <span className="text-sm text-gray-900">
-                #{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}
-              </span>
-            </div>
-          </>
+          <PredictionDisplay prediction={prediction} drivers={drivers} />
         )}
       </div>
 
       {/* Footer con data */}
-      <div className="mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          {formatDate(prediction.createdAt)}
+      <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
+        <p className="text-xs text-gray-400">
+          Inviato il {formatDate(prediction.createdAt)}
         </p>
       </div>
     </div>

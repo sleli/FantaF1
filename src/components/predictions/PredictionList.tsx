@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { PredictionWithDetails } from '@/lib/types'
+import { Driver, ScoringType } from '@prisma/client'
+import PredictionDisplay from './PredictionDisplay'
 
 interface PredictionListProps {
   predictions: PredictionWithDetails[]
+  drivers?: Driver[]
   onEdit?: (prediction: PredictionWithDetails) => void
   onDelete?: (predictionId: string) => void
   isLoading?: boolean
@@ -10,6 +13,7 @@ interface PredictionListProps {
 
 export default function PredictionList({
   predictions,
+  drivers = [],
   onEdit,
   onDelete,
   isLoading = false
@@ -122,49 +126,7 @@ export default function PredictionList({
           </div>
 
           {/* Pronostico */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {/* 1° Posto */}
-            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-yellow-800">🥇 1° Posto</span>
-                <span className="text-xs text-yellow-600">
-                  {prediction.event.type === 'SPRINT' ? '12.5 pt' : '25 pt'}
-                </span>
-              </div>
-              <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.firstPlace?.number} {prediction.firstPlace?.name}</p>
-                <p className="text-sm text-gray-600">{prediction.firstPlace?.team}</p>
-              </div>
-            </div>
-
-            {/* 2° Posto */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-800">🥈 2° Posto</span>
-                <span className="text-xs text-gray-600">
-                  {prediction.event.type === 'SPRINT' ? '7.5 pt' : '15 pt'}
-                </span>
-              </div>
-              <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.secondPlace?.number} {prediction.secondPlace?.name}</p>
-                <p className="text-sm text-gray-600">{prediction.secondPlace?.team}</p>
-              </div>
-            </div>
-
-            {/* 3° Posto */}
-            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-orange-800">🥉 3° Posto</span>
-                <span className="text-xs text-orange-600">
-                  {prediction.event.type === 'SPRINT' ? '5 pt' : '10 pt'}
-                </span>
-              </div>
-              <div className="text-f1-dark">
-                <p className="font-semibold">#{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}</p>
-                <p className="text-sm text-gray-600">{prediction.thirdPlace?.team}</p>
-              </div>
-            </div>
-          </div>
+          <PredictionDisplay prediction={prediction} drivers={drivers} />
 
           {/* Punteggio e meta info */}
           <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-600">

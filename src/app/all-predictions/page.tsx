@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Event } from '@prisma/client'
+import { Event, Driver } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PublicLayout from '@/components/layout/PublicLayout'
 import AllPredictionsList from '@/components/predictions/AllPredictionsList'
@@ -13,6 +13,7 @@ export default function AllPredictionsPage() {
   const router = useRouter()
   
   const [events, setEvents] = useState<Event[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
   const [predictions, setPredictions] = useState<PredictionWithDetails[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -42,14 +43,23 @@ export default function AllPredictionsPage() {
     try {
       setIsLoading(true)
       
-      // Carica eventi
-      const eventsRes = await fetch('/api/events')
+      // Carica eventi e piloti
+      const [eventsRes, driversRes] = await Promise.all([
+        fetch('/api/events'),
+        fetch('/api/drivers')
+      ])
+
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json()
         setEvents(eventsData.events || [])
       }
+
+      if (driversRes.ok) {
+        const driversData = await driversRes.json()
+        setDrivers(driversData.drivers || [])
+      }
     } catch (error) {
-      console.error('Errore nel caricamento eventi:', error)
+      console.error('Errore nel caricamento dati:', error)
     } finally {
       setIsLoading(false)
     }
@@ -127,6 +137,7 @@ export default function AllPredictionsPage() {
         <div className="bg-white rounded-lg shadow-md">
           <AllPredictionsList
             predictions={predictions}
+            drivers={drivers}
             isLoading={isLoading}
             selectedEventId={selectedEventId}
           />

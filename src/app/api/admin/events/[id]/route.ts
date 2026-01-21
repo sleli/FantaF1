@@ -3,13 +3,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation, eventStatusValidation, eventUpdateValidation } from '@/lib/validation/event';
-import { calculatePoints } from '@/lib/scoring';
+import { calculatePoints, calculateAbsoluteDifferenceScore } from '@/lib/scoring';
+import { ScoringType } from '@prisma/client';
 
 // Helper function per calcolare automaticamente i punteggi di un evento
 async function calculateScoresForEvent(eventId: string): Promise<void> {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
+      season: true,
       firstPlace: true,
       secondPlace: true,
       thirdPlace: true,
@@ -23,30 +25,68 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
     }
   });
 
-  if (!event || !event.firstPlace || !event.secondPlace || !event.thirdPlace) {
-    throw new Error('Evento o risultati non trovati');
+  if (!event) {
+    throw new Error('Evento non trovato');
+  }
+
+  const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
+
+  // Verifica validità dati in base al tipo di scoring
+  if (scoringType === ScoringType.FULL_GRID_DIFF) {
+    if (!event.results) {
+       throw new Error('Risultati griglia completa non trovati');
+    }
+  } else {
+    if (!event.firstPlace || !event.secondPlace || !event.thirdPlace) {
+      throw new Error('Risultati podio non trovati');
+    }
   }
 
   const eventResult = {
-    firstPlaceId: event.firstPlace.id,
-    secondPlaceId: event.secondPlace.id,
-    thirdPlaceId: event.thirdPlace.id
+    firstPlaceId: event.firstPlaceId,
+    secondPlaceId: event.secondPlaceId,
+    thirdPlaceId: event.thirdPlaceId,
+    results: event.results
   };
 
   const scoreUpdates = [];
 
   for (const prediction of event.predictions) {
-    if (!prediction.firstPlace || !prediction.secondPlace || !prediction.thirdPlace) {
-      continue; // Salta pronostici incompleti
+    // Per FULL_GRID_DIFF servono i rankings, per LEGACY servono i posti specifici
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+       if (!prediction.rankings) continue;
+    } else {
+       if (!prediction.firstPlace || !prediction.secondPlace || !prediction.thirdPlace) continue;
     }
 
     const predictionResult = {
-      firstPlaceId: prediction.firstPlace.id,
-      secondPlaceId: prediction.secondPlace.id,
-      thirdPlaceId: prediction.thirdPlace.id
+      firstPlaceId: prediction.firstPlaceId,
+      secondPlaceId: prediction.secondPlaceId,
+      thirdPlaceId: prediction.thirdPlaceId,
+      rankings: prediction.rankings
     };
 
-    const points = calculatePoints(predictionResult, eventResult, event.type);
+    let points = 0;
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+       // @ts-ignore - rankings and results are Json types but we know they are string[]
+       points = calculateAbsoluteDifferenceScore(predictionResult.rankings as string[], eventResult.results as string[]);
+    } else {
+       // @ts-ignore - casting params to match expected interface
+       points = calculatePoints(
+          { 
+            firstPlaceId: predictionResult.firstPlaceId!, 
+            secondPlaceId: predictionResult.secondPlaceId!, 
+            thirdPlaceId: predictionResult.thirdPlaceId! 
+          }, 
+          { 
+            firstPlaceId: eventResult.firstPlaceId!, 
+            secondPlaceId: eventResult.secondPlaceId!, 
+            thirdPlaceId: eventResult.thirdPlaceId! 
+          }, 
+          event.type
+       );
+    }
+    
     scoreUpdates.push({ id: prediction.id, points });
   }
 
@@ -82,6 +122,7 @@ export async function GET(
     const event = await prisma.event.findUnique({
       where: { id: params.id },
       include: {
+        season: true,
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true,
@@ -169,62 +210,87 @@ export async function PUT(
     // Restrictions removed: Allow editing all events regardless of status or predictions
 
     // Validazione per aggiornamento risultati
-    if (body.firstPlaceId || body.secondPlaceId || body.thirdPlaceId) {
-      const { firstPlaceId, secondPlaceId, thirdPlaceId } = body;
-      
-      // Verifica che i piloti esistano
-      if (firstPlaceId) {
-        const driver = await prisma.driver.findUnique({ where: { id: firstPlaceId } });
-        if (!driver) {
-          return NextResponse.json(
-            { error: 'Pilota primo posto non trovato' },
-            { status: 400 }
-          );
-        }
-      }
-      
-      if (secondPlaceId) {
-        const driver = await prisma.driver.findUnique({ where: { id: secondPlaceId } });
-        if (!driver) {
-          return NextResponse.json(
-            { error: 'Pilota secondo posto non trovato' },
-            { status: 400 }
-          );
-        }
-      }
-      
-      if (thirdPlaceId) {
-        const driver = await prisma.driver.findUnique({ where: { id: thirdPlaceId } });
-        if (!driver) {
-          return NextResponse.json(
-            { error: 'Pilota terzo posto non trovato' },
-            { status: 400 }
-          );
-        }
-      }
-
-      // Verifica che non ci siano duplicati
-      const positions = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean);
-      if (new Set(positions).size !== positions.length) {
-        return NextResponse.json(
-          { error: 'Lo stesso pilota non può occupare più posizioni' },
-          { status: 400 }
-        );
-      }
-
-      // Se stiamo inserendo risultati, aggiorna status a COMPLETED
+    if (body.firstPlaceId || body.secondPlaceId || body.thirdPlaceId || body.results) {
       const updateData: any = {
-        firstPlaceId,
-        secondPlaceId,
-        thirdPlaceId,
         status: 'COMPLETED',
         updatedAt: new Date()
       };
+
+      // Gestione FULL_GRID_DIFF (array di risultati)
+      if (body.results && Array.isArray(body.results)) {
+        const results = body.results as string[];
+        
+        // Verifica duplicati
+        if (new Set(results).size !== results.length) {
+          return NextResponse.json(
+            { error: 'Lo stesso pilota non può comparire più volte nei risultati' },
+            { status: 400 }
+          );
+        }
+
+        updateData.results = results;
+        
+        // Mantieni compatibilità con legacy fields
+        if (results.length > 0) updateData.firstPlaceId = results[0];
+        if (results.length > 1) updateData.secondPlaceId = results[1];
+        if (results.length > 2) updateData.thirdPlaceId = results[2];
+
+      } else {
+        // Gestione LEGACY_TOP3 (singoli campi)
+        const { firstPlaceId, secondPlaceId, thirdPlaceId } = body;
+        
+        // Verifica che i piloti esistano
+        if (firstPlaceId) {
+          const driver = await prisma.driver.findUnique({ where: { id: firstPlaceId } });
+          if (!driver) {
+            return NextResponse.json(
+              { error: 'Pilota primo posto non trovato' },
+              { status: 400 }
+            );
+          }
+        }
+        
+        if (secondPlaceId) {
+          const driver = await prisma.driver.findUnique({ where: { id: secondPlaceId } });
+          if (!driver) {
+            return NextResponse.json(
+              { error: 'Pilota secondo posto non trovato' },
+              { status: 400 }
+            );
+          }
+        }
+        
+        if (thirdPlaceId) {
+          const driver = await prisma.driver.findUnique({ where: { id: thirdPlaceId } });
+          if (!driver) {
+            return NextResponse.json(
+              { error: 'Pilota terzo posto non trovato' },
+              { status: 400 }
+            );
+          }
+        }
+
+        // Verifica che non ci siano duplicati
+        const positions = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean);
+        if (new Set(positions).size !== positions.length) {
+          return NextResponse.json(
+            { error: 'Lo stesso pilota non può occupare più posizioni' },
+            { status: 400 }
+          );
+        }
+
+        if (firstPlaceId) updateData.firstPlaceId = firstPlaceId;
+        if (secondPlaceId) updateData.secondPlaceId = secondPlaceId;
+        if (thirdPlaceId) updateData.thirdPlaceId = thirdPlaceId;
+      }
+
+      // Se stiamo inserendo risultati, aggiorna status a COMPLETED (già in updateData)
 
       const event = await prisma.event.update({
         where: { id: params.id },
         data: updateData,
         include: {
+          season: true,
           firstPlace: true,
           secondPlace: true,
           thirdPlace: true,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, KeyboardEvent, memo } from 'react';
-import { Driver } from '@prisma/client';
+import { Driver, ScoringType } from '@prisma/client';
 
 type UserWithPrediction = {
   user: {
@@ -26,6 +26,7 @@ interface BulkPredictionsGridProps {
   onPredictionChange: (userId: string, field: string, value: string) => void;
   isLoading: boolean;
   hasUnsavedChanges: boolean;
+  scoringType?: ScoringType;
 }
 
 export default memo(function BulkPredictionsGrid({
@@ -33,7 +34,8 @@ export default memo(function BulkPredictionsGrid({
   drivers,
   onPredictionChange,
   isLoading,
-  hasUnsavedChanges
+  hasUnsavedChanges,
+  scoringType
 }: BulkPredictionsGridProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -157,6 +159,22 @@ export default memo(function BulkPredictionsGrid({
     return (
       <div className="p-8 text-center text-gray-500">
         <p>Nessun utente trovato.</p>
+      </div>
+    );
+  }
+
+  if (scoringType === ScoringType.FULL_GRID_DIFF) {
+    return (
+      <div className="p-8 text-center">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-2xl mx-auto">
+          <h3 className="text-lg font-medium text-yellow-800 mb-2">
+            ⚠️ Modalità "Differenza Griglia"
+          </h3>
+          <p className="text-yellow-700">
+            La modifica massiva non è supportata per questa modalità di gioco (Full Grid).
+            L'ordinamento completo della griglia deve essere gestito individualmente o tramite interfaccia dedicata.
+          </p>
+        </div>
       </div>
     );
   }

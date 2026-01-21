@@ -29,6 +29,11 @@ export async function GET(request: NextRequest) {
         status: { in: ['UPCOMING', 'CLOSED'] }
       },
       include: {
+        season: {
+          select: {
+            scoringType: true
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true,

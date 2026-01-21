@@ -235,6 +235,7 @@ export default function PredictionsPage() {
             {activeTab === 'existing' && !editingPrediction && (
               <PredictionList
                 predictions={predictions}
+                drivers={drivers}
                 onEdit={(prediction) => {
                   setEditingPrediction(prediction)
                   setActiveTab('new')
@@ -299,6 +300,7 @@ export default function PredictionsPage() {
                     drivers={drivers}
                     onSubmit={handleCreatePrediction}
                     isLoading={isLoading}
+                    lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
                   />
                 )}
               </div>

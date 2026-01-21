@@ -32,3 +32,4 @@ tasks.json
 tasks/ 
 *.sql
 .vercel
+.trae/

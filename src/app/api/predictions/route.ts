@@ -49,7 +49,16 @@ export async function GET(request: NextRequest) {
     const predictions = await prisma.prediction.findMany({
       where: whereClause,
       include: {
-        event: true,
+        event: {
+          include: {
+            season: {
+              select: {
+                scoringType: true,
+                driverCount: true
+              }
+            }
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true
@@ -130,9 +139,10 @@ export async function POST(request: NextRequest) {
         if (!rankings || !Array.isArray(rankings)) {
              return NextResponse.json({ error: 'Rankings are required' }, { status: 400 })
         }
-        if (rankings.length !== driverCount) {
-             return NextResponse.json({ error: `Must predict exactly ${driverCount} drivers` }, { status: 400 })
-        }
+        // Validation relaxed to allow partial predictions
+        // if (rankings.length !== driverCount) {
+        //      return NextResponse.json({ error: `Must predict exactly ${driverCount} drivers` }, { status: 400 })
+        // }
         const unique = new Set(rankings);
         if (unique.size !== rankings.length) {
              return NextResponse.json({ error: 'Duplicate drivers in ranking' }, { status: 400 })

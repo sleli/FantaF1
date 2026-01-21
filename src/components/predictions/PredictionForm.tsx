@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Driver, Event, ScoringType } from '@prisma/client'
 import SortableDriverList from './SortableDriverList'
 
@@ -19,6 +19,9 @@ interface PredictionFormProps {
     thirdPlaceId?: string
     rankings?: string[]
   }
+  lastPrediction?: {
+    rankings?: string[]
+  }
   isLoading: boolean
   isModifying?: boolean
 }
@@ -28,11 +31,15 @@ export default function PredictionForm({
   drivers,
   onSubmit,
   initialPrediction,
+  lastPrediction,
   isLoading,
   isModifying = false
 }: PredictionFormProps) {
   const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3
   const driverCount = event.season?.driverCount || 20
+
+  // View Mode State determined by Season Settings
+  const viewMode = scoringType === ScoringType.FULL_GRID_DIFF ? 'GRID' : 'TOP3'
 
   // Legacy State
   const [firstPlaceId, setFirstPlaceId] = useState(initialPrediction?.firstPlaceId || '')
@@ -44,22 +51,64 @@ export default function PredictionForm({
   
   const [errors, setErrors] = useState<string[]>([])
 
+  // Helper to get initial order based on history or random
+  const getInitialOrder = useCallback(() => {
+    const activeDrivers = drivers
+        .filter(d => d.active)
+        // Default sort by number if we need a fallback, but we will shuffle or use history
+        .sort((a, b) => a.number - b.number)
+    
+    const activeDriverIds = activeDrivers.map(d => d.id)
+
+    if (initialPrediction?.rankings && Array.isArray(initialPrediction.rankings) && initialPrediction.rankings.length > 0) {
+        // EDIT MODE: Use saved rankings
+        const savedRankings = initialPrediction.rankings as string[]
+        const validSavedRankings = savedRankings.filter(id => activeDriverIds.includes(id))
+        const missingDriverIds = activeDriverIds.filter(id => !validSavedRankings.includes(id))
+        return [...validSavedRankings, ...missingDriverIds]
+    } 
+    
+    if (lastPrediction?.rankings && Array.isArray(lastPrediction.rankings) && lastPrediction.rankings.length > 0) {
+         // NEW PREDICTION (HISTORY): Use last prediction rankings
+         const savedRankings = lastPrediction.rankings as string[]
+         const validSavedRankings = savedRankings.filter(id => activeDriverIds.includes(id))
+         const missingDriverIds = activeDriverIds.filter(id => !validSavedRankings.includes(id))
+         // Append missing drivers at the end
+         return [...validSavedRankings, ...missingDriverIds]
+    }
+
+    // NEW PREDICTION (NO HISTORY): Randomize
+    const shuffled = [...activeDriverIds]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled
+  }, [drivers, initialPrediction, lastPrediction])
+
   // Initialize Ordered IDs
   useEffect(() => {
-    if (scoringType === ScoringType.FULL_GRID_DIFF) {
-        if (initialPrediction?.rankings && initialPrediction.rankings.length > 0) {
-            setOrderedDriverIds(initialPrediction.rankings)
-        } else {
-            // Default order: active drivers sorted by number
-            const initialOrder = drivers
-                .filter(d => d.active)
-                .sort((a, b) => a.number - b.number)
-                .slice(0, driverCount)
-                .map(d => d.id)
-            setOrderedDriverIds(initialOrder)
+    // If we have no ordered IDs, initialize them
+    if (orderedDriverIds.length === 0) {
+        let initialOrder = getInitialOrder()
+        
+        // If we are in Legacy mode and have explicit selections, ensure they are at the top
+        // This handles the case where we load a Legacy prediction but want to view it in Grid mode
+        if (scoringType === ScoringType.LEGACY_TOP3 && (initialPrediction?.firstPlaceId || initialPrediction?.secondPlaceId || initialPrediction?.thirdPlaceId)) {
+            const top3 = [
+                initialPrediction.firstPlaceId, 
+                initialPrediction.secondPlaceId, 
+                initialPrediction.thirdPlaceId
+            ].filter(Boolean) as string[]
+            
+            const top3Set = new Set(top3)
+            const rest = initialOrder.filter(id => !top3Set.has(id))
+            initialOrder = [...top3, ...rest]
         }
+        
+        setOrderedDriverIds(initialOrder)
     }
-  }, [scoringType, drivers, driverCount, initialPrediction])
+  }, [getInitialOrder, scoringType, initialPrediction]) // Run once on mount/data load
 
   // Verifica se l'evento è ancora aperto
   const isEventOpen = event.status === 'UPCOMING' && new Date() < new Date(event.closingDate)
@@ -77,19 +126,25 @@ export default function PredictionForm({
     })
   }
 
-  const validateSelection = () => {
+  const validateSelection = (data?: any) => {
     const newErrors: string[] = []
     
+    // Use derived data if provided, otherwise fallback to state
+    const currentFirst = data?.firstPlaceId ?? firstPlaceId
+    const currentSecond = data?.secondPlaceId ?? secondPlaceId
+    const currentThird = data?.thirdPlaceId ?? thirdPlaceId
+    
     if (scoringType === ScoringType.FULL_GRID_DIFF) {
-        if (orderedDriverIds.length !== driverCount) {
-            newErrors.push(`Devi ordinare tutti i ${driverCount} piloti`)
-        }
+        // Relaxed validation: Allow partial ordering
+        // if (orderedDriverIds.length !== driverCount) {
+        //    newErrors.push(`Devi ordinare tutti i ${driverCount} piloti`)
+        // }
     } else {
-        if (!firstPlaceId) newErrors.push('Seleziona il pilota per il 1° posto')
-        if (!secondPlaceId) newErrors.push('Seleziona il pilota per il 2° posto')
-        if (!thirdPlaceId) newErrors.push('Seleziona il pilota per il 3° posto')
+        if (!currentFirst) newErrors.push('Seleziona il pilota per il 1° posto')
+        if (!currentSecond) newErrors.push('Seleziona il pilota per il 2° posto')
+        if (!currentThird) newErrors.push('Seleziona il pilota per il 3° posto')
         
-        const selectedDrivers = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
+        const selectedDrivers = [currentFirst, currentSecond, currentThird].filter(Boolean)
         const uniqueDrivers = new Set(selectedDrivers)
         
         if (selectedDrivers.length === 3 && uniqueDrivers.size !== 3) {
@@ -108,27 +163,44 @@ export default function PredictionForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (validateSelection()) {
-      if (scoringType === ScoringType.FULL_GRID_DIFF) {
-          onSubmit({ rankings: orderedDriverIds })
-      } else {
-          onSubmit({
-            firstPlaceId,
-            secondPlaceId,
-            thirdPlaceId
-          })
-      }
+    let dataToSubmit: any = {}
+
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        let rankings = orderedDriverIds
+        if (viewMode === 'TOP3') {
+            // Reconstruct full list from Top 3 inputs + rest of ordered list
+            const top3 = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
+            const top3Set = new Set(top3)
+            // Use existing order for the rest
+            const rest = orderedDriverIds.filter(id => !top3Set.has(id))
+            rankings = [...top3, ...rest]
+        }
+        dataToSubmit = { rankings }
+    } else {
+        // LEGACY_TOP3
+        if (viewMode === 'GRID') {
+            dataToSubmit = {
+                firstPlaceId: orderedDriverIds[0] || '',
+                secondPlaceId: orderedDriverIds[1] || '',
+                thirdPlaceId: orderedDriverIds[2] || ''
+            }
+        } else {
+            dataToSubmit = {
+                firstPlaceId,
+                secondPlaceId,
+                thirdPlaceId
+            }
+        }
+    }
+
+    if (validateSelection(dataToSubmit)) {
+      onSubmit(dataToSubmit)
     }
   }
 
   const resetForm = () => {
     if (scoringType === ScoringType.FULL_GRID_DIFF) {
-         const initialOrder = drivers
-            .filter(d => d.active)
-            .sort((a, b) => a.number - b.number)
-            .slice(0, driverCount)
-            .map(d => d.id)
-        setOrderedDriverIds(initialOrder)
+        setOrderedDriverIds(getInitialOrder())
     } else {
         setFirstPlaceId('')
         setSecondPlaceId('')
@@ -196,7 +268,7 @@ export default function PredictionForm({
 
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
         
-        {scoringType === ScoringType.FULL_GRID_DIFF ? (
+        {viewMode === 'GRID' ? (
             <div className="mb-6">
                 <p className="mb-2 text-sm text-gray-600">Trascina i piloti per ordinare la griglia di arrivo prevista:</p>
                 <SortableDriverList 
