@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { getActiveSeason } from '@/lib/season';
 
 // Validation schema for bulk prediction updates
 const bulkPredictionSchema = z.object({
@@ -44,9 +45,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get the event with all predictions and users
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
+    const activeSeason = await getActiveSeason();
+    if (!activeSeason) {
+        return NextResponse.json({ error: 'No active season' }, { status: 400 });
+    }
+
+    // Get the event with all predictions and users, strictly checking active season
+    const event = await prisma.event.findFirst({
+      where: { 
+          id: eventId,
+          seasonId: activeSeason.id 
+      },
       include: {
         firstPlace: true,
         secondPlace: true,
@@ -66,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     if (!event) {
       return NextResponse.json(
-        { error: 'Evento non trovato' },
+        { error: 'Evento non trovato nella stagione attiva' },
         { status: 404 }
       );
     }
@@ -155,19 +164,27 @@ async function handleBulkUpdate(body: any) {
 
   const { eventId, predictions } = validation.data;
 
-  // Verify event exists
-  const event = await prisma.event.findUnique({
-    where: { id: eventId }
+  const activeSeason = await getActiveSeason();
+  if (!activeSeason) {
+      return NextResponse.json({ error: 'No active season' }, { status: 400 });
+  }
+
+  // Verify event exists in active season
+  const event = await prisma.event.findFirst({
+    where: { 
+        id: eventId,
+        seasonId: activeSeason.id
+    }
   });
 
   if (!event) {
     return NextResponse.json(
-      { error: 'Evento non trovato' },
+      { error: 'Evento non trovato nella stagione attiva' },
       { status: 404 }
     );
   }
 
-  // Validate that all drivers exist
+  // Validate that all drivers exist and belong to the active season
   const driverIds = new Set<string>();
   predictions.forEach(p => {
     driverIds.add(p.firstPlaceId);
@@ -176,12 +193,15 @@ async function handleBulkUpdate(body: any) {
   });
 
   const drivers = await prisma.driver.findMany({
-    where: { id: { in: Array.from(driverIds) } }
+    where: { 
+        id: { in: Array.from(driverIds) },
+        seasonId: activeSeason.id // Ensure drivers are from active season
+    }
   });
 
   if (drivers.length !== driverIds.size) {
     return NextResponse.json(
-      { error: 'Uno o più piloti non esistono' },
+      { error: 'Uno o più piloti non esistono o non appartengono alla stagione attiva' },
       { status: 400 }
     );
   }
@@ -258,6 +278,20 @@ async function handleClearPredictions(body: any) {
     );
   }
 
+  const activeSeason = await getActiveSeason();
+  if (!activeSeason) {
+      return NextResponse.json({ error: 'No active season' }, { status: 400 });
+  }
+
+  // Verify event in active season
+  const event = await prisma.event.findFirst({
+      where: { id: eventId, seasonId: activeSeason.id }
+  });
+
+  if (!event) {
+      return NextResponse.json({ error: 'Evento non trovato nella stagione attiva' }, { status: 404 });
+  }
+
   const deletedCount = await prisma.prediction.deleteMany({
     where: { eventId }
   });
@@ -282,15 +316,29 @@ async function handleCopyPredictions(body: any) {
 
   const { sourceEventId, targetEventId, userIds } = validation.data;
 
-  // Verify both events exist
+  const activeSeason = await getActiveSeason();
+  if (!activeSeason) {
+      return NextResponse.json({ error: 'No active season' }, { status: 400 });
+  }
+
+  // Verify target event exists in active season
+  // Source event can be anywhere
   const [sourceEvent, targetEvent] = await Promise.all([
     prisma.event.findUnique({ where: { id: sourceEventId } }),
-    prisma.event.findUnique({ where: { id: targetEventId } })
+    prisma.event.findFirst({ 
+        where: { 
+            id: targetEventId,
+            seasonId: activeSeason.id
+        } 
+    })
   ]);
 
-  if (!sourceEvent || !targetEvent) {
+  if (!sourceEvent) {
+      return NextResponse.json({ error: 'Evento sorgente non trovato' }, { status: 404 });
+  }
+  if (!targetEvent) {
     return NextResponse.json(
-      { error: 'Uno o entrambi gli eventi non esistono' },
+      { error: 'Evento destinazione non trovato nella stagione attiva' },
       { status: 404 }
     );
   }

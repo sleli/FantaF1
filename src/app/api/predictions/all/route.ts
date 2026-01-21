@@ -17,18 +17,18 @@ export async function GET(request: NextRequest) {
     const eventId = searchParams.get('eventId')
     const isAdmin = session.user.role === 'ADMIN'
 
-    const whereClause: any = {}
+    const activeSeason = await getActiveSeason();
+    if (!activeSeason) {
+        return new NextResponse(null, { status: 204 });
+    }
+
+    // Filtra SEMPRE per stagione attiva
+    const whereClause: any = {
+        event: { seasonId: activeSeason.id }
+    }
 
     if (eventId) {
       whereClause.eventId = eventId
-    } else {
-        // Se non specificato evento, filtra per stagione attiva
-        const activeSeason = await getActiveSeason();
-        if (activeSeason) {
-            whereClause.event = { seasonId: activeSeason.id };
-        } else {
-             return new NextResponse(null, { status: 204 });
-        }
     }
 
     const predictions = await prisma.prediction.findMany({

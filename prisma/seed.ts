@@ -326,7 +326,8 @@ async function main() {
           name: driver.name,
           team: driver.team,
           number: driver.number,
-          active: driver.active
+          active: driver.active,
+          seasonId: season2025.id
         }
       })
     } else {
@@ -336,7 +337,8 @@ async function main() {
           name: driver.name,
           team: driver.team,
           number: driver.number,
-          active: driver.active
+          active: driver.active,
+          seasonId: season2025.id
         }
       })
     }

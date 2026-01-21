@@ -20,22 +20,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const type = searchParams.get('type');
-    const showAll = searchParams.get('all') === 'true';
 
     // Costruisci il filtro
     const where: any = {};
     if (status) where.status = status;
     if (type) where.type = type;
 
-    if (!showAll) {
-      const activeSeason = await getActiveSeason();
-      
-      if (activeSeason) {
-        where.seasonId = activeSeason.id;
-      } else {
-        // Se non c'è stagione attiva, non ritornare nulla
-        return NextResponse.json({ events: [] });
-      }
+    // Strict Active Season Filter
+    const activeSeason = await getActiveSeason();
+    
+    if (activeSeason) {
+      where.seasonId = activeSeason.id;
+    } else {
+      // Se non c'è stagione attiva, non ritornare nulla
+      return NextResponse.json({ events: [] });
     }
 
     const events = await prisma.event.findMany({
@@ -93,6 +91,11 @@ export async function POST(request: NextRequest) {
 
     const { name, type, date, closingDate } = validation.data;
 
+    const activeSeason = await getActiveSeason();
+    if (!activeSeason) {
+        return NextResponse.json({ error: 'Nessuna stagione attiva. Impossibile creare eventi.' }, { status: 400 });
+    }
+
     // Validazione date
     const eventDate = new Date(date);
     const closingDateTime = new Date(closingDate);
@@ -119,14 +122,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Controlla se esiste già un evento con lo stesso nome
+    // Controlla se esiste già un evento con lo stesso nome NELLA STESSA STAGIONE
     const existingEvent = await prisma.event.findFirst({
-      where: { name }
+      where: { 
+          name,
+          seasonId: activeSeason.id
+      }
     });
 
     if (existingEvent) {
       return NextResponse.json(
-        { error: 'Esiste già un evento con questo nome' },
+        { error: 'Esiste già un evento con questo nome nella stagione attiva' },
         { status: 409 }
       );
     }
@@ -143,7 +149,8 @@ export async function POST(request: NextRequest) {
         type,
         date: eventDate,
         closingDate: closingDateTime,
-        status: status as any
+        status: status as any,
+        seasonId: activeSeason.id
       },
       include: {
         firstPlace: true,

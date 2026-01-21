@@ -1,4 +1,3 @@
-
 import { NextRequest } from 'next/server';
 import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
@@ -67,24 +66,41 @@ async function patchHandler(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-// DELETE: Delete season
+// DELETE: Delete season and all related data
 async function deleteHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id: seasonId } = await params;
         
-        // Check if season has events or predictions before deleting?
-        // For now, let's allow deleting but maybe handle cascade in schema or here.
-        // Schema has relation events Event[], but no cascade delete on Event side for seasonId usually unless specified.
-        // Let's just try to delete.
+        // Execute all deletions in a transaction to ensure atomicity
+        await prisma.$transaction(async (tx) => {
+            // 1. Find all events in the season
+            // We don't need to fetch them if we just deleteMany, but let's be sure.
+            
+            // 2. Delete all events associated with the season
+            // Note: Deleting events will cascade delete predictions due to 
+            // @relation(..., onDelete: Cascade) in Prediction model for eventId
+            await tx.event.deleteMany({
+                where: { seasonId }
+            });
 
-        await prisma.season.delete({
-            where: { id: seasonId }
+            // 3. Delete all drivers associated with the season
+            // Now that events are gone, no events reference these drivers as results
+            // And no predictions reference these drivers (since predictions are gone with events)
+            await tx.driver.deleteMany({
+                where: { seasonId }
+            });
+
+            // 4. Finally delete the season
+            await tx.season.delete({
+                where: { id: seasonId }
+            });
         });
 
         return apiResponse({ success: true }, 200);
     } catch (error) {
         console.error('Error deleting season:', error);
-        return apiResponse({ error: 'Failed to delete season' }, 500);
+        // Check for specific Prisma errors if needed
+        return apiResponse({ error: 'Failed to delete season and associated data' }, 500);
     }
 }
 

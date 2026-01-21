@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { Season, ScoringType } from '@prisma/client'
-import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon, TrashIcon } from '@heroicons/react/24/outline'
 import SeasonDriverSelector from '@/components/admin/SeasonDriverSelector'
 
 export default function SeasonsPage() {
@@ -26,7 +26,8 @@ export default function SeasonsPage() {
     endDate: '',
     scoringType: 'LEGACY_TOP3' as ScoringType,
     driverCount: 20,
-    isActive: false
+    isActive: false,
+    copyDriversFromSeasonId: ''
   })
 
   const fetchSeasons = async () => {
@@ -84,7 +85,8 @@ export default function SeasonsPage() {
         endDate: '',
         scoringType: 'LEGACY_TOP3',
         driverCount: 20,
-        isActive: false
+        isActive: false,
+        copyDriversFromSeasonId: ''
     })
   }
 
@@ -96,7 +98,8 @@ export default function SeasonsPage() {
         endDate: new Date(season.endDate).toISOString().split('T')[0],
         scoringType: season.scoringType,
         driverCount: season.driverCount,
-        isActive: season.isActive
+        isActive: season.isActive,
+        copyDriversFromSeasonId: ''
     })
     setShowForm(true)
   }
@@ -150,6 +153,29 @@ export default function SeasonsPage() {
     } catch (error) {
       console.error('Error saving drivers:', error)
       alert('Errore di connessione')
+    }
+  }
+
+  const handleDelete = async (seasonId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questa stagione? QUESTA AZIONE È IRREVERSIBILE.\n\nVerranno eliminati:\n- La stagione\n- Tutti gli eventi associati\n- Tutti i pronostici associati\n- Tutti i piloti della stagione')) return;
+    
+    setProcessing(true);
+    try {
+        const res = await fetch(`/api/seasons/${seasonId}`, {
+            method: 'DELETE'
+        });
+        
+        if (res.ok) {
+            fetchSeasons();
+        } else {
+            const error = await res.json();
+            alert(error.error || 'Errore durante l\'eliminazione');
+        }
+    } catch (error) {
+        console.error('Error deleting season:', error);
+        alert('Errore di connessione');
+    } finally {
+        setProcessing(false);
     }
   }
 
@@ -232,6 +258,29 @@ export default function SeasonsPage() {
                                 : 'Pronostico intera griglia. Punteggio basato sulla differenza assoluta tra posizione pronosticata e reale.'}
                         </p>
                     </div>
+
+                    {!editingSeason && seasons.length > 0 && (
+                        <div className="md:col-span-2 border-t pt-4 mt-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Importa Piloti (Opzionale)</label>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    className="w-full border rounded-md p-2"
+                                    value={formData.copyDriversFromSeasonId}
+                                    onChange={e => setFormData({...formData, copyDriversFromSeasonId: e.target.value})}
+                                >
+                                    <option value="">-- Non importare piloti (Crea vuota) --</option>
+                                    {seasons.map(s => (
+                                        <option key={s.id} value={s.id}>
+                                            Copia da {s.name} ({new Date(s.startDate).getFullYear()})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Seleziona una stagione precedente per copiare automaticamente tutti i suoi piloti nella nuova stagione.
+                            </p>
+                        </div>
+                    )}
                 </div>
                 <div className="flex justify-end pt-4 gap-2">
                     <button 
@@ -315,6 +364,14 @@ export default function SeasonsPage() {
                                 <CheckCircleIcon className="h-5 w-5" />
                             </button>
                         )}
+                        <button 
+                            onClick={() => handleDelete(season.id)}
+                            disabled={processing}
+                            className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
+                            title="Elimina Stagione"
+                        >
+                            <TrashIcon className="h-5 w-5" />
+                        </button>
                     </div>
                   </td>
                 </tr>

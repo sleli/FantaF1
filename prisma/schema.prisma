@@ -65,7 +65,8 @@ model Driver {
   id                     String       @id @default(cuid())
   name                   String
   team                   String
-  number                 Int          @unique
+  number                 Int
+  seasonId               String
   active                 Boolean      @default(true)
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
@@ -75,8 +76,9 @@ model Driver {
   firstPlacePredictions  Prediction[] @relation("FirstPlace")
   secondPlacePredictions Prediction[] @relation("SecondPlace")
   thirdPlacePredictions  Prediction[] @relation("ThirdPlace")
-  seasons                Season[]     @relation("SeasonDrivers")
+  season                 Season       @relation(fields: [seasonId], references: [id])
 
+  @@unique([seasonId, number])
   @@map("drivers")
 }
 
@@ -133,7 +135,7 @@ model Season {
   driverCount Int         @default(20)
   scoringType ScoringType @default(LEGACY_TOP3)
   events      Event[]
-  drivers     Driver[]    @relation("SeasonDrivers")
+  drivers     Driver[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

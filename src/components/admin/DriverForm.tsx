@@ -23,7 +23,8 @@ export function DriverForm({
     name: driver?.name || '',
     team: driver?.team || '',
     number: driver?.number || 0,
-    active: driver?.active !== undefined ? driver.active : true
+    active: driver?.active !== undefined ? driver.active : true,
+    seasonId: driver?.seasonId || ''
   })
 
   const [errors, setErrors] = useState<DriverValidationErrors>({})

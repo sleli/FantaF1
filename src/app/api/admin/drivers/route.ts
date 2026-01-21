@@ -5,31 +5,33 @@ import { getActiveSeason } from '@/lib/season';
 
 // Admin-only API route to manage drivers
 async function handler(req: NextRequest) {
-  // GET /api/admin/drivers - List all drivers
+  // Check active season first - required for all operations
+  const activeSeason = await getActiveSeason();
+  
+  if (!activeSeason) {
+    // If no active season, we can't list or create drivers contextually
+    // For GET, return empty list. For POST, return error.
+    if (req.method === 'GET') {
+        return apiResponse({ drivers: [] });
+    }
+    return apiResponse({ error: 'No active season found. Cannot manage drivers.' }, 400);
+  }
+
+  // GET /api/admin/drivers - List all drivers for active season
   if (req.method === 'GET') {
     try {
-      const { searchParams } = new URL(req.url);
-      const showAll = searchParams.get('all') === 'true';
-
-      const whereClause: any = {};
+      // STRICT: No filtering by query params allowed. 
+      // Always filter by active season.
       
-      if (!showAll) {
-          const activeSeason = await getActiveSeason();
-          if (activeSeason) {
-              whereClause.seasons = { some: { id: activeSeason.id } };
-          } else {
-              // No active season, return empty list
-              return apiResponse({ drivers: [] });
-          }
-      }
-
       const drivers = await prisma.driver.findMany({
-        where: whereClause,
+        where: {
+            seasonId: activeSeason.id
+        },
         orderBy: {
           name: 'asc'
         },
         include: {
-          seasons: true
+          season: true
         }
       });
       
@@ -50,38 +52,29 @@ async function handler(req: NextRequest) {
         return apiResponse({ error: 'Missing required fields' }, 400);
       }
       
-      // Check if a driver with this number already exists
+      // Check if a driver with this number already exists IN THIS SEASON
       const existingDriver = await prisma.driver.findUnique({
         where: {
-          number: data.number
+          seasonId_number: {
+            seasonId: activeSeason.id,
+            number: data.number
+          }
         }
       });
       
       if (existingDriver) {
-        return apiResponse({ error: 'A driver with this number already exists' }, 409);
+        return apiResponse({ error: 'A driver with this number already exists in the active season' }, 409);
       }
       
-      // Find active season
-      const activeSeason = await prisma.season.findFirst({
-        where: { isActive: true }
-      });
-
-      const driverData: any = {
-        name: data.name,
-        team: data.team,
-        number: data.number,
-        active: data.active !== undefined ? data.active : true
-      };
-
-      if (activeSeason) {
-        driverData.seasons = {
-          connect: { id: activeSeason.id }
-        };
-      }
-
-      // Create the new driver
+      // Create the new driver linked to active season
       const driver = await prisma.driver.create({
-        data: driverData
+        data: {
+            name: data.name,
+            team: data.team,
+            number: data.number,
+            active: data.active !== undefined ? data.active : true,
+            seasonId: activeSeason.id
+        }
       });
       
       return apiResponse({ driver }, 201);

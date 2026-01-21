@@ -19,11 +19,7 @@ async function handler(req: NextRequest) {
     const drivers = await prisma.driver.findMany({
       where: {
         active: true,
-        seasons: {
-            some: {
-                id: activeSeason.id
-            }
-        }
+        seasonId: activeSeason.id
       },
       orderBy: {
         name: 'asc'

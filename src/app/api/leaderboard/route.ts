@@ -17,24 +17,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
-    const seasonId = searchParams.get('seasonId')
-
     // Determine Season context
-    let activeSeason;
-    if (seasonId) {
-        activeSeason = await prisma.season.findUnique({ where: { id: seasonId } });
-    } else {
-        activeSeason = await getActiveSeason();
-    }
+    const activeSeason = await getActiveSeason();
     
     // STRICT ACTIVE SEASON CHECK
-    // If no active season is found (and no specific season was requested), 
-    // we must return an empty state or appropriate status code.
+    // If no active season is found, we must return an empty state or appropriate status code.
     if (!activeSeason) {
       // 204 No Content is appropriate for "Success, but no data to show"
-      // However, NextResponse with 204 might not support a body.
-      // Usually, APIs return empty object or array with 200 for "no data found".
-      // But the requirement says "risposta vuota (null/undefined) con stato HTTP appropriato (es. 204 No Content)"
       return new NextResponse(null, { status: 204 });
     }
 

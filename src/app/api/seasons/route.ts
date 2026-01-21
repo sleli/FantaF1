@@ -27,7 +27,7 @@ async function getHandler(req: NextRequest) {
 async function postHandler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, startDate, endDate, driverCount, scoringType } = body;
+    const { name, startDate, endDate, driverCount, scoringType, copyDriversFromSeasonId } = body;
 
     // Basic validation
     if (!name || !startDate || !endDate) {
@@ -43,15 +43,39 @@ async function postHandler(req: NextRequest) {
       return apiResponse({ error: 'Season name already exists' }, 409);
     }
 
-    const season = await prisma.season.create({
-      data: {
-        name,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        driverCount: driverCount ? parseInt(driverCount) : 20,
-        scoringType: scoringType as ScoringType || 'LEGACY_TOP3',
-        isActive: false // Default to inactive
-      }
+    // Use transaction to create season and copy drivers if requested
+    const season = await prisma.$transaction(async (tx) => {
+        const newSeason = await tx.season.create({
+            data: {
+                name,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                driverCount: driverCount ? parseInt(driverCount) : 20,
+                scoringType: scoringType as ScoringType || 'LEGACY_TOP3',
+                isActive: false // Default to inactive
+            }
+        });
+
+        // Copy drivers if source season is provided
+        if (copyDriversFromSeasonId) {
+            const sourceDrivers = await tx.driver.findMany({
+                where: { seasonId: copyDriversFromSeasonId }
+            });
+
+            if (sourceDrivers.length > 0) {
+                await tx.driver.createMany({
+                    data: sourceDrivers.map(d => ({
+                        name: d.name,
+                        team: d.team,
+                        number: d.number,
+                        active: d.active,
+                        seasonId: newSeason.id
+                    }))
+                });
+            }
+        }
+
+        return newSeason;
     });
 
     return apiResponse({ season }, 201);
