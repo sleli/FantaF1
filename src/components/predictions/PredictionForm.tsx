@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Driver, Event } from '@prisma/client'
+import { Driver, Event, ScoringType } from '@prisma/client'
+import SortableDriverList from './SortableDriverList'
+
+interface ExtendedEvent extends Event {
+    season?: {
+        scoringType: ScoringType
+        driverCount: number
+    }
+}
 
 interface PredictionFormProps {
-  event: Event
+  event: ExtendedEvent
   drivers: Driver[]
-  onSubmit: (prediction: {
-    firstPlaceId: string
-    secondPlaceId: string
-    thirdPlaceId: string
-  }) => void
+  onSubmit: (prediction: any) => void
   initialPrediction?: {
-    firstPlaceId: string
-    secondPlaceId: string
-    thirdPlaceId: string
+    firstPlaceId?: string
+    secondPlaceId?: string
+    thirdPlaceId?: string
+    rankings?: string[]
   }
   isLoading: boolean
   isModifying?: boolean
@@ -26,15 +31,40 @@ export default function PredictionForm({
   isLoading,
   isModifying = false
 }: PredictionFormProps) {
+  const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3
+  const driverCount = event.season?.driverCount || 20
+
+  // Legacy State
   const [firstPlaceId, setFirstPlaceId] = useState(initialPrediction?.firstPlaceId || '')
   const [secondPlaceId, setSecondPlaceId] = useState(initialPrediction?.secondPlaceId || '')
   const [thirdPlaceId, setThirdPlaceId] = useState(initialPrediction?.thirdPlaceId || '')
+  
+  // New State
+  const [orderedDriverIds, setOrderedDriverIds] = useState<string[]>([])
+  
   const [errors, setErrors] = useState<string[]>([])
+
+  // Initialize Ordered IDs
+  useEffect(() => {
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        if (initialPrediction?.rankings && initialPrediction.rankings.length > 0) {
+            setOrderedDriverIds(initialPrediction.rankings)
+        } else {
+            // Default order: active drivers sorted by number
+            const initialOrder = drivers
+                .filter(d => d.active)
+                .sort((a, b) => a.number - b.number)
+                .slice(0, driverCount)
+                .map(d => d.id)
+            setOrderedDriverIds(initialOrder)
+        }
+    }
+  }, [scoringType, drivers, driverCount, initialPrediction])
 
   // Verifica se l'evento è ancora aperto
   const isEventOpen = event.status === 'UPCOMING' && new Date() < new Date(event.closingDate)
   
-  // Filtra i piloti disponibili per ogni posizione
+  // Filtra i piloti disponibili per ogni posizione (Legacy)
   const getAvailableDrivers = (position: 'first' | 'second' | 'third') => {
     const selectedDrivers = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
     
@@ -50,15 +80,21 @@ export default function PredictionForm({
   const validateSelection = () => {
     const newErrors: string[] = []
     
-    if (!firstPlaceId) newErrors.push('Seleziona il pilota per il 1° posto')
-    if (!secondPlaceId) newErrors.push('Seleziona il pilota per il 2° posto')
-    if (!thirdPlaceId) newErrors.push('Seleziona il pilota per il 3° posto')
-    
-    const selectedDrivers = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
-    const uniqueDrivers = new Set(selectedDrivers)
-    
-    if (selectedDrivers.length === 3 && uniqueDrivers.size !== 3) {
-      newErrors.push('Devi selezionare 3 piloti diversi')
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        if (orderedDriverIds.length !== driverCount) {
+            newErrors.push(`Devi ordinare tutti i ${driverCount} piloti`)
+        }
+    } else {
+        if (!firstPlaceId) newErrors.push('Seleziona il pilota per il 1° posto')
+        if (!secondPlaceId) newErrors.push('Seleziona il pilota per il 2° posto')
+        if (!thirdPlaceId) newErrors.push('Seleziona il pilota per il 3° posto')
+        
+        const selectedDrivers = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
+        const uniqueDrivers = new Set(selectedDrivers)
+        
+        if (selectedDrivers.length === 3 && uniqueDrivers.size !== 3) {
+        newErrors.push('Devi selezionare 3 piloti diversi')
+        }
     }
 
     if (!isEventOpen) {
@@ -73,53 +109,54 @@ export default function PredictionForm({
     e.preventDefault()
     
     if (validateSelection()) {
-      onSubmit({
-        firstPlaceId,
-        secondPlaceId,
-        thirdPlaceId
-      })
+      if (scoringType === ScoringType.FULL_GRID_DIFF) {
+          onSubmit({ rankings: orderedDriverIds })
+      } else {
+          onSubmit({
+            firstPlaceId,
+            secondPlaceId,
+            thirdPlaceId
+          })
+      }
     }
   }
 
   const resetForm = () => {
-    setFirstPlaceId('')
-    setSecondPlaceId('')
-    setThirdPlaceId('')
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+         const initialOrder = drivers
+            .filter(d => d.active)
+            .sort((a, b) => a.number - b.number)
+            .slice(0, driverCount)
+            .map(d => d.id)
+        setOrderedDriverIds(initialOrder)
+    } else {
+        setFirstPlaceId('')
+        setSecondPlaceId('')
+        setThirdPlaceId('')
+    }
     setErrors([])
   }
 
-  // Countdown timer
+  // Countdown timer logic (same as before)
   const [timeLeft, setTimeLeft] = useState<string>('')
-
   useEffect(() => {
     if (!isEventOpen) return
-
     const updateTimer = () => {
       const now = new Date().getTime()
       const closingTime = new Date(event.closingDate).getTime()
       const difference = closingTime - now
-
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24))
         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
         const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-        if (days > 0) {
-          setTimeLeft(`${days}g ${hours}h ${minutes}m`)
-        } else if (hours > 0) {
-          setTimeLeft(`${hours}h ${minutes}m ${seconds}s`)
-        } else {
-          setTimeLeft(`${minutes}m ${seconds}s`)
-        }
-      } else {
-        setTimeLeft('Chiuso')
-      }
+        if (days > 0) setTimeLeft(`${days}g ${hours}h ${minutes}m`)
+        else if (hours > 0) setTimeLeft(`${hours}h ${minutes}m ${seconds}s`)
+        else setTimeLeft(`${minutes}m ${seconds}s`)
+      } else setTimeLeft('Chiuso')
     }
-
     updateTimer()
     const timer = setInterval(updateTimer, 1000)
-
     return () => clearInterval(timer)
   }, [event.closingDate, isEventOpen])
 
@@ -133,6 +170,9 @@ export default function PredictionForm({
           <p className="font-semibold">{event.name}</p>
           <p className="text-sm">
             {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toISOString().slice(0, 16).replace('T', ' ')}
+          </p>
+          <p className="text-sm mt-1">
+             Regole: {scoringType === ScoringType.FULL_GRID_DIFF ? 'Differenza (Low Score)' : 'Standard (Top 3)'}
           </p>
           {isEventOpen ? (
             <p className="text-sm text-green-600 font-medium">
@@ -155,70 +195,83 @@ export default function PredictionForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-        {/* 1° Posto */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-            🥇 1° Posto (25 punti)
-          </label>
-          <select
-            value={firstPlaceId}
-            onChange={(e) => setFirstPlaceId(e.target.value)}
-            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-            disabled={!isEventOpen || isLoading}
-          >
-            <option value="">Seleziona un pilota...</option>
-            {getAvailableDrivers('first').map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                #{driver.number} {driver.name} ({driver.team})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 2° Posto */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-            🥈 2° Posto (15 punti)
-          </label>
-          <select
-            value={secondPlaceId}
-            onChange={(e) => setSecondPlaceId(e.target.value)}
-            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-            disabled={!isEventOpen || isLoading}
-          >
-            <option value="">Seleziona un pilota...</option>
-            {getAvailableDrivers('second').map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                #{driver.number} {driver.name} ({driver.team})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 3° Posto */}
-        <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-            🥉 3° Posto (10 punti)
-          </label>
-          <select
-            value={thirdPlaceId}
-            onChange={(e) => setThirdPlaceId(e.target.value)}
-            className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-            disabled={!isEventOpen || isLoading}
-          >
-            <option value="">Seleziona un pilota...</option>
-            {getAvailableDrivers('third').map((driver) => (
-              <option key={driver.id} value={driver.id}>
-                #{driver.number} {driver.name} ({driver.team})
-              </option>
-            ))}
-          </select>
-        </div>
+        
+        {scoringType === ScoringType.FULL_GRID_DIFF ? (
+            <div className="mb-6">
+                <p className="mb-2 text-sm text-gray-600">Trascina i piloti per ordinare la griglia di arrivo prevista:</p>
+                <SortableDriverList 
+                    drivers={drivers}
+                    orderedDriverIds={orderedDriverIds}
+                    onChange={setOrderedDriverIds}
+                    disabled={!isEventOpen || isLoading}
+                />
+            </div>
+        ) : (
+            <>
+                {/* Legacy Inputs */}
+                {/* 1° Posto */}
+                <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
+                    🥇 1° Posto (25 punti)
+                  </label>
+                  <select
+                    value={firstPlaceId}
+                    onChange={(e) => setFirstPlaceId(e.target.value)}
+                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
+                    disabled={!isEventOpen || isLoading}
+                  >
+                    <option value="">Seleziona un pilota...</option>
+                    {getAvailableDrivers('first').map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        #{driver.number} {driver.name} ({driver.team})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                 <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
+                    🥈 2° Posto (15 punti)
+                  </label>
+                  <select
+                    value={secondPlaceId}
+                    onChange={(e) => setSecondPlaceId(e.target.value)}
+                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
+                    disabled={!isEventOpen || isLoading}
+                  >
+                    <option value="">Seleziona un pilota...</option>
+                    {getAvailableDrivers('second').map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        #{driver.number} {driver.name} ({driver.team})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                 <div>
+                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
+                    🥉 3° Posto (10 punti)
+                  </label>
+                  <select
+                    value={thirdPlaceId}
+                    onChange={(e) => setThirdPlaceId(e.target.value)}
+                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
+                    disabled={!isEventOpen || isLoading}
+                  >
+                    <option value="">Seleziona un pilota...</option>
+                    {getAvailableDrivers('third').map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        #{driver.number} {driver.name} ({driver.team})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+            </>
+        )}
 
         {/* Errori */}
         {errors.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
+             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -239,7 +292,7 @@ export default function PredictionForm({
         )}
 
         {/* Note sui punteggi */}
-        {event.type === 'SPRINT' && (
+        {event.type === 'SPRINT' && scoringType === ScoringType.LEGACY_TOP3 && (
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <p className="text-blue-800 text-sm">
               <strong>Sprint:</strong> I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)
@@ -266,7 +319,7 @@ export default function PredictionForm({
             {isLoading ? 'Salvando...' : (isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico')}
           </button>
 
-          {(firstPlaceId || secondPlaceId || thirdPlaceId) && (
+          {(firstPlaceId || secondPlaceId || thirdPlaceId || orderedDriverIds.length > 0) && (
             <button
               type="button"
               onClick={resetForm}

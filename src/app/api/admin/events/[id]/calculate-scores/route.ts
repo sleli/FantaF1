@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculatePoints } from '@/lib/scoring'
+import { calculateScore } from '@/lib/scoring'
+import { ScoringType } from '@prisma/client'
 
 // POST /api/admin/events/[id]/calculate-scores - Calcola i punteggi per un evento
 export async function POST(
@@ -23,17 +24,10 @@ export async function POST(
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
+        season: true,
         firstPlace: true,
         secondPlace: true,
-        thirdPlace: true,
-        predictions: {
-          include: {
-            user: true,
-            firstPlace: true,
-            secondPlace: true,
-            thirdPlace: true
-          }
-        }
+        thirdPlace: true
       }
     })
 
@@ -41,35 +35,93 @@ export async function POST(
       return NextResponse.json({ error: 'Evento non trovato' }, { status: 404 })
     }
 
-    if (!event.firstPlace || !event.secondPlace || !event.thirdPlace) {
-      return NextResponse.json(
-        { error: 'Risultati dell\'evento non completi' },
-        { status: 400 }
-      )
+    const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
+
+    // Validation
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        if (!event.results) {
+            return NextResponse.json({ error: 'Risultati griglia completa mancanti' }, { status: 400 })
+        }
+    } else {
+        if (!event.firstPlace || !event.secondPlace || !event.thirdPlace) {
+            return NextResponse.json({ error: 'Risultati podio mancanti' }, { status: 400 })
+        }
     }
+
+    // --- AUTO-FILL LOGIC ---
+    if (event.seasonId) {
+        const users = await prisma.user.findMany({ where: { role: 'PLAYER' } });
+        const existingPreds = await prisma.prediction.findMany({ 
+            where: { eventId }, 
+            select: { userId: true } 
+        });
+        const hasPred = new Set(existingPreds.map(p => p.userId));
+        const missingUsers = users.filter(u => !hasPred.has(u.id));
+
+        console.log(`Auto-fill: Found ${missingUsers.length} users without prediction.`);
+
+        for (const user of missingUsers) {
+            // Find last prediction in season
+            const lastPred = await prisma.prediction.findFirst({
+                where: {
+                    userId: user.id,
+                    event: {
+                        seasonId: event.seasonId,
+                        date: { lt: event.date },
+                        // status: { in: ['COMPLETED', 'CLOSED'] } // Maybe not strictly needed if we rely on date
+                    }
+                },
+                orderBy: { event: { date: 'desc' } }
+            });
+
+            if (lastPred) {
+                console.log(`Auto-filling for user ${user.name} from event ${lastPred.eventId}`);
+                await prisma.prediction.create({
+                    data: {
+                        userId: user.id,
+                        eventId: event.id,
+                        firstPlaceId: lastPred.firstPlaceId,
+                        secondPlaceId: lastPred.secondPlaceId,
+                        thirdPlaceId: lastPred.thirdPlaceId,
+                        rankings: lastPred.rankings ?? undefined
+                    }
+                });
+            } else {
+                console.log(`No previous prediction for user ${user.name} (first event?)`);
+            }
+        }
+    }
+
+    // --- CALCULATION LOGIC ---
+    // Fetch predictions again to include auto-filled ones
+    const predictions = await prisma.prediction.findMany({
+        where: { eventId },
+        include: { user: true } // Need user for logging/debug if needed
+    });
 
     // Risultato dell'evento
     const eventResult = {
-      firstPlaceId: event.firstPlace.id,
-      secondPlaceId: event.secondPlace.id,
-      thirdPlaceId: event.thirdPlace.id
+      firstPlaceId: event.firstPlaceId,
+      secondPlaceId: event.secondPlaceId,
+      thirdPlaceId: event.thirdPlaceId,
+      results: event.results
     }
 
     // Calcola i punteggi per tutti i pronostici
     const scoreUpdates: Array<{ id: string; points: number }> = []
 
-    for (const prediction of event.predictions) {
-      if (!prediction.firstPlace || !prediction.secondPlace || !prediction.thirdPlace) {
-        continue // Salta pronostici incompleti
-      }
-
+    for (const prediction of predictions) {
+      // Skip check for top3 if we are in FULL_GRID mode, 
+      // but calculateScore handles fallback.
+      
       const predictionResult = {
-        firstPlaceId: prediction.firstPlace.id,
-        secondPlaceId: prediction.secondPlace.id,
-        thirdPlaceId: prediction.thirdPlace.id
+        firstPlaceId: prediction.firstPlaceId,
+        secondPlaceId: prediction.secondPlaceId,
+        thirdPlaceId: prediction.thirdPlaceId,
+        rankings: prediction.rankings
       }
 
-      const points = calculatePoints(predictionResult, eventResult, event.type)
+      const points = calculateScore(predictionResult, eventResult, event.type, scoringType)
       scoreUpdates.push({ id: prediction.id, points })
     }
 
@@ -89,6 +141,7 @@ export async function POST(
     const summary = {
       eventName: event.name,
       eventType: event.type,
+      scoringType,
       totalPredictions: scoreUpdates.length,
       averagePoints: scoreUpdates.length > 0 
         ? scoreUpdates.reduce((sum, s) => sum + s.points, 0) / scoreUpdates.length

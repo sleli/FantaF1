@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateLeaderboard } from '@/lib/scoring'
+import { ScoringType } from '@prisma/client'
+import { getActiveSeason } from '@/lib/season'
 
 // GET /api/leaderboard - Ottieni classifica generale
 export async function GET(request: NextRequest) {
@@ -15,12 +17,35 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
+    const seasonId = searchParams.get('seasonId')
+
+    // Determine Season context
+    let activeSeason;
+    if (seasonId) {
+        activeSeason = await prisma.season.findUnique({ where: { id: seasonId } });
+    } else {
+        activeSeason = await getActiveSeason();
+    }
+    
+    // STRICT ACTIVE SEASON CHECK
+    // If no active season is found (and no specific season was requested), 
+    // we must return an empty state or appropriate status code.
+    if (!activeSeason) {
+      // 204 No Content is appropriate for "Success, but no data to show"
+      // However, NextResponse with 204 might not support a body.
+      // Usually, APIs return empty object or array with 200 for "no data found".
+      // But the requirement says "risposta vuota (null/undefined) con stato HTTP appropriato (es. 204 No Content)"
+      return new NextResponse(null, { status: 204 });
+    }
+
+    const scoringType = activeSeason.scoringType;
 
     if (eventId) {
       // Classifica per evento specifico
       const event = await prisma.event.findUnique({
         where: { id: eventId },
         include: {
+          season: true,
           predictions: {
             include: {
               user: {
@@ -29,9 +54,6 @@ export async function GET(request: NextRequest) {
               firstPlace: true,
               secondPlace: true,
               thirdPlace: true
-            },
-            orderBy: {
-              points: 'desc'
             }
           }
         }
@@ -41,7 +63,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Evento non trovato' }, { status: 404 })
       }
 
-      const eventLeaderboard = event.predictions.map(prediction => ({
+      // Sort predictions based on scoring type
+      const sortedPredictions = event.predictions.sort((a, b) => {
+          const pointsA = a.points ?? (scoringType === ScoringType.FULL_GRID_DIFF ? 1000 : -1);
+          const pointsB = b.points ?? (scoringType === ScoringType.FULL_GRID_DIFF ? 1000 : -1);
+          
+          if (scoringType === ScoringType.FULL_GRID_DIFF) {
+              return pointsA - pointsB;
+          } else {
+              return pointsB - pointsA;
+          }
+      });
+
+      const eventLeaderboard = sortedPredictions.map(prediction => ({
         user: prediction.user,
         prediction: {
           id: prediction.id,
@@ -61,16 +95,20 @@ export async function GET(request: NextRequest) {
           name: event.name,
           type: event.type,
           status: event.status,
-          date: event.date
+          date: event.date,
+          season: event.season
         },
         leaderboard: eventLeaderboard
       })
     } else {
       // Classifica generale
+      const whereClause: any = {
+          points: { not: null },
+          event: { seasonId: activeSeason.id } // Enforce season filter
+      };
+
       const predictions = await prisma.prediction.findMany({
-        where: {
-          points: { not: null }
-        },
+        where: whereClause,
         include: {
           user: {
             select: { id: true, name: true, email: true }
@@ -78,13 +116,10 @@ export async function GET(request: NextRequest) {
           event: {
             select: { id: true, name: true, type: true, date: true }
           }
-        },
-        orderBy: {
-          points: 'desc'
         }
       })
 
-      const leaderboard = calculateLeaderboard(predictions)
+      const leaderboard = calculateLeaderboard(predictions, scoringType)
 
       // Aggiungi posizione nella classifica
       const leaderboardWithPosition = leaderboard.map((entry, index) => ({
@@ -93,6 +128,7 @@ export async function GET(request: NextRequest) {
       }))
 
       return NextResponse.json({
+        season: activeSeason,
         leaderboard: leaderboardWithPosition,
         totalPredictions: predictions.length,
         totalUsers: leaderboard.length

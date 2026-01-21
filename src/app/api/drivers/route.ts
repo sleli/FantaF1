@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
+import { getActiveSeason } from '@/lib/season';
 
 // API route to get active drivers - requires authentication but not admin
 async function handler(req: NextRequest) {
@@ -9,9 +10,20 @@ async function handler(req: NextRequest) {
   }
 
   try {
+    const activeSeason = await getActiveSeason();
+    
+    if (!activeSeason) {
+        return apiResponse({ drivers: [] }); // Or 204 No Content
+    }
+
     const drivers = await prisma.driver.findMany({
       where: {
-        active: true
+        active: true,
+        seasons: {
+            some: {
+                id: activeSeason.id
+            }
+        }
       },
       orderBy: {
         name: 'asc'

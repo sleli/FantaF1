@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getActiveSeason } from '@/lib/season';
 
 // GET /api/events - Lista eventi per utenti normali
 export async function GET(request: NextRequest) {
@@ -20,8 +21,30 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const upcoming = searchParams.get('upcoming') === 'true';
 
+    // Ottieni la stagione attiva
+    const activeSeason = await getActiveSeason();
+
+    // Se non c'è una stagione attiva, restituisci 204 No Content
+    if (!activeSeason) {
+        return new NextResponse(null, { status: 204 });
+    }
+
     // Costruisci il filtro
     const where: any = {};
+    
+    // Validazione parametri non necessari
+    const allowedParams = ['status', 'type', 'upcoming'];
+    const extraParams = Array.from(searchParams.keys()).filter(k => !allowedParams.includes(k));
+    if (extraParams.length > 0) {
+        console.warn(`[API Events] Parametri non supportati ignorati: ${extraParams.join(', ')}`);
+        // Opzionale: restituire 400 se si vuole essere strict, ma la richiesta chiede "validazione" e "logging".
+        // Per ora logghiamo.
+    }
+
+    // Default: mostra solo eventi della stagione attiva
+    console.log(`[API Events] Fetching events for season ${activeSeason.id}`);
+    where.seasonId = activeSeason.id;
+
     if (status) where.status = status;
     if (type) where.type = type;
     if (upcoming) {
@@ -37,6 +60,15 @@ export async function GET(request: NextRequest) {
         date: true,
         closingDate: true,
         status: true,
+        season: {
+            select: {
+                id: true,
+                name: true,
+                driverCount: true,
+                scoringType: true
+            }
+        },
+        results: true,
         // Nascondi risultati per eventi non completati
         firstPlace: {
           select: {
@@ -80,7 +112,8 @@ export async function GET(request: NextRequest) {
           ...event,
           firstPlace: null,
           secondPlace: null,
-          thirdPlace: null
+          thirdPlace: null,
+          results: null
         };
       }
       return event;

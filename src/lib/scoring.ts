@@ -1,24 +1,88 @@
-import { EventType } from '@prisma/client'
+import { EventType, ScoringType } from '@prisma/client'
 import { POINTS } from './types'
 
 export type PredictionResult = {
-  firstPlaceId: string
-  secondPlaceId: string
-  thirdPlaceId: string
+  firstPlaceId?: string | null
+  secondPlaceId?: string | null
+  thirdPlaceId?: string | null
+  rankings?: any
 }
 
 export type EventResult = {
-  firstPlaceId: string
-  secondPlaceId: string
-  thirdPlaceId: string
+  firstPlaceId?: string | null
+  secondPlaceId?: string | null
+  thirdPlaceId?: string | null
+  results?: any
 }
 
 /**
- * Calcola i punti per un pronostico confrontandolo con il risultato effettivo
+ * Calcola il punteggio basato sulla differenza assoluta (nuovo sistema)
+ * Punteggio più basso = migliore
  */
-export function calculatePoints(
+export function calculateAbsoluteDifferenceScore(
+  predictionRankings: string[],
+  resultRankings: string[]
+): number {
+  let score = 0
+  
+  // Se mancano dati, penalità massima? Per ora 0 o gestito a monte
+  if (!predictionRankings || !resultRankings) return 1000 // Penalità alta
+
+  resultRankings.forEach((driverId, actualIndex) => {
+    const predictedIndex = predictionRankings.indexOf(driverId)
+    if (predictedIndex !== -1) {
+      score += Math.abs(predictedIndex - actualIndex)
+    } else {
+      // Pilota non pronosticato (non dovrebbe succedere con griglia completa)
+      // Penalità: posizione max (20)
+      score += 20 
+    }
+  })
+
+  return score
+}
+
+/**
+ * Wrapper principale per il calcolo punteggi
+ */
+export function calculateScore(
   prediction: PredictionResult,
   result: EventResult,
+  eventType: EventType,
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+): number {
+  if (scoringType === ScoringType.FULL_GRID_DIFF) {
+    const predRankings = (prediction.rankings as string[]) || []
+    const resRankings = (result.results as string[]) || []
+    
+    // Fallback per migrazione: se non ci sono ranking JSON, usa i vecchi campi se possibile
+    // Ma per il nuovo sistema FULL_GRID_DIFF ci aspettiamo il JSON.
+    
+    return calculateAbsoluteDifferenceScore(predRankings, resRankings)
+  }
+
+  // Legacy Logic
+  // Ensure we have strings
+  const legacyPrediction = {
+    firstPlaceId: prediction.firstPlaceId || '',
+    secondPlaceId: prediction.secondPlaceId || '',
+    thirdPlaceId: prediction.thirdPlaceId || ''
+  }
+  const legacyResult = {
+    firstPlaceId: result.firstPlaceId || '',
+    secondPlaceId: result.secondPlaceId || '',
+    thirdPlaceId: result.thirdPlaceId || ''
+  }
+
+  return calculatePoints(legacyPrediction, legacyResult, eventType)
+}
+
+/**
+ * Calcola i punti per un pronostico confrontandolo con il risultato effettivo (LEGACY)
+ */
+export function calculatePoints(
+  prediction: { firstPlaceId: string, secondPlaceId: string, thirdPlaceId: string },
+  result: { firstPlaceId: string, secondPlaceId: string, thirdPlaceId: string },
   eventType: EventType
 ): number {
   const pointsConfig = eventType === 'RACE' ? POINTS.RACE : POINTS.SPRINT
@@ -64,10 +128,13 @@ export function validatePrediction(prediction: PredictionResult): boolean {
 /**
  * Calcola la classifica generale basata sui punti totali
  */
-export function calculateLeaderboard(predictions: Array<{
-  user: { id: string; name: string | null; email: string | null }
-  points: number | null
-}>): Array<{
+export function calculateLeaderboard(
+  predictions: Array<{
+    user: { id: string; name: string | null; email: string | null }
+    points: number | null
+  }>,
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+): Array<{
   user: { id: string; name: string | null; email: string | null }
   totalPoints: number
   eventCount: number
@@ -106,8 +173,16 @@ export function calculateLeaderboard(predictions: Array<{
     averagePoints: stats.eventCount > 0 ? stats.totalPoints / stats.eventCount : 0
   }))
 
-  // Ordina per punti totali (decrescente)
-  return leaderboard.sort((a, b) => b.totalPoints - a.totalPoints)
+  // Ordina in base al sistema di punteggio
+  return leaderboard.sort((a, b) => {
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+      // Punteggio più basso vince (Crescente)
+      return a.totalPoints - b.totalPoints
+    } else {
+      // Punteggio più alto vince (Decrescente - Legacy)
+      return b.totalPoints - a.totalPoints
+    }
+  })
 }
 
 /**

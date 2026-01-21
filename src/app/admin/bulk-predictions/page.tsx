@@ -66,6 +66,13 @@ export default function BulkPredictionsPage() {
       if (response.ok) {
         const data = await response.json();
         setEvents(data.events);
+        
+        // Auto-select active event if available
+        if (data.events.length > 0) {
+           const activeEvent = data.events[0]; // The API now returns only active events
+           setSelectedEvent(activeEvent);
+           loadPredictionsForEvent(activeEvent.id);
+        }
       } else {
         addNotification({
           type: 'error',

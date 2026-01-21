@@ -9,6 +9,36 @@ async function handler(req: NextRequest) {
   }
 
   try {
+    const { searchParams } = new URL(req.url);
+    const activeEventOnly = searchParams.get('activeEvent') === 'true';
+    
+    let predictionWhere: any = undefined;
+
+    if (activeEventOnly) {
+      const activeSeason = await prisma.season.findFirst({
+        where: { isActive: true }
+      });
+      
+      if (activeSeason) {
+        const activeEvent = await prisma.event.findFirst({
+          where: {
+            seasonId: activeSeason.id,
+            status: { in: ['UPCOMING', 'CLOSED'] }
+          },
+          orderBy: { date: 'asc' }
+        });
+
+        if (activeEvent) {
+          predictionWhere = { eventId: activeEvent.id };
+        } else {
+          // Nessun evento attivo, conta 0
+          predictionWhere = { eventId: 'cnone' }; // ID impossibile
+        }
+      } else {
+        predictionWhere = { eventId: 'cnone' };
+      }
+    }
+
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -18,7 +48,7 @@ async function handler(req: NextRequest) {
         createdAt: true,
         _count: {
           select: {
-            predictions: true
+            predictions: predictionWhere ? { where: predictionWhere } : true
           }
         }
       }

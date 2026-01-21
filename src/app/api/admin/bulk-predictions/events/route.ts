@@ -15,7 +15,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const activeSeason = await prisma.season.findFirst({
+      where: { isActive: true }
+    });
+
+    if (!activeSeason) {
+      return NextResponse.json({ events: [] });
+    }
+
     const events = await prisma.event.findMany({
+      where: {
+        seasonId: activeSeason.id,
+        status: { in: ['UPCOMING', 'CLOSED'] }
+      },
       include: {
         firstPlace: true,
         secondPlace: true,
@@ -27,7 +39,7 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: [
-        { date: 'desc' } // Most recent first for easier access
+        { date: 'desc' }
       ]
     });
 

@@ -280,6 +280,22 @@ const testEvents = [
 
 async function main() {
   console.log('🏎️  Seeding FantaF1 database...')
+
+  // Create Season 2025
+  console.log('📅 Creating Season 2025...')
+  const season2025 = await prisma.season.upsert({
+    where: { name: '2025' },
+    update: { isActive: true },
+    create: {
+      name: '2025',
+      startDate: new Date('2025-01-01'),
+      endDate: new Date('2025-12-31'),
+      driverCount: 20,
+      scoringType: 'FULL_GRID_DIFF',
+      isActive: true
+    }
+  })
+  console.log(`   ✅ Season 2025 created/updated: ${season2025.id}`)
   
   // Create drivers
   console.log('📝 Creating drivers...')
@@ -380,7 +396,10 @@ async function main() {
     
     // Create new event
     const createdEvent = await prisma.event.create({
-      data: event
+      data: {
+        ...event,
+        seasonId: season2025.id
+      }
     })
     
     console.log(`   ✅ Created: ${createdEvent.name} (${createdEvent.type}) - ${createdEvent.date.toISOString()}`)  }

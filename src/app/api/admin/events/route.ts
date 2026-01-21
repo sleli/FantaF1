@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation } from '@/lib/validation/event';
+import { getActiveSeason } from '@/lib/season';
 
 // GET /api/admin/events - Lista tutti gli eventi
 export async function GET(request: NextRequest) {
@@ -19,11 +20,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const type = searchParams.get('type');
+    const showAll = searchParams.get('all') === 'true';
 
     // Costruisci il filtro
     const where: any = {};
     if (status) where.status = status;
     if (type) where.type = type;
+
+    if (!showAll) {
+      const activeSeason = await getActiveSeason();
+      
+      if (activeSeason) {
+        where.seasonId = activeSeason.id;
+      } else {
+        // Se non c'è stagione attiva, non ritornare nulla
+        return NextResponse.json({ events: [] });
+      }
+    }
 
     const events = await prisma.event.findMany({
       where,

@@ -75,6 +75,7 @@ model Driver {
   firstPlacePredictions  Prediction[] @relation("FirstPlace")
   secondPlacePredictions Prediction[] @relation("SecondPlace")
   thirdPlacePredictions  Prediction[] @relation("ThirdPlace")
+  seasons                Season[]     @relation("SeasonDrivers")
 
   @@map("drivers")
 }
@@ -94,6 +95,9 @@ model Event {
   firstPlace    Driver?      @relation("FirstPlaceResult", fields: [firstPlaceId], references: [id])
   secondPlace   Driver?      @relation("SecondPlaceResult", fields: [secondPlaceId], references: [id])
   thirdPlace    Driver?      @relation("ThirdPlaceResult", fields: [thirdPlaceId], references: [id])
+  seasonId      String?
+  season        Season?      @relation(fields: [seasonId], references: [id])
+  results       Json?
   predictions   Prediction[]
 
   @@map("events")
@@ -105,23 +109,45 @@ model Prediction {
   eventId       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  firstPlaceId  String
-  secondPlaceId String
-  thirdPlaceId  String
+  firstPlaceId  String?
+  secondPlaceId String?
+  thirdPlaceId  String?
+  rankings      Json?
   points        Float?
   event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  firstPlace    Driver   @relation("FirstPlace", fields: [firstPlaceId], references: [id])
-  secondPlace   Driver   @relation("SecondPlace", fields: [secondPlaceId], references: [id])
-  thirdPlace    Driver   @relation("ThirdPlace", fields: [thirdPlaceId], references: [id])
+  firstPlace    Driver?  @relation("FirstPlace", fields: [firstPlaceId], references: [id])
+  secondPlace   Driver?  @relation("SecondPlace", fields: [secondPlaceId], references: [id])
+  thirdPlace    Driver?  @relation("ThirdPlace", fields: [thirdPlaceId], references: [id])
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("predictions")
 }
 
+model Season {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean     @default(false)
+  driverCount Int         @default(20)
+  scoringType ScoringType @default(LEGACY_TOP3)
+  events      Event[]
+  drivers     Driver[]    @relation("SeasonDrivers")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("seasons")
+}
+
 enum UserRole {
   ADMIN
   PLAYER
+}
+
+enum ScoringType {
+  LEGACY_TOP3
+  FULL_GRID_DIFF
 }
 
 enum EventType {

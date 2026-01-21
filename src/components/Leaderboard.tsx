@@ -35,6 +35,9 @@ type Event = {
   type: 'RACE' | 'SPRINT'
   status: string
   date: string
+  season?: {
+      scoringType: string
+  }
 }
 
 interface LeaderboardProps {
@@ -48,6 +51,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
   const [completedEvents, setCompletedEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<'general' | 'event'>('general')
   const [isLoading, setIsLoading] = useState(false)
+  const [activeSeason, setActiveSeason] = useState<{ name: string; scoringType: string } | null>(null)
 
   useEffect(() => {
     loadGeneralLeaderboard()
@@ -61,6 +65,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
       if (response.ok) {
         const data = await response.json()
         setGeneralLeaderboard(data.leaderboard)
+        setActiveSeason(data.season)
       }
     } catch (error) {
       console.error('Errore nel caricamento classifica generale:', error)
@@ -285,7 +290,15 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                   ) : (
                     <div className="space-y-4">
                       {eventLeaderboard
-                        .sort((a, b) => (b.points || 0) - (a.points || 0))
+                        .sort((a, b) => {
+                            const scoringType = selectedEvent?.season?.scoringType || 'LEGACY_TOP3';
+                            if (scoringType === 'FULL_GRID_DIFF') {
+                                // For FULL_GRID_DIFF, null points should be last (max penalty)
+                                // But backend usually returns points for calculated events.
+                                return (a.points || 9999) - (b.points || 9999)
+                            }
+                            return (b.points || 0) - (a.points || 0)
+                        })
                         .map((entry, index) => (
                           <div
                             key={entry.user.id}

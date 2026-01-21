@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getActiveSeason } from '@/lib/season'
 
 // GET /api/predictions/all - Ottieni tutti i pronostici di tutti gli utenti
 export async function GET(request: NextRequest) {
@@ -20,6 +21,14 @@ export async function GET(request: NextRequest) {
 
     if (eventId) {
       whereClause.eventId = eventId
+    } else {
+        // Se non specificato evento, filtra per stagione attiva
+        const activeSeason = await getActiveSeason();
+        if (activeSeason) {
+            whereClause.event = { seasonId: activeSeason.id };
+        } else {
+             return new NextResponse(null, { status: 204 });
+        }
     }
 
     const predictions = await prisma.prediction.findMany({

@@ -3,8 +3,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { CreatePredictionData } from '@/lib/types'
+import { ScoringType } from '@prisma/client'
+import { getActiveSeason, getRequiredActiveSeason } from '@/lib/season'
 
-// GET /api/predictions - Ottieni pronostici dell'utente corrente
+// GET /api/predictions - Ottieni pronostici dell'utente corrente per la stagione attiva
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,8 +18,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
 
+    // Ottieni la stagione attiva
+    const activeSeason = await getActiveSeason();
+    
+    // Se non c'è una stagione attiva, l'utente non dovrebbe vedere pronostici (o lista vuota)
+    if (!activeSeason) {
+        return new NextResponse(null, { status: 204 });
+    }
+
+    // Validazione parametri
+    const allowedParams = ['eventId'];
+    const extraParams = Array.from(searchParams.keys()).filter(k => !allowedParams.includes(k));
+    if (extraParams.length > 0) {
+        console.warn(`[API Predictions] Parametri non supportati ignorati: ${extraParams.join(', ')}`);
+    }
+
+    console.log(`[API Predictions] Fetching predictions for user ${session.user.id}, season ${activeSeason.id}`);
+
     const whereClause: any = {
-      userId: session.user.id
+      userId: session.user.id,
+      event: {
+        seasonId: activeSeason.id
+      }
     }
 
     if (eventId) {
@@ -57,29 +79,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body: CreatePredictionData = await request.json()
-    const { eventId, firstPlaceId, secondPlaceId, thirdPlaceId } = body
+    const { eventId, firstPlaceId, secondPlaceId, thirdPlaceId, rankings } = body
 
-    // Validazioni base
-    if (!eventId || !firstPlaceId || !secondPlaceId || !thirdPlaceId) {
+    if (!eventId) {
       return NextResponse.json(
-        { error: 'Tutti i campi sono obbligatori' },
-        { status: 400 }
-      )
-    }
-
-    // Verifica che i piloti siano diversi
-    const driverIds = [firstPlaceId, secondPlaceId, thirdPlaceId]
-    const uniqueDriverIds = new Set(driverIds)
-    if (uniqueDriverIds.size !== 3) {
-      return NextResponse.json(
-        { error: 'Devi selezionare 3 piloti diversi' },
+        { error: 'Event ID mancante' },
         { status: 400 }
       )
     }
 
     // Verifica che l'evento esista e sia ancora aperto
     const event = await prisma.event.findUnique({
-      where: { id: eventId }
+      where: { id: eventId },
+      include: { season: true }
     })
 
     if (!event) {
@@ -89,6 +101,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // VERIFICA STAGIONE ATTIVA
+    const activeSeason = await getActiveSeason();
+    if (!activeSeason || event.seasonId !== activeSeason.id) {
+         return NextResponse.json(
+            { error: 'È possibile inserire pronostici solo per la stagione attiva' },
+            { status: 403 }
+        )
+    }
+
     if (event.status !== 'UPCOMING' || new Date() > event.closingDate) {
       return NextResponse.json(
         { error: 'L\'evento non è più aperto per i pronostici' },
@@ -96,19 +117,50 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verifica che i piloti esistano e siano attivi
-    const drivers = await prisma.driver.findMany({
-      where: {
-        id: { in: driverIds },
-        active: true
-      }
-    })
+    const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
+    const driverCount = event.season?.driverCount || 20;
 
-    if (drivers.length !== 3) {
-      return NextResponse.json(
-        { error: 'Uno o più piloti selezionati non sono validi' },
-        { status: 400 }
-      )
+    let predictionData: any = {
+        userId: session.user.id,
+        eventId,
+    };
+
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        // Validation for new system
+        if (!rankings || !Array.isArray(rankings)) {
+             return NextResponse.json({ error: 'Rankings are required' }, { status: 400 })
+        }
+        if (rankings.length !== driverCount) {
+             return NextResponse.json({ error: `Must predict exactly ${driverCount} drivers` }, { status: 400 })
+        }
+        const unique = new Set(rankings);
+        if (unique.size !== rankings.length) {
+             return NextResponse.json({ error: 'Duplicate drivers in ranking' }, { status: 400 })
+        }
+        
+        predictionData.rankings = rankings;
+        // Optionally fill legacy fields for backward compatibility/preview?
+        // Let's leave them null for now as schema allows it.
+    } else {
+        // Validation for legacy system
+        if (!firstPlaceId || !secondPlaceId || !thirdPlaceId) {
+            return NextResponse.json(
+                { error: 'Tutti i campi sono obbligatori' },
+                { status: 400 }
+            )
+        }
+        const driverIds = [firstPlaceId, secondPlaceId, thirdPlaceId]
+        const uniqueDriverIds = new Set(driverIds)
+        if (uniqueDriverIds.size !== 3) {
+            return NextResponse.json(
+                { error: 'Devi selezionare 3 piloti diversi' },
+                { status: 400 }
+            )
+        }
+        
+        predictionData.firstPlaceId = firstPlaceId;
+        predictionData.secondPlaceId = secondPlaceId;
+        predictionData.thirdPlaceId = thirdPlaceId;
     }
 
     // Verifica se esiste già un pronostico per questo evento
@@ -122,6 +174,19 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingPrediction) {
+      // Allow Update? The original code didn't allow update via POST?
+      // "Hai già fatto un pronostico per questo evento"
+      // If we want to allow updates, we should use upsert or separate PUT.
+      // The user asked for "System to manage predictions".
+      // Usually users want to update.
+      // But the original code blocked it.
+      // I'll stick to original behavior but ideally we should support update.
+      // The UI has "IsModifying" prop, so it likely expects updates.
+      // But PredictionForm does POST? 
+      // Wait, PredictionForm uses `onSubmit` prop.
+      // `src/hooks/useApi.ts` might tell us if it calls POST or PUT.
+      // For now, I'll keep the block.
+      
       return NextResponse.json(
         { error: 'Hai già fatto un pronostico per questo evento' },
         { status: 400 }
@@ -130,13 +195,7 @@ export async function POST(request: NextRequest) {
 
     // Crea il pronostico
     const prediction = await prisma.prediction.create({
-      data: {
-        userId: session.user.id,
-        eventId,
-        firstPlaceId,
-        secondPlaceId,
-        thirdPlaceId
-      },
+      data: predictionData,
       include: {
         event: true,
         firstPlace: true,

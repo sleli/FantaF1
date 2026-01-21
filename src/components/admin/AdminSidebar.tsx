@@ -80,6 +80,12 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
       emoji: '📅'
     },
     {
+      name: 'Stagioni',
+      href: '/admin/seasons',
+      icon: CalendarIcon,
+      emoji: '📆'
+    },
+    {
       name: 'Bulk Pronostici',
       href: '/admin/bulk-predictions',
       icon: ChartPieIcon,

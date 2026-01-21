@@ -22,10 +22,10 @@ export async function isAdmin(req: NextRequest) {
  * Middleware wrapper for API routes that require authentication
  */
 export function withAuthAPI(
-  handler: (req: NextRequest) => Promise<NextResponse> | NextResponse,
+  handler: (req: NextRequest, ...args: any[]) => Promise<NextResponse> | NextResponse,
   options?: { requiredRole?: UserRole }
 ) {
-  return async function (req: NextRequest) {
+  return async function (req: NextRequest, ...args: any[]) {
     const token = await getToken({ req });
     const isAuth = !!token;
     
@@ -43,7 +43,7 @@ export function withAuthAPI(
       );
     }
 
-    return handler(req);
+    return handler(req, ...args);
   };
 }
 

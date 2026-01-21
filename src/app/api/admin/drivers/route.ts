@@ -1,15 +1,35 @@
 import { NextRequest } from 'next/server';
 import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
+import { getActiveSeason } from '@/lib/season';
 
 // Admin-only API route to manage drivers
 async function handler(req: NextRequest) {
   // GET /api/admin/drivers - List all drivers
   if (req.method === 'GET') {
     try {
+      const { searchParams } = new URL(req.url);
+      const showAll = searchParams.get('all') === 'true';
+
+      const whereClause: any = {};
+      
+      if (!showAll) {
+          const activeSeason = await getActiveSeason();
+          if (activeSeason) {
+              whereClause.seasons = { some: { id: activeSeason.id } };
+          } else {
+              // No active season, return empty list
+              return apiResponse({ drivers: [] });
+          }
+      }
+
       const drivers = await prisma.driver.findMany({
+        where: whereClause,
         orderBy: {
           name: 'asc'
+        },
+        include: {
+          seasons: true
         }
       });
       
@@ -41,14 +61,27 @@ async function handler(req: NextRequest) {
         return apiResponse({ error: 'A driver with this number already exists' }, 409);
       }
       
+      // Find active season
+      const activeSeason = await prisma.season.findFirst({
+        where: { isActive: true }
+      });
+
+      const driverData: any = {
+        name: data.name,
+        team: data.team,
+        number: data.number,
+        active: data.active !== undefined ? data.active : true
+      };
+
+      if (activeSeason) {
+        driverData.seasons = {
+          connect: { id: activeSeason.id }
+        };
+      }
+
       // Create the new driver
       const driver = await prisma.driver.create({
-        data: {
-          name: data.name,
-          team: data.team,
-          number: data.number,
-          active: data.active !== undefined ? data.active : true
-        }
+        data: driverData
       });
       
       return apiResponse({ driver }, 201);

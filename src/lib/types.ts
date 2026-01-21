@@ -37,15 +37,17 @@ export type CreateEventData = {
 
 export type CreatePredictionData = {
   eventId: string
-  firstPlaceId: string
-  secondPlaceId: string
-  thirdPlaceId: string
+  firstPlaceId?: string
+  secondPlaceId?: string
+  thirdPlaceId?: string
+  rankings?: string[]
 }
 
 export type UpdateEventResultsData = {
-  firstPlaceId: string
-  secondPlaceId: string
-  thirdPlaceId: string
+  firstPlaceId?: string
+  secondPlaceId?: string
+  thirdPlaceId?: string
+  results?: string[]
 }
 
 // Tipi per classifiche

@@ -310,9 +310,10 @@ export default function PredictionsPage() {
                 drivers={drivers}
                 onSubmit={handleUpdatePrediction}
                 initialPrediction={{
-                  firstPlaceId: editingPrediction.firstPlaceId,
-                  secondPlaceId: editingPrediction.secondPlaceId,
-                  thirdPlaceId: editingPrediction.thirdPlaceId
+                  firstPlaceId: editingPrediction.firstPlaceId || undefined,
+                  secondPlaceId: editingPrediction.secondPlaceId || undefined,
+                  thirdPlaceId: editingPrediction.thirdPlaceId || undefined,
+                  rankings: (editingPrediction.rankings as string[]) || undefined
                 }}
                 isLoading={isLoading}
                 isModifying={true}

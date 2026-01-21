@@ -43,7 +43,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch users stats
-      const usersResponse = await fetch('/api/admin/users');
+      const usersResponse = await fetch('/api/admin/users?activeEvent=true');
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         const users = usersData.users || [];
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch events stats
-      const eventsResponse = await fetch('/api/admin/events');
+      const eventsResponse = await fetch('/api/admin/events?active=true');
       if (eventsResponse.ok) {
         const eventsData = await eventsResponse.json();
         const events = eventsData.events || [];
@@ -100,14 +100,14 @@ export default function AdminDashboard() {
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Eventi Attivi</h2>
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Evento Attivo</h2>
           <p className="text-3xl font-bold mt-2 text-purple-600">
             {isLoading ? '...' : stats.totalEvents}
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Pronostici Totali</h2>
+          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Pronostici (Attivo)</h2>
           <p className="text-3xl font-bold mt-2 text-orange-600">
             {isLoading ? '...' : stats.totalPredictions}
           </p>
