@@ -85,85 +85,79 @@ describe('PredictionForm View Modes', () => {
     localStorage.clear()
   })
 
-  it('renders Top 3 mode by default', () => {
+  it('renders Legacy Top 3 mode correctly', () => {
+    const legacyEvent = { ...mockEvent, season: { scoringType: ScoringType.LEGACY_TOP3 } }
     render(
       <PredictionForm 
-        event={mockEvent} 
+        event={legacyEvent} 
         drivers={mockDrivers} 
         onSubmit={jest.fn()} 
         isLoading={false} 
       />
     )
     
-    expect(screen.getByText('Top 3')).toHaveClass('bg-white')
     expect(screen.getByText('🥇 1° Posto (25 punti)')).toBeInTheDocument()
     expect(screen.queryByTestId('sortable-list')).not.toBeInTheDocument()
   })
 
-  it('switches to Grid mode', () => {
+  it('renders Full Grid Diff mode correctly', () => {
+    const gridEvent = { ...mockEvent, season: { scoringType: ScoringType.FULL_GRID_DIFF } }
     render(
       <PredictionForm 
-        event={mockEvent} 
+        event={gridEvent} 
         drivers={mockDrivers} 
         onSubmit={jest.fn()} 
         isLoading={false} 
       />
     )
     
-    fireEvent.click(screen.getByText('Griglia Completa'))
-    
-    expect(screen.getByText('Griglia Completa')).toHaveClass('bg-white')
     expect(screen.getByTestId('sortable-list')).toBeInTheDocument()
     expect(screen.queryByText('🥇 1° Posto (25 punti)')).not.toBeInTheDocument()
   })
 
-  it('syncs Top 3 selection to Grid', () => {
+  it('pre-fills Legacy prediction correctly', () => {
+    const legacyEvent = { ...mockEvent, season: { scoringType: ScoringType.LEGACY_TOP3 } }
+    const initialPrediction = {
+      firstPlaceId: 'd1',
+      secondPlaceId: 'd2',
+      thirdPlaceId: 'd3'
+    }
+    
     render(
       <PredictionForm 
-        event={mockEvent} 
+        event={legacyEvent} 
         drivers={mockDrivers} 
         onSubmit={jest.fn()} 
         isLoading={false} 
+        initialPrediction={initialPrediction}
       />
     )
     
-    // Select Driver 1 for 1st place
     const selects = screen.getAllByRole('combobox')
-    fireEvent.change(selects[0], { target: { value: 'd1' } })
-    
-    // Switch to Grid
-    fireEvent.click(screen.getByText('Griglia Completa'))
-    
-    // Check if d1 is first in the list
-    const listItems = screen.getByTestId('sortable-list').children
-    expect(listItems[0]).toHaveTextContent('d1')
+    expect(selects[0]).toHaveValue('d1')
+    expect(selects[1]).toHaveValue('d2')
+    expect(selects[2]).toHaveValue('d3')
   })
 
-  it('syncs Grid order to Top 3', () => {
+  it('pre-fills Grid prediction correctly', () => {
+    const gridEvent = { ...mockEvent, season: { scoringType: ScoringType.FULL_GRID_DIFF } }
+    // rankings: d3 first, d1 second...
+    const initialPrediction = {
+      rankings: ['d3', 'd1', 'd2', 'd4']
+    }
+    
     render(
       <PredictionForm 
-        event={mockEvent} 
+        event={gridEvent} 
         drivers={mockDrivers} 
         onSubmit={jest.fn()} 
         isLoading={false} 
+        initialPrediction={initialPrediction}
       />
     )
     
-    // Switch to Grid
-    fireEvent.click(screen.getByText('Griglia Completa'))
-    
-    // Default order is randomized or sorted. 
-    // In our component getInitialOrder sorts by number if no history.
-    // Driver 1 (d1) is number 1, so it should be first.
-    // Let's click d2 (number 2) to move it to top (as per our mock).
-    
-    fireEvent.click(screen.getByText('d2'))
-    
-    // Switch back to Top 3
-    fireEvent.click(screen.getByText('Top 3'))
-    
-    // Check if 1st place select has d2 selected
-    const selects = screen.getAllByRole('combobox')
-    expect(selects[0]).toHaveValue('d2')
+    const listItems = screen.getByTestId('sortable-list').children
+    expect(listItems[0]).toHaveTextContent('d3')
+    expect(listItems[1]).toHaveTextContent('d1')
   })
 })
