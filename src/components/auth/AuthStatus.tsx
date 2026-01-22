@@ -1,14 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut, signIn } from 'next-auth/react';
 import Link from 'next/link';
-import { ChevronDownIcon, UserIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { UserIcon } from '@heroicons/react/24/outline';
 
 export default function AuthStatus() {
   const { data: session, status } = useSession();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
   const isAdmin = session?.user?.role === 'ADMIN';
@@ -16,24 +13,6 @@ export default function AuthStatus() {
   // Handle direct Google sign in
   const handleGoogleSignIn = async () => {
     await signIn('google', { callbackUrl: '/' });
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Handle logout
-  const handleLogout = () => {
-    setIsDropdownOpen(false);
-    signOut({ callbackUrl: '/' });
   };
 
   if (isLoading) {
@@ -44,91 +23,23 @@ export default function AuthStatus() {
 
   if (isAuthenticated) {
     return (
-      <div className="relative" ref={dropdownRef}>
-        {/* Mobile: Hidden - Navigation handled by MobileMenu */}
-        <div className="hidden">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-f1-red focus:ring-offset-2 transition-colors touch-target"
-            aria-label="User menu"
-          >
-            {session.user.image ? (
-              <img
-                src={session.user.image}
-                alt={session.user.name || 'Profile'}
-                className="w-8 h-8 rounded-full"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <UserIcon className="w-5 h-5 text-gray-600" />
-              </div>
-            )}
-            <ChevronDownIcon className={`w-4 h-4 text-gray-600 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Mobile Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-              {/* User Info */}
-              <div className="px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  {session.user.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session.user.name || 'Profile'}
-                      className="w-10 h-10 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                      <UserIcon className="w-6 h-6 text-gray-600" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {session.user.name}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {session.user.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Menu Items */}
-              <div className="py-1">
-                <Link
-                  href="/profile"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors touch-button"
-                >
-                  <UserIcon className="w-5 h-5 text-gray-500" />
-                  Profilo
-                </Link>
-
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors touch-button"
-                  >
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-500" />
-                    Admin Panel
-                  </Link>
-                )}
-
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors touch-button"
-                >
-                  <ArrowRightOnRectangleIcon className="w-5 h-5 text-red-500" />
-                  Logout
-                </button>
-              </div>
+      <div className="flex items-center gap-4">
+        {/* Mobile: Avatar Only (Link to Profile) */}
+        <Link href="/profile" className="md:hidden">
+          {session.user.image ? (
+            <img
+              src={session.user.image}
+              alt={session.user.name || 'Profile'}
+              className="w-8 h-8 rounded-full border border-gray-200"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center border border-gray-200">
+              <UserIcon className="w-5 h-5 text-gray-600" />
             </div>
           )}
-        </div>
+        </Link>
 
-        {/* Desktop: Original Layout */}
+        {/* Desktop: Full Menu */}
         <div className="hidden md:flex items-center gap-4">
           <div className="flex items-center gap-2">
             {session.user.image && (
@@ -145,7 +56,7 @@ export default function AuthStatus() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md transition-colors"
+                className="py-2 px-3 bg-f1-red hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors shadow-sm"
               >
                 Admin
               </Link>
@@ -153,14 +64,14 @@ export default function AuthStatus() {
 
             <Link
               href="/profile"
-              className="py-2 px-3 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md transition-colors"
+              className="py-2 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-md transition-colors shadow-sm"
             >
               Profilo
             </Link>
 
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="py-2 px-3 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors"
+              className="py-2 px-3 bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium rounded-md transition-colors shadow-sm"
             >
               Logout
             </button>
@@ -173,9 +84,9 @@ export default function AuthStatus() {
   return (
     <button
       onClick={handleGoogleSignIn}
-      className="inline-flex items-center gap-2 py-3 px-4 sm:px-6 bg-gradient-to-r from-f1-red to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 touch-button"
+      className="inline-flex items-center gap-2 py-2 px-4 bg-f1-red hover:bg-red-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 active:scale-95"
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" className="flex-shrink-0">
+      <svg width="18" height="18" viewBox="0 0 24 24" className="flex-shrink-0">
         <path
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
           fill="currentColor"
