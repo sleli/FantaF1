@@ -33,3 +33,13 @@ Il sistema è basato su Next.js con database PostgreSQL gestito tramite Prisma O
 
 ## Migrazione
 È disponibile uno script `scripts/migrate-seasons.ts` per inizializzare il database con la struttura a stagioni, migrando gli eventi esistenti in una stagione "Legacy".
+
+## Refactoring (Gennaio 2026)
+### Scoring Engine 2.0
+Il modulo di calcolo dei punteggi (`src/lib/scoring.ts`) è stato rifattorizzato utilizzando il **Strategy Pattern** per migliorare manutenibilità e scalabilità.
+
+- **ScoringStrategy Interface**: Definisce il contratto per gli algoritmi di calcolo.
+- **Implementazioni**:
+  - `LegacyTop3Strategy`: Logica per stagioni classiche (podio).
+  - `FullGridDiffStrategy`: Logica per stagioni a griglia completa (differenza assoluta).
+- **Centralizzazione Validazione**: Le regole di validazione dei pronostici sono ora centralizzate in `validatePrediction` e `validateEventResults`, eliminando duplicazioni nelle API.

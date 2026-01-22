@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { CreatePredictionData } from '@/lib/types'
 import { ScoringType } from '@prisma/client'
 import { getActiveSeason, getRequiredActiveSeason } from '@/lib/season'
+import { validatePrediction } from '@/lib/scoring'
 
 // GET /api/predictions - Ottieni pronostici dell'utente corrente per la stagione attiva
 export async function GET(request: NextRequest) {
@@ -135,42 +136,19 @@ export async function POST(request: NextRequest) {
     };
 
     if (scoringType === ScoringType.FULL_GRID_DIFF) {
-        // Validation for new system
-        if (!rankings || !Array.isArray(rankings)) {
-             return NextResponse.json({ error: 'Rankings are required' }, { status: 400 })
-        }
-        // Validation relaxed to allow partial predictions
-        // if (rankings.length !== driverCount) {
-        //      return NextResponse.json({ error: `Must predict exactly ${driverCount} drivers` }, { status: 400 })
-        // }
-        const unique = new Set(rankings);
-        if (unique.size !== rankings.length) {
-             return NextResponse.json({ error: 'Duplicate drivers in ranking' }, { status: 400 })
-        }
-        
         predictionData.rankings = rankings;
-        // Optionally fill legacy fields for backward compatibility/preview?
-        // Let's leave them null for now as schema allows it.
     } else {
-        // Validation for legacy system
-        if (!firstPlaceId || !secondPlaceId || !thirdPlaceId) {
-            return NextResponse.json(
-                { error: 'Tutti i campi sono obbligatori' },
-                { status: 400 }
-            )
-        }
-        const driverIds = [firstPlaceId, secondPlaceId, thirdPlaceId]
-        const uniqueDriverIds = new Set(driverIds)
-        if (uniqueDriverIds.size !== 3) {
-            return NextResponse.json(
-                { error: 'Devi selezionare 3 piloti diversi' },
-                { status: 400 }
-            )
-        }
-        
         predictionData.firstPlaceId = firstPlaceId;
         predictionData.secondPlaceId = secondPlaceId;
         predictionData.thirdPlaceId = thirdPlaceId;
+    }
+
+    // Use centralized validation
+    if (!validatePrediction(predictionData, scoringType)) {
+         return NextResponse.json(
+            { error: 'Dati pronostico non validi. Controlla che non ci siano duplicati e che tutti i campi richiesti siano compilati.' },
+            { status: 400 }
+        )
     }
 
     // Verifica se esiste già un pronostico per questo evento
@@ -207,7 +185,11 @@ export async function POST(request: NextRequest) {
     const prediction = await prisma.prediction.create({
       data: predictionData,
       include: {
-        event: true,
+        event: {
+          include: {
+            season: true
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true

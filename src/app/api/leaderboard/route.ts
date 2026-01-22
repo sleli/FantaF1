@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateLeaderboard } from '@/lib/scoring'
+import { calculateLeaderboard, sortPredictions } from '@/lib/scoring'
 import { ScoringType } from '@prisma/client'
 import { getActiveSeason } from '@/lib/season'
 
@@ -53,16 +53,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Sort predictions based on scoring type
-      const sortedPredictions = event.predictions.sort((a, b) => {
-          const pointsA = a.points ?? (scoringType === ScoringType.FULL_GRID_DIFF ? 1000 : -1);
-          const pointsB = b.points ?? (scoringType === ScoringType.FULL_GRID_DIFF ? 1000 : -1);
-          
-          if (scoringType === ScoringType.FULL_GRID_DIFF) {
-              return pointsA - pointsB;
-          } else {
-              return pointsB - pointsA;
-          }
-      });
+      const sortedPredictions = sortPredictions(event.predictions, scoringType);
 
       const eventLeaderboard = sortedPredictions.map(prediction => ({
         user: prediction.user,

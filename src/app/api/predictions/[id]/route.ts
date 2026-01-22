@@ -128,7 +128,11 @@ export async function PUT(
                 updatedAt: new Date()
             },
             include: {
-                event: true
+                event: {
+                    include: {
+                        season: true
+                    }
+                }
             }
         })
 
@@ -181,7 +185,11 @@ export async function PUT(
                 updatedAt: new Date()
             },
             include: {
-                event: true,
+                event: {
+                    include: {
+                        season: true
+                    }
+                },
                 firstPlace: true,
                 secondPlace: true,
                 thirdPlace: true

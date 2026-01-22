@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation, eventStatusValidation, eventUpdateValidation } from '@/lib/validation/event';
-import { calculateScore } from '@/lib/scoring';
+import { calculateScore, validateEventResults, validatePrediction } from '@/lib/scoring';
 import { ScoringType } from '@prisma/client';
 
 // Helper function per calcolare automaticamente i punteggi di un evento
@@ -32,14 +32,8 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
   const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
 
   // Verifica validità dati in base al tipo di scoring
-  if (scoringType === ScoringType.FULL_GRID_DIFF) {
-    if (!event.results) {
-       throw new Error('Risultati griglia completa non trovati');
-    }
-  } else {
-    if (!event.firstPlace || !event.secondPlace || !event.thirdPlace) {
-      throw new Error('Risultati podio non trovati');
-    }
+  if (!validateEventResults(event, scoringType)) {
+      throw new Error('Risultati evento mancanti o incompleti per il tipo di scoring');
   }
 
   const eventResult = {
@@ -52,12 +46,8 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
   const scoreUpdates = [];
 
   for (const prediction of event.predictions) {
-    // Per FULL_GRID_DIFF servono i rankings, per LEGACY servono i posti specifici
-    if (scoringType === ScoringType.FULL_GRID_DIFF) {
-       if (!prediction.rankings) continue;
-    } else {
-       if (!prediction.firstPlace || !prediction.secondPlace || !prediction.thirdPlace) continue;
-    }
+    // Usa validazione centralizzata
+    if (!validatePrediction(prediction, scoringType)) continue;
 
     const predictionResult = {
       firstPlaceId: prediction.firstPlaceId,

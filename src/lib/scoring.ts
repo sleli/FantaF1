@@ -1,49 +1,145 @@
 import { EventType, ScoringType } from '@prisma/client'
 import { POINTS } from './types'
 
+// --- Constants ---
+export const MAX_PENALTY = 20;
+export const MISSING_DATA_PENALTY = 1000;
+
+// --- Types ---
 export type PredictionResult = {
   firstPlaceId?: string | null
   secondPlaceId?: string | null
   thirdPlaceId?: string | null
-  rankings?: any
+  rankings?: string[] | any 
 }
 
 export type EventResult = {
   firstPlaceId?: string | null
   secondPlaceId?: string | null
   thirdPlaceId?: string | null
-  results?: any
+  results?: string[] | any
 }
 
-/**
- * Calcola il punteggio basato sulla differenza assoluta (nuovo sistema)
- * Punteggio più basso = migliore
- */
-export function calculateAbsoluteDifferenceScore(
+export type LeaderboardUser = {
+  id: string;
+  name: string | null;
+  email: string | null;
+};
+
+export type LeaderboardEntry = {
+  user: LeaderboardUser;
+  totalPoints: number;
+  eventCount: number;
+  averagePoints: number;
+};
+
+// --- Strategy Pattern Implementation ---
+
+export interface ScoringStrategy {
+  calculate(prediction: PredictionResult, result: EventResult, eventType: EventType): number;
+}
+
+export class LegacyTop3Strategy implements ScoringStrategy {
+  calculate(prediction: PredictionResult, result: EventResult, eventType: EventType): number {
+    const pointsConfig = eventType === 'RACE' ? POINTS.RACE : POINTS.SPRINT;
+    let totalPoints = 0;
+
+    // Helper to get safe strings
+    const p1 = prediction.firstPlaceId || '';
+    const p2 = prediction.secondPlaceId || '';
+    const p3 = prediction.thirdPlaceId || '';
+    
+    const r1 = result.firstPlaceId || '';
+    const r2 = result.secondPlaceId || '';
+    const r3 = result.thirdPlaceId || '';
+
+    const predictionArray = [p1, p2, p3];
+    const resultArray = [r1, r2, r3];
+
+    // Check exact matches
+    if (p1 === r1) totalPoints += pointsConfig.FIRST_CORRECT;
+    if (p2 === r2) totalPoints += pointsConfig.SECOND_CORRECT;
+    if (p3 === r3) totalPoints += pointsConfig.THIRD_CORRECT;
+
+    // Check wrong positions
+    predictionArray.forEach((predId, idx) => {
+      const resIdx = resultArray.indexOf(predId);
+      // If driver is in result but not in the predicted position
+      if (resIdx !== -1 && resIdx !== idx) {
+        totalPoints += pointsConfig.PRESENT_WRONG_POSITION;
+      }
+    });
+
+    return totalPoints;
+  }
+}
+
+export class FullGridDiffStrategy implements ScoringStrategy {
+  calculate(prediction: PredictionResult, result: EventResult, eventType: EventType): number {
+    const predRankings = (prediction.rankings as string[]) || [];
+    const resRankings = (result.results as string[]) || [];
+
+    // Delegate core calculation to helper for reusability
+    let score = calculateAbsoluteDifferenceScoreHelper(predRankings, resRankings);
+
+    // Sprint penalty reduction (since lower score is better, half points = half penalty)
+    if (eventType === 'SPRINT') {
+      score = score * 0.5;
+    }
+
+    return score;
+  }
+}
+
+export class ScoringCalculator {
+  private static strategies: Record<ScoringType, ScoringStrategy> = {
+    [ScoringType.LEGACY_TOP3]: new LegacyTop3Strategy(),
+    [ScoringType.FULL_GRID_DIFF]: new FullGridDiffStrategy(),
+  };
+
+  static getStrategy(type: ScoringType): ScoringStrategy {
+    return this.strategies[type] || this.strategies[ScoringType.LEGACY_TOP3];
+  }
+
+  static calculate(
+    prediction: PredictionResult, 
+    result: EventResult, 
+    eventType: EventType, 
+    scoringType: ScoringType
+  ): number {
+    return this.getStrategy(scoringType).calculate(prediction, result, eventType);
+  }
+}
+
+// --- Helper Functions ---
+
+function calculateAbsoluteDifferenceScoreHelper(
   predictionRankings: string[],
   resultRankings: string[]
 ): number {
-  let score = 0
-  
-  // Se mancano dati, penalità massima? Per ora 0 o gestito a monte
-  if (!predictionRankings || !resultRankings) return 1000 // Penalità alta
+  if (!predictionRankings || !resultRankings || predictionRankings.length === 0 || resultRankings.length === 0) {
+    return MISSING_DATA_PENALTY;
+  }
 
+  let score = 0;
   resultRankings.forEach((driverId, actualIndex) => {
-    const predictedIndex = predictionRankings.indexOf(driverId)
+    const predictedIndex = predictionRankings.indexOf(driverId);
     if (predictedIndex !== -1) {
-      score += Math.abs(predictedIndex - actualIndex)
+      score += Math.abs(predictedIndex - actualIndex);
     } else {
-      // Pilota non pronosticato (non dovrebbe succedere con griglia completa)
-      // Penalità: posizione max (20)
-      score += 20 
+      // Driver not predicted -> Max penalty
+      score += MAX_PENALTY;
     }
-  })
+  });
 
-  return score
+  return score;
 }
 
+// --- Exported Functions (Public API) ---
+
 /**
- * Wrapper principale per il calcolo punteggi
+ * Main wrapper for score calculation.
+ * Uses Strategy Pattern internally.
  */
 export function calculateScore(
   prediction: PredictionResult,
@@ -51,178 +147,164 @@ export function calculateScore(
   eventType: EventType,
   scoringType: ScoringType = ScoringType.LEGACY_TOP3
 ): number {
-  if (scoringType === ScoringType.FULL_GRID_DIFF) {
-    const predRankings = (prediction.rankings as string[]) || []
-    const resRankings = (result.results as string[]) || []
-    
-    // Fallback per migrazione: se non ci sono ranking JSON, usa i vecchi campi se possibile
-    // Ma per il nuovo sistema FULL_GRID_DIFF ci aspettiamo il JSON.
-    
-    let score = calculateAbsoluteDifferenceScore(predRankings, resRankings)
-
-    // Se è una gara SPRINT, dimezza il punteggio (penalità)
-    if (eventType === 'SPRINT') {
-      score = score * 0.5
-    }
-
-    return score
-  }
-
-  // Legacy Logic
-  // Ensure we have strings
-  const legacyPrediction = {
-    firstPlaceId: prediction.firstPlaceId || '',
-    secondPlaceId: prediction.secondPlaceId || '',
-    thirdPlaceId: prediction.thirdPlaceId || ''
-  }
-  const legacyResult = {
-    firstPlaceId: result.firstPlaceId || '',
-    secondPlaceId: result.secondPlaceId || '',
-    thirdPlaceId: result.thirdPlaceId || ''
-  }
-
-  return calculatePoints(legacyPrediction, legacyResult, eventType)
+  return ScoringCalculator.calculate(prediction, result, eventType, scoringType);
 }
 
 /**
- * Calcola i punti per un pronostico confrontandolo con il risultato effettivo (LEGACY)
+ * Calculates absolute difference score.
+ * Kept for backward compatibility and direct usage.
+ */
+export function calculateAbsoluteDifferenceScore(
+  predictionRankings: string[],
+  resultRankings: string[]
+): number {
+  return calculateAbsoluteDifferenceScoreHelper(predictionRankings, resultRankings);
+}
+
+/**
+ * Calculates points (LEGACY wrapper).
  */
 export function calculatePoints(
   prediction: { firstPlaceId: string, secondPlaceId: string, thirdPlaceId: string },
   result: { firstPlaceId: string, secondPlaceId: string, thirdPlaceId: string },
   eventType: EventType
 ): number {
-  const pointsConfig = eventType === 'RACE' ? POINTS.RACE : POINTS.SPRINT
-  let totalPoints = 0
-
-  // Array dei pronostici e risultati per facilitare i controlli
-  const predictionArray = [prediction.firstPlaceId, prediction.secondPlaceId, prediction.thirdPlaceId]
-  const resultArray = [result.firstPlaceId, result.secondPlaceId, result.thirdPlaceId]
-
-  // Controllo posizioni esatte
-  if (prediction.firstPlaceId === result.firstPlaceId) {
-    totalPoints += pointsConfig.FIRST_CORRECT
-  }
-  if (prediction.secondPlaceId === result.secondPlaceId) {
-    totalPoints += pointsConfig.SECOND_CORRECT
-  }
-  if (prediction.thirdPlaceId === result.thirdPlaceId) {
-    totalPoints += pointsConfig.THIRD_CORRECT
-  }
-
-  // Controllo piloti presenti ma in posizione sbagliata
-  predictionArray.forEach((predictedDriverId, predictionIndex) => {
-    const resultIndex = resultArray.indexOf(predictedDriverId)
-    
-    // Se il pilota è presente nel risultato ma in posizione diversa
-    if (resultIndex !== -1 && resultIndex !== predictionIndex) {
-      totalPoints += pointsConfig.PRESENT_WRONG_POSITION
-    }
-  })
-
-  return totalPoints
+  const strategy = new LegacyTop3Strategy();
+  return strategy.calculate(prediction, result, eventType);
 }
 
 /**
- * Valida che un pronostico non abbia piloti duplicati
+ * Validates a prediction based on scoring type.
  */
-export function validatePrediction(prediction: PredictionResult): boolean {
-  const drivers = [prediction.firstPlaceId, prediction.secondPlaceId, prediction.thirdPlaceId]
-  const uniqueDrivers = new Set(drivers)
-  return uniqueDrivers.size === 3
+export function validatePrediction(
+  prediction: PredictionResult, 
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+): boolean {
+  if (scoringType === ScoringType.FULL_GRID_DIFF) {
+    if (!prediction.rankings || !Array.isArray(prediction.rankings)) return false;
+    // Check for duplicates
+    const unique = new Set(prediction.rankings);
+    return unique.size === prediction.rankings.length;
+  }
+
+  // Legacy Top 3 validation
+  const drivers = [prediction.firstPlaceId, prediction.secondPlaceId, prediction.thirdPlaceId];
+  // Ensure all 3 are present (truthy)
+  if (!prediction.firstPlaceId || !prediction.secondPlaceId || !prediction.thirdPlaceId) return false;
+  
+  const uniqueDrivers = new Set(drivers);
+  return uniqueDrivers.size === 3;
 }
 
 /**
- * Calcola la classifica generale basata sui punti totali
+ * Validates if an event has the necessary results for the scoring type.
+ */
+export function validateEventResults(
+  event: { 
+    results?: any; 
+    firstPlaceId?: string | null; 
+    secondPlaceId?: string | null; 
+    thirdPlaceId?: string | null;
+  },
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+): boolean {
+  if (scoringType === ScoringType.FULL_GRID_DIFF) {
+    return !!(event.results && Array.isArray(event.results) && event.results.length > 0);
+  }
+  return !!(event.firstPlaceId && event.secondPlaceId && event.thirdPlaceId);
+}
+
+/**
+ * Calculates the leaderboard from a list of predictions.
  */
 export function calculateLeaderboard(
   predictions: Array<{
-    user: { id: string; name: string | null; email: string | null }
-    points: number | null
+    user: LeaderboardUser;
+    points: number | null;
   }>,
   scoringType: ScoringType = ScoringType.LEGACY_TOP3
-): Array<{
-  user: { id: string; name: string | null; email: string | null }
-  totalPoints: number
-  eventCount: number
-  averagePoints: number
-}> {
-  const userStats = new Map<string, {
-    user: { id: string; name: string | null; email: string | null }
-    totalPoints: number
-    eventCount: number
-  }>()
+): Array<LeaderboardEntry> {
+  const userStats = new Map<string, LeaderboardEntry>();
 
-  // Aggrega i punti per utente
-  predictions.forEach(prediction => {
-    if (prediction.points !== null) {
-      const userId = prediction.user.id
-      const existing = userStats.get(userId)
-      
-      if (existing) {
-        existing.totalPoints += prediction.points
-        existing.eventCount += 1
-      } else {
-        userStats.set(userId, {
-          user: prediction.user,
-          totalPoints: prediction.points,
-          eventCount: 1
-        })
-      }
+  for (const prediction of predictions) {
+    if (prediction.points === null) continue;
+
+    const userId = prediction.user.id;
+    const existing = userStats.get(userId);
+
+    if (existing) {
+      existing.totalPoints += prediction.points;
+      existing.eventCount += 1;
+    } else {
+      userStats.set(userId, {
+        user: prediction.user,
+        totalPoints: prediction.points,
+        eventCount: 1,
+        averagePoints: prediction.points // Initial average
+      });
     }
-  })
+  }
 
-  // Converte in array e calcola la media
-  const leaderboard = Array.from(userStats.values()).map(stats => ({
-    user: stats.user,
-    totalPoints: stats.totalPoints,
-    eventCount: stats.eventCount,
-    averagePoints: stats.eventCount > 0 ? stats.totalPoints / stats.eventCount : 0
-  }))
+  // Finalize averages and convert to array
+  const leaderboard = Array.from(userStats.values()).map(stats => {
+    stats.averagePoints = stats.eventCount > 0 ? stats.totalPoints / stats.eventCount : 0;
+    return stats;
+  });
 
-  // Ordina in base al sistema di punteggio
+  // Sort based on scoring type
   return leaderboard.sort((a, b) => {
     if (scoringType === ScoringType.FULL_GRID_DIFF) {
-      // Punteggio più basso vince (Crescente)
-      return a.totalPoints - b.totalPoints
+      // Lower score wins
+      return a.totalPoints - b.totalPoints;
     } else {
-      // Punteggio più alto vince (Decrescente - Legacy)
-      return b.totalPoints - a.totalPoints
+      // Higher score wins
+      return b.totalPoints - a.totalPoints;
     }
-  })
+  });
 }
 
-/**
- * Verifica se è ancora possibile inviare/modificare pronostici per un evento
- */
 export function canMakePrediction(event: { closingDate: Date; status: string }): boolean {
-  const now = new Date()
-  return event.status === 'UPCOMING' && now < event.closingDate
+  const now = new Date();
+  return event.status === 'UPCOMING' && now < event.closingDate;
 }
 
-/**
- * Formatta una data per la visualizzazione (mostra UTC raw)
- */
 export function formatEventDate(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
-  // Mostra la data UTC esattamente come salvata nel DB
-  return dateObj.toISOString().slice(0, 16).replace('T', ' ')
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+export function getTimeUntilClosing(closingDate: Date): string {
+  const now = new Date();
+  const diff = closingDate.getTime() - now.getTime();
+
+  if (diff <= 0) return 'Chiuso';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return `${days}g ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 /**
- * Calcola il tempo rimanente per chiusura pronostici
+ * Sorts predictions based on points and scoring type.
+ * Handles null points by assigning appropriate penalty/fallback.
  */
-export function getTimeUntilClosing(closingDate: Date): string {
-  const now = new Date()
-  const diff = closingDate.getTime() - now.getTime()
+export function sortPredictions<T extends { points: number | null }>(
+  predictions: T[], 
+  scoringType: ScoringType
+): T[] {
+  return [...predictions].sort((a, b) => {
+    const penalty = scoringType === ScoringType.FULL_GRID_DIFF ? MISSING_DATA_PENALTY : -1;
+    const pointsA = a.points ?? penalty;
+    const pointsB = b.points ?? penalty;
 
-  if (diff <= 0) return 'Chiuso'
-
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-  if (days > 0) return `${days}g ${hours}h`
-  if (hours > 0) return `${hours}h ${minutes}m`
-  return `${minutes}m`
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+      return pointsA - pointsB;
+    } else {
+      return pointsB - pointsA;
+    }
+  });
 }
