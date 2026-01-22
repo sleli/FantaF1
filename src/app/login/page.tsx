@@ -1,12 +1,16 @@
 'use client';
 
 import { signIn, useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Redirect to home if already authenticated
   useEffect(() => {
@@ -21,6 +25,31 @@ export default function Login() {
       callbackUrl: '/',
       redirect: true
     });
+  };
+
+  const handleCredentialsSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Credenziali non valide');
+      } else {
+        router.push('/');
+        router.refresh();
+      }
+    } catch (error) {
+      setError('Si è verificato un errore durante il login');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // If loading, show loading state
@@ -60,6 +89,54 @@ export default function Login() {
           <p className="text-gray-500 text-sm mt-2">
             Sfida i tuoi amici e diventa il campione!
           </p>
+        </div>
+
+        {/* Credentials Login Form */}
+        <form onSubmit={handleCredentialsSignIn} className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red outline-none transition-all"
+              placeholder="nome@esempio.com"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red outline-none transition-all"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          
+          {error && (
+            <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-f1-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Accesso in corso...' : 'Accedi con Email'}
+          </button>
+        </form>
+
+        <div className="relative flex py-5 items-center">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Oppure</span>
+          <div className="flex-grow border-t border-gray-300"></div>
         </div>
 
         {/* Google Sign In Button */}
