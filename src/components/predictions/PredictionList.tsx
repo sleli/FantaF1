@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { PredictionWithDetails } from '@/lib/types'
 import { Driver, ScoringType } from '@prisma/client'
 import PredictionDisplay from './PredictionDisplay'
+import Badge from '@/components/ui/Badge'
 
 interface PredictionListProps {
   predictions: PredictionWithDetails[]
@@ -26,21 +27,15 @@ export default function PredictionList({
     
     if (prediction.event.status === 'COMPLETED') {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          Completato
-        </span>
+        <Badge variant="success">Completato</Badge>
       )
     } else if (prediction.event.status === 'CLOSED' || now > closingDate) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-          Chiuso
-        </span>
+        <Badge variant="warning">Chiuso</Badge>
       )
     } else {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          Aperto
-        </span>
+        <Badge variant="info">Aperto</Badge>
       )
     }
   }
@@ -63,12 +58,12 @@ export default function PredictionList({
     return (
       <div className="text-center py-12">
         <div className="w-24 h-24 mx-auto mb-4">
-          <svg className="w-full h-full text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-full h-full text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun pronostico</h3>
-        <p className="text-gray-500">Non hai ancora fatto nessun pronostico.</p>
+        <h3 className="text-lg font-medium text-foreground mb-2">Nessun pronostico</h3>
+        <p className="text-muted-foreground">Non hai ancora fatto nessun pronostico.</p>
       </div>
     )
   }
@@ -76,19 +71,19 @@ export default function PredictionList({
   return (
     <div className="space-y-4 sm:space-y-6">
       {predictions.map((prediction) => (
-        <div key={prediction.id} className="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+        <div key={prediction.id} className="bg-card text-card-foreground rounded-lg shadow-md p-4 sm:p-6 border border-border">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4 mb-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-f1-dark truncate">
+              <h3 className="text-lg font-semibold text-foreground truncate">
                 {prediction.event.name}
               </h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   {prediction.event.type === 'RACE' ? 'Gran Premio' : 'Sprint'}
                 </span>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm text-gray-600">
+                <span className="text-muted-foreground">•</span>
+                <span className="text-sm text-muted-foreground">
                   {formatDate(prediction.event.date)}
                 </span>
                 {getStatusBadge(prediction)}
@@ -101,7 +96,7 @@ export default function PredictionList({
                 <button
                   onClick={() => onEdit(prediction)}
                   disabled={isLoading}
-                  className="p-3 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 touch-target"
+                  className="p-3 sm:p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 touch-target"
                   title="Modifica pronostico"
                 >
                   <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +109,7 @@ export default function PredictionList({
                 <button
                   onClick={() => onDelete(prediction.id)}
                   disabled={isLoading}
-                  className="p-3 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 touch-target"
+                  className="p-3 sm:p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50 touch-target"
                   title="Elimina pronostico"
                 >
                   <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,10 +124,10 @@ export default function PredictionList({
           <PredictionDisplay prediction={prediction} drivers={drivers} />
 
           {/* Punteggio e meta info */}
-          <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center text-sm text-gray-600">
+          <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm text-muted-foreground">
             <div>
               {prediction.points !== null ? (
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-green-500">
                   Punteggio: {prediction.points} punti
                 </span>
               ) : (
@@ -149,7 +144,7 @@ export default function PredictionList({
 
           {/* Countdown per eventi aperti */}
           {canModifyPrediction(prediction) && (
-            <div className="mt-2 text-sm text-blue-600">
+            <div className="mt-2 text-sm text-primary">
               <CountdownTimer closingDate={prediction.event.closingDate} />
             </div>
           )}

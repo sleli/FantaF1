@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation';
 import { UserGroupIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import UserList from '@/components/admin/UserList';
 import UserForm from '@/components/admin/UserForm';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 type UserRole = 'PLAYER' | 'ADMIN';
 
@@ -130,10 +132,10 @@ export default function UsersAdminPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento utenti...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Caricamento utenti...</p>
         </div>
       </div>
     );
@@ -141,29 +143,32 @@ export default function UsersAdminPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <Card>
+            <div className="p-6">
           <div className="text-center">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="text-destructive text-6xl mb-4">⚠️</div>
+            <h1 className="text-xl font-semibold text-foreground mb-2">
               Errore nel Caricamento
             </h1>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button
               onClick={handleRefresh}
-              disabled={refreshing}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+              isLoading={refreshing}
             >
-              {refreshing ? 'Ricaricamento...' : 'Riprova'}
-            </button>
+              Riprova
+            </Button>
           </div>
+            </div>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -171,23 +176,23 @@ export default function UsersAdminPage() {
             <div className="flex items-center">
               <UserGroupIcon className="h-8 w-8 text-red-500 mr-3" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-foreground">
                   Gestione Utenti
                 </h1>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Gestisci gli utenti registrati, i loro ruoli e le statistiche
                 </p>
               </div>
             </div>
             
-            <button
+            <Button
               onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              variant="secondary"
+              isLoading={refreshing}
+              leftIcon={<ArrowPathIcon className="h-4 w-4" />}
             >
-              <ArrowPathIcon className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              {refreshing ? 'Aggiornamento...' : 'Aggiorna'}
-            </button>
+              Aggiorna
+            </Button>
           </div>
         </div>
 

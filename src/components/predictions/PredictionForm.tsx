@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Driver, Event, ScoringType } from '@prisma/client'
 import SortableDriverList from './SortableDriverList'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 
 interface ExtendedEvent extends Event {
     season?: {
@@ -233,12 +236,13 @@ export default function PredictionForm({
   }, [event.closingDate, isEventOpen])
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <Card>
+      <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-f1-dark mb-2">
+        <h2 className="text-2xl font-bold text-foreground mb-2">
           {isModifying ? 'Modifica Pronostico' : 'Nuovo Pronostico'}
         </h2>
-        <div className="text-gray-600">
+        <div className="text-muted-foreground">
           <p className="font-semibold">{event.name}</p>
           <p className="text-sm">
             {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toISOString().slice(0, 16).replace('T', ' ')}
@@ -247,11 +251,11 @@ export default function PredictionForm({
              Regole: {scoringType === ScoringType.FULL_GRID_DIFF ? 'Differenza (Low Score)' : 'Standard (Top 3)'}
           </p>
           {isEventOpen ? (
-            <p className="text-sm text-green-600 font-medium">
+            <p className="text-sm text-green-500 font-medium">
               Chiusura pronostici: {timeLeft}
             </p>
           ) : (
-            <p className="text-sm text-red-600 font-medium">
+            <p className="text-sm text-destructive font-medium">
               Pronostici chiusi
             </p>
           )}
@@ -259,8 +263,8 @@ export default function PredictionForm({
       </div>
 
       {!isEventOpen && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-          <p className="text-red-800 font-medium">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 mb-6">
+          <p className="text-destructive font-medium">
             I pronostici per questo evento sono stati chiusi.
           </p>
         </div>
@@ -270,7 +274,7 @@ export default function PredictionForm({
         
         {viewMode === 'GRID' ? (
             <div className="mb-6">
-                <p className="mb-2 text-sm text-gray-600">Trascina i piloti per ordinare la griglia di arrivo prevista:</p>
+                <p className="mb-2 text-sm text-muted-foreground">Trascina i piloti per ordinare la griglia di arrivo prevista:</p>
                 <SortableDriverList 
                     drivers={drivers}
                     orderedDriverIds={orderedDriverIds}
@@ -282,78 +286,63 @@ export default function PredictionForm({
             <>
                 {/* Legacy Inputs */}
                 {/* 1° Posto */}
-                <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-                    🥇 1° Posto (25 punti)
-                  </label>
-                  <select
-                    value={firstPlaceId}
-                    onChange={(e) => setFirstPlaceId(e.target.value)}
-                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-                    disabled={!isEventOpen || isLoading}
-                  >
-                    <option value="">Seleziona un pilota...</option>
-                    {getAvailableDrivers('first').map((driver) => (
-                      <option key={driver.id} value={driver.id}>
-                        #{driver.number} {driver.name} ({driver.team})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="🥇 1° Posto (25 punti)"
+                  value={firstPlaceId}
+                  onChange={(e) => setFirstPlaceId(e.target.value)}
+                  disabled={!isEventOpen || isLoading}
+                >
+                  <option value="">Seleziona un pilota...</option>
+                  {getAvailableDrivers('first').map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      #{driver.number} {driver.name} ({driver.team})
+                    </option>
+                  ))}
+                </Select>
                 
-                 <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-                    🥈 2° Posto (15 punti)
-                  </label>
-                  <select
-                    value={secondPlaceId}
-                    onChange={(e) => setSecondPlaceId(e.target.value)}
-                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-                    disabled={!isEventOpen || isLoading}
-                  >
-                    <option value="">Seleziona un pilota...</option>
-                    {getAvailableDrivers('second').map((driver) => (
-                      <option key={driver.id} value={driver.id}>
-                        #{driver.number} {driver.name} ({driver.team})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                 <div>
-                  <label className="block text-sm sm:text-base font-medium text-gray-700 mb-3">
-                    🥉 3° Posto (10 punti)
-                  </label>
-                  <select
-                    value={thirdPlaceId}
-                    onChange={(e) => setThirdPlaceId(e.target.value)}
-                    className="w-full p-4 sm:p-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-f1-red focus:border-f1-red touch-button"
-                    disabled={!isEventOpen || isLoading}
-                  >
-                    <option value="">Seleziona un pilota...</option>
-                    {getAvailableDrivers('third').map((driver) => (
-                      <option key={driver.id} value={driver.id}>
-                        #{driver.number} {driver.name} ({driver.team})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="🥈 2° Posto (15 punti)"
+                  value={secondPlaceId}
+                  onChange={(e) => setSecondPlaceId(e.target.value)}
+                  disabled={!isEventOpen || isLoading}
+                >
+                  <option value="">Seleziona un pilota...</option>
+                  {getAvailableDrivers('second').map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      #{driver.number} {driver.name} ({driver.team})
+                    </option>
+                  ))}
+                </Select>
+                <Select
+                  label="🥉 3° Posto (10 punti)"
+                  value={thirdPlaceId}
+                  onChange={(e) => setThirdPlaceId(e.target.value)}
+                  disabled={!isEventOpen || isLoading}
+                >
+                  <option value="">Seleziona un pilota...</option>
+                  {getAvailableDrivers('third').map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      #{driver.number} {driver.name} ({driver.team})
+                    </option>
+                  ))}
+                </Select>
             </>
         )}
 
         {/* Errori */}
         {errors.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4">
              <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-destructive" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+                <h3 className="text-sm font-medium text-destructive">
                   Errori di validazione:
                 </h3>
-                <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
+                <ul className="mt-2 text-sm text-destructive list-disc list-inside">
                   {errors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}
@@ -365,8 +354,8 @@ export default function PredictionForm({
 
         {/* Note sui punteggi Sprint */}
         {event.type === 'SPRINT' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-            <p className="text-blue-800 text-sm">
+          <div className="bg-primary/10 border border-primary/20 rounded-md p-4">
+            <p className="text-primary text-sm">
               <strong>Sprint:</strong> {scoringType === ScoringType.FULL_GRID_DIFF 
                 ? 'Le penalità saranno dimezzate (x 0.5)' 
                 : 'I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)'}
@@ -376,44 +365,29 @@ export default function PredictionForm({
 
         {/* Bottoni */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <button
+          <Button
             type="submit"
             disabled={!isEventOpen || isLoading}
-            className="prediction-submit-button flex-1 py-4 sm:py-3 px-6 rounded-lg font-medium text-base sm:text-sm"
-            style={{
-              backgroundColor: (!isEventOpen || isLoading) ? '#9CA3AF' : '#E10600',
-              color: 'white',
-              border: 'none',
-              cursor: (!isEventOpen || isLoading) ? 'not-allowed' : 'pointer',
-              display: 'block',
-              visibility: 'visible',
-              opacity: 1
-            }}
+            className="prediction-submit-button flex-1"
+            isLoading={isLoading}
           >
-            {isLoading ? 'Salvando...' : (isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico')}
-          </button>
+            {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
+          </Button>
 
           {(firstPlaceId || secondPlaceId || thirdPlaceId || orderedDriverIds.length > 0) && (
-            <button
+            <Button
               type="button"
               onClick={resetForm}
               disabled={isLoading}
-              className={`px-6 py-4 sm:py-3 border rounded-lg transition-colors text-base sm:text-sm touch-button ${
-                isLoading
-                  ? 'border-gray-200 bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              style={{
-                backgroundColor: isLoading ? '#E5E7EB' : 'white',
-                borderColor: isLoading ? '#E5E7EB' : '#D1D5DB',
-                color: isLoading ? '#6B7280' : '#374151'
-              }}
+              variant="outline"
+              className="touch-button"
             >
               Reset
-            </button>
+            </Button>
           )}
         </div>
       </form>
-    </div>
+      </div>
+    </Card>
   )
 }

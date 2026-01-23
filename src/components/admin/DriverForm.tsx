@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Driver } from '@prisma/client'
 import { validateDriver, hasValidationErrors, F1_2025_TEAMS, type DriverValidationErrors } from '@/lib/validation/driver'
+import Button from '@/components/ui/Button'
 
 interface DriverFormProps {
   driver?: Driver
@@ -67,7 +68,7 @@ export function DriverForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="name" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+        <label htmlFor="name" className="block text-sm sm:text-base font-medium text-muted-foreground mb-2">
           Nome Pilota *
         </label>
         <input
@@ -75,17 +76,17 @@ export function DriverForm({
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 touch-button ${
-            errors.name ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary touch-button ${
+            errors.name ? 'border-destructive' : 'border-border'
           }`}
           placeholder="Es. Max Verstappen"
           disabled={isLoading}
         />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+        {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
       </div>
       
       <div className="relative">
-        <label htmlFor="team" className="block text-sm sm:text-base font-medium text-gray-700 mb-2">
+        <label htmlFor="team" className="block text-sm sm:text-base font-medium text-muted-foreground mb-2">
           Team *
         </label>
         <input
@@ -97,24 +98,24 @@ export function DriverForm({
             setShowTeamSuggestions(true)
           }}
           onFocus={() => setShowTeamSuggestions(true)}
-          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 touch-button ${
-            errors.team ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-4 py-3 sm:px-3 sm:py-2 text-base sm:text-sm border rounded-lg bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary touch-button ${
+            errors.team ? 'border-destructive' : 'border-border'
           }`}
           placeholder="Es. Red Bull Racing"
           disabled={isLoading}
         />
-        {errors.team && <p className="text-red-500 text-sm mt-1">{errors.team}</p>}
+        {errors.team && <p className="text-destructive text-sm mt-1">{errors.team}</p>}
         
         {/* Team suggestions dropdown */}
         {showTeamSuggestions && teamSuggestions.length > 0 && (
           <div 
-            className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto"
+            className="absolute z-10 mt-1 w-full bg-card text-card-foreground shadow-lg rounded-md border border-border max-h-60 overflow-auto"
           >
             <ul>
               {teamSuggestions.map((team) => (
                 <li 
                   key={team} 
-                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                  className="px-4 py-2 hover:bg-primary/10 cursor-pointer"
                   onClick={() => handleTeamSelect(team)}
                 >
                   {team}
@@ -126,7 +127,7 @@ export function DriverForm({
       </div>
       
       <div>
-        <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="number" className="block text-sm font-medium text-muted-foreground mb-1">
           Numero *
         </label>
         <input
@@ -136,13 +137,13 @@ export function DriverForm({
           max="99"
           value={formData.number}
           onChange={(e) => setFormData({ ...formData, number: parseInt(e.target.value) || 0 })}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.number ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-3 py-2 border rounded-md bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+            errors.number ? 'border-destructive' : 'border-border'
           }`}
           placeholder="Es. 1"
           disabled={isLoading}
         />
-        {errors.number && <p className="text-red-500 text-sm mt-1">{errors.number}</p>}
+        {errors.number && <p className="text-destructive text-sm mt-1">{errors.number}</p>}
       </div>
 
       <div className="flex items-center">
@@ -151,36 +152,35 @@ export function DriverForm({
           id="active"
           checked={formData.active}
           onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
           disabled={isLoading}
         />
-        <label htmlFor="active" className="ml-2 block text-sm text-gray-700">
+        <label htmlFor="active" className="ml-2 block text-sm text-muted-foreground">
           Pilota attivo
         </label>
       </div>
       
       {errors.general && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
-          <p className="text-red-700">{errors.general}</p>
+        <div className="bg-destructive/10 border-l-4 border-destructive p-4 mt-4">
+          <p className="text-destructive">{errors.general}</p>
         </div>
       )}
       
       <div className="flex gap-3 pt-4">
-        <button
+        <Button
           type="submit"
-          disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          isLoading={isLoading}
         >
-          {isLoading ? 'Salvando...' : (driver ? 'Aggiorna Pilota' : 'Crea Pilota')}
-        </button>
-        <button
+          {driver ? 'Aggiorna Pilota' : 'Crea Pilota'}
+        </Button>
+        <Button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="secondary"
         >
           Annulla
-        </button>
+        </Button>
       </div>
     </form>
   )

@@ -8,6 +8,7 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import UpcomingEvents from '@/components/events/UpcomingEvents';
 import EventForm from '@/components/admin/EventForm';
 import { usePullToRefresh } from '@/hooks/useSwipe';
+import Card from '@/components/ui/Card';
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -93,34 +94,36 @@ export default function Home() {
     <PublicLayout>
       
       <main ref={pullToRefreshRef} className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 transition-transform duration-300">
-        <div className="card mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Dashboard FantaF1</h2>
-          <p className="text-gray-600 mb-6">
+        <Card className="mb-8">
+          <div className="p-6">
+          <h2 className="text-3xl font-bold text-foreground mb-4">Dashboard FantaF1</h2>
+          <p className="text-muted-foreground mb-6">
             Benvenuto nella tua dashboard! Qui potrai gestire i tuoi pronostici per le gare di Formula 1.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/predictions" className="card bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">📊 I Miei Pronostici</h3>
-              <p className="text-blue-700">Gestisci i tuoi pronostici per le gare di Formula 1</p>
+            <Link href="/predictions" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
+              <h3 className="text-lg font-semibold text-foreground mb-2">📊 I Miei Pronostici</h3>
+              <p className="text-muted-foreground">Gestisci i tuoi pronostici per le gare di Formula 1</p>
             </Link>
 
-            <Link href="/all-predictions" className="card bg-purple-50 border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">👥 Tutti i Pronostici</h3>
-              <p className="text-purple-700">Vedi i pronostici di tutti i giocatori</p>
+            <Link href="/all-predictions" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
+              <h3 className="text-lg font-semibold text-foreground mb-2">👥 Tutti i Pronostici</h3>
+              <p className="text-muted-foreground">Vedi i pronostici di tutti i giocatori</p>
             </Link>
 
-            <Link href="/leaderboard" className="card bg-green-50 border-green-200 hover:bg-green-100 transition-colors cursor-pointer">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">🏆 Classifica</h3>
-              <p className="text-green-700">Vedi la classifica generale e i tuoi punti</p>
+            <Link href="/leaderboard" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
+              <h3 className="text-lg font-semibold text-foreground mb-2">🏆 Classifica</h3>
+              <p className="text-muted-foreground">Vedi la classifica generale e i tuoi punti</p>
             </Link>
 
-            <div className="card bg-yellow-50 border-yellow-200">
-              <h3 className="text-lg font-semibold text-yellow-900 mb-2">🏁 Prossima Gara</h3>
-              <p className="text-yellow-700">Controlla i prossimi eventi in programma</p>
+            <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
+              <h3 className="text-lg font-semibold text-foreground mb-2">🏁 Prossima Gara</h3>
+              <p className="text-muted-foreground">Controlla i prossimi eventi in programma</p>
             </div>
           </div>
-        </div>
+          </div>
+        </Card>
 
         {/* Upcoming Events Section */}
         <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />

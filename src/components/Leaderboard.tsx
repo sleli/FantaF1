@@ -111,20 +111,20 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
       case 3:
         return <span className="text-2xl">🥉</span>
       default:
-        return <span className="text-lg font-bold text-gray-600">#{position}</span>
+        return <span className="text-lg font-bold text-muted-foreground">#{position}</span>
     }
   }
 
   const getPositionColors = (position: number) => {
     switch (position) {
       case 1:
-        return 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-300'
+        return 'bg-primary/10 border-primary/40'
       case 2:
-        return 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-300'
+        return 'bg-foreground/5 border-border'
       case 3:
-        return 'bg-gradient-to-r from-orange-50 to-orange-100 border-orange-300'
+        return 'bg-foreground/5 border-border'
       default:
-        return 'bg-white border-gray-200'
+        return 'bg-card border-border'
     }
   }
 
@@ -134,25 +134,25 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-f1-dark flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
           <TrophyIcon className="h-8 w-8 text-yellow-500" />
           Classifiche
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-muted-foreground">
           Scopri chi è in testa al campionato FantaF1
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-        <div className="border-b border-gray-200">
+      <div className="bg-card text-card-foreground rounded-lg shadow-sm border border-border mb-8">
+        <div className="border-b border-border">
           <nav className="flex px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             <button
               onClick={() => setActiveTab('general')}
               className={`py-4 px-2 sm:px-1 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap touch-button ${
                 activeTab === 'general'
-                  ? 'border-f1-red text-f1-red'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               <ChartBarIcon className="h-4 w-4 flex-shrink-0" />
@@ -163,8 +163,8 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
               onClick={() => setActiveTab('event')}
               className={`py-4 px-2 sm:px-1 ml-6 sm:ml-8 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap touch-button ${
                 activeTab === 'event'
-                  ? 'border-f1-red text-f1-red'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               <CalendarIcon className="h-4 w-4 flex-shrink-0" />
@@ -180,13 +180,13 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
             <div>
               {isLoading ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-f1-red"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : generalLeaderboard.length === 0 ? (
                 <div className="text-center py-12">
-                  <TrophyIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun dato disponibile</h3>
-                  <p className="text-gray-500">
+                  <TrophyIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Nessun dato disponibile</h3>
+                  <p className="text-muted-foreground">
                     I punteggi appariranno dopo i primi eventi completati
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                     <div
                       key={entry.user.id}
                       className={`p-4 rounded-lg border-2 transition-all ${getPositionColors(entry.position)} ${
-                        isCurrentUser(entry.user.id) ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                        isCurrentUser(entry.user.id) ? 'ring-2 ring-primary/40' : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -205,22 +205,22 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                             {getPositionIcon(entry.position)}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <h3 className="font-semibold text-foreground flex items-center gap-2">
                               {entry.user.name || entry.user.email?.split('@')[0] || 'Utente Anonimo'}
                               {isCurrentUser(entry.user.id) && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tu</span>
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20">Tu</span>
                               )}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {entry.eventCount} eventi • Media: {entry.averagePoints.toFixed(1)} punti
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-f1-dark">
+                          <div className="text-2xl font-bold text-foreground">
                             {entry.totalPoints}
                           </div>
-                          <div className="text-sm text-gray-500">punti</div>
+                          <div className="text-sm text-muted-foreground">punti</div>
                         </div>
                       </div>
                     </div>
@@ -235,14 +235,14 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
             <div>
               {!selectedEvent ? (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <h3 className="text-lg font-medium text-foreground mb-4">
                     Seleziona un evento per vedere la classifica:
                   </h3>
                   {completedEvents.length === 0 ? (
                     <div className="text-center py-12">
-                      <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun evento completato</h3>
-                      <p className="text-gray-500">
+                      <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">Nessun evento completato</h3>
+                      <p className="text-muted-foreground">
                         Le classifiche per evento appariranno dopo il completamento delle gare
                       </p>
                     </div>
@@ -252,10 +252,10 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                         <button
                           key={event.id}
                           onClick={() => loadEventLeaderboard(event.id)}
-                          className="p-4 border border-gray-200 rounded-lg hover:border-f1-red hover:bg-red-50 transition-colors text-left"
+                          className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 transition-colors text-left"
                         >
-                          <h4 className="font-semibold text-f1-dark">{event.name}</h4>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <h4 className="font-semibold text-foreground">{event.name}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
                             {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} • {new Date(event.date).toLocaleDateString('it-IT')}
                           </p>
                         </button>
@@ -267,8 +267,8 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{selectedEvent.name}</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="text-lg font-medium text-foreground">{selectedEvent.name}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {selectedEvent.type === 'RACE' ? 'Gran Premio' : 'Sprint'} • {new Date(selectedEvent.date).toLocaleDateString('it-IT')}
                       </p>
                     </div>
@@ -277,7 +277,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                         setSelectedEvent(null)
                         setEventLeaderboard([])
                       }}
-                      className="text-sm text-gray-500 hover:text-gray-700"
+                      className="text-sm text-muted-foreground hover:text-foreground"
                     >
                       ← Torna agli eventi
                     </button>
@@ -285,7 +285,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
 
                   {isLoading ? (
                     <div className="flex justify-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-f1-red"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -303,7 +303,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                           <div
                             key={entry.user.id}
                             className={`p-4 rounded-lg border-2 ${getPositionColors(index + 1)} ${
-                              isCurrentUser(entry.user.id) ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                              isCurrentUser(entry.user.id) ? 'ring-2 ring-primary/40' : ''
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -312,14 +312,14 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                                   {getPositionIcon(index + 1)}
                                 </div>
                                 <div>
-                                  <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                                  <h4 className="font-semibold text-foreground flex items-center gap-2">
                                     {entry.user.name || entry.user.email?.split('@')[0] || 'Utente Anonimo'}
                                     {isCurrentUser(entry.user.id) && (
-                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tu</span>
+                                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20">Tu</span>
                                     )}
                                   </h4>
                                   {entry.prediction && (
-                                    <div className="text-xs text-gray-600 mt-1">
+                                    <div className="text-xs text-muted-foreground mt-1">
                                       {entry.prediction.firstPlace ? (
                                         <>
                                           1° {entry.prediction.firstPlace.name} • 
@@ -334,10 +334,10 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-xl font-bold text-f1-dark">
+                                <div className="text-xl font-bold text-foreground">
                                   {entry.points || 0}
                                 </div>
-                                <div className="text-sm text-gray-500">punti</div>
+                                <div className="text-sm text-muted-foreground">punti</div>
                               </div>
                             </div>
                           </div>

@@ -103,25 +103,25 @@ export default function AllPredictionsPage() {
     <PublicLayout>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-foreground mb-4">
             Pronostici di Tutti i Giocatori
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Visualizza i pronostici di tutti i giocatori per ogni evento.
           </p>
         </div>
 
         {/* Filtro per evento */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-card text-card-foreground rounded-lg shadow-md p-6 mb-8 border border-border">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <label htmlFor="event-filter" className="text-sm font-medium text-gray-700">
+            <label htmlFor="event-filter" className="text-sm font-medium text-foreground">
               Filtra per evento:
             </label>
             <select
               id="event-filter"
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="flex-1 max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="flex-1 max-w-md px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="all">Tutti gli eventi</option>
               {events.map((event) => (
@@ -134,7 +134,7 @@ export default function AllPredictionsPage() {
         </div>
 
         {/* Lista pronostici */}
-        <div className="bg-white rounded-lg shadow-md">
+        <div className="bg-card text-card-foreground rounded-lg shadow-md border border-border">
           <AllPredictionsList
             predictions={predictions}
             drivers={drivers}

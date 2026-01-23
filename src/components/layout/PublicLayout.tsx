@@ -10,7 +10,7 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children }: PublicLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
       <MainNavigation />
       <main>
         {children}

@@ -92,7 +92,7 @@ export default function BulkOperations({
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+        className="inline-flex items-center px-4 py-2 border border-border rounded-md shadow-sm text-sm font-medium text-secondary-foreground bg-secondary hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
       >
         Operazioni Bulk
         <ChevronDownIcon className="ml-2 -mr-1 h-4 w-4" />
@@ -100,7 +100,7 @@ export default function BulkOperations({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+        <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-card text-card-foreground border border-border z-10">
           <div className="py-1">
             <button
               onClick={() => {
@@ -108,7 +108,7 @@ export default function BulkOperations({
                 setIsOpen(false);
               }}
               disabled={isLoading || availableSourceEvents.length === 0}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-foreground/5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               📋 Copia da altra gara
             </button>
@@ -116,7 +116,7 @@ export default function BulkOperations({
             <button
               onClick={handleClearAll}
               disabled={isLoading}
-              className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="block w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               🗑️ Cancella tutti i pronostici
             </button>
@@ -126,38 +126,38 @@ export default function BulkOperations({
 
       {/* Copy Dialog */}
       {showCopyDialog && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/60 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border border-border w-96 shadow-lg rounded-md bg-card text-card-foreground">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg font-medium text-foreground mb-4">
                 Copia Pronostici
               </h3>
               
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Gara di destinazione:
                 </label>
-                <div className="p-3 bg-gray-50 rounded-md text-sm">
+                <div className="p-3 bg-muted rounded-md text-sm border border-border">
                   <strong>{selectedEvent.name}</strong>
-                  <div className="text-gray-600">
+                  <div className="text-muted-foreground">
                     {formatDate(selectedEvent.date)} • {selectedEvent._count.predictions} pronostici esistenti
                   </div>
                 </div>
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Copia da:
                 </label>
                 {availableSourceEvents.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">
+                  <p className="text-sm text-muted-foreground italic">
                     Nessuna gara con pronostici disponibile per la copia.
                   </p>
                 ) : (
                   <select
                     value={copySourceEventId}
                     onChange={(e) => setCopySourceEventId(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                    className="w-full p-2 border border-border bg-input text-foreground rounded-md focus:ring-primary focus:border-primary"
                   >
                     <option value="">Seleziona gara sorgente...</option>
                     {availableSourceEvents.map((event) => (
@@ -173,7 +173,7 @@ export default function BulkOperations({
                 <button
                   onClick={handleCopyPredictions}
                   disabled={!copySourceEventId || isLoading}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Copiando...' : 'Copia Pronostici'}
                 </button>
@@ -184,7 +184,7 @@ export default function BulkOperations({
                     setCopySourceEventId('');
                   }}
                   disabled={isLoading}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="px-4 py-2 border border-border rounded-md text-secondary-foreground bg-secondary hover:bg-secondary/80 disabled:opacity-50"
                 >
                   Annulla
                 </button>

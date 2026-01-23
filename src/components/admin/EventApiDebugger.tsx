@@ -53,12 +53,12 @@ export default function EventApiDebugger() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md max-w-3xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Event API Debugger</h2>
+    <div className="bg-card text-card-foreground border border-border p-6 rounded-lg shadow-md max-w-3xl mx-auto">
+      <h2 className="text-xl font-semibold mb-4 text-foreground">Event API Debugger</h2>
       
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-muted-foreground mb-1">
             Event ID
           </label>
           <input
@@ -66,18 +66,18 @@ export default function EventApiDebugger() {
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
             placeholder="cmb423tzg0002pfix7hyam6p4"
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border border-border bg-input text-foreground rounded-md"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-muted-foreground mb-1">
             Status
           </label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border border-border bg-input text-foreground rounded-md"
           >
             <option value="UPCOMING">UPCOMING</option>
             <option value="CLOSED">CLOSED</option>
@@ -88,17 +88,17 @@ export default function EventApiDebugger() {
         <button
           onClick={handleDebug}
           disabled={loading || !eventId}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md disabled:opacity-50"
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md disabled:opacity-50"
         >
           {loading ? 'Testing...' : 'Test Status Update'}
         </button>
       </div>
       
       {error && (
-        <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-800">
+        <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-destructive">
           <p className="font-semibold">Error:</p>
           <p>{error}</p>
-          <p className="text-xs mt-1 text-gray-600">
+          <p className="text-xs mt-1 text-muted-foreground">
             Check the console for more details about the error.
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function EventApiDebugger() {
       {result && (
         <div className="mt-4">
           <p className="font-semibold mb-2">API Response:</p>
-          <pre className="bg-gray-100 p-3 rounded-md overflow-auto max-h-80 text-xs">
+          <pre className="bg-muted p-3 rounded-md overflow-auto max-h-80 text-xs">
             {JSON.stringify(result, null, 2)}
           </pre>
         </div>

@@ -62,20 +62,20 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'UPCOMING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20';
       case 'CLOSED':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-500/10 text-orange-500 border border-orange-500/20';
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/10 text-green-500 border border-green-500/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground border border-border';
     }
   };
 
   const getTypeColor = (type: string) => {
     return type === 'RACE' 
-      ? 'bg-red-100 text-red-800' 
-      : 'bg-blue-100 text-blue-800';
+      ? 'bg-destructive/10 text-destructive border border-destructive/20' 
+      : 'bg-primary/10 text-primary border border-primary/20';
   };
 
   const handleStatusUpdate = async (eventId: string, newStatus: string) => {
@@ -129,12 +129,12 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
 
   if (events.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-8 text-center">
-        <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="bg-card text-card-foreground border border-border rounded-lg shadow p-8 text-center">
+        <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">
           Nessun evento trovato
         </h3>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Inizia creando il primo evento del campionato
         </p>
       </div>
@@ -146,22 +146,22 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
       {/* Mobile Card Layout */}
       <div className="block lg:hidden space-y-4">
         {events.map((event) => (
-          <div key={event.id} className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+          <div key={event.id} className="bg-card text-card-foreground rounded-lg shadow border border-border overflow-hidden">
             {/* Card Header */}
-            <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {getStatusIcon(event.status)}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{event.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="text-lg font-medium text-foreground">{event.name}</h3>
+                    <p className="text-sm text-muted-foreground">
                       {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} • {event._count.predictions} pronostici
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                  className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 touch-target"
+                  className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-primary touch-target"
                   aria-label="Toggle details"
                 >
                   {expandedEvent === event.id ? (
@@ -177,37 +177,37 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
             <div className="p-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Data Evento:</span>
+                  <span className="text-muted-foreground">Data Evento:</span>
                   <p className="font-medium">{formatDate(event.date)}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Chiusura:</span>
+                  <span className="text-muted-foreground">Chiusura:</span>
                   <p className="font-medium">{formatDate(event.closingDate)}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Status:</span>
+                  <span className="text-muted-foreground">Status:</span>
                   <p className="font-medium">{getStatusText(event.status)}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Pronostici:</span>
+                  <span className="text-muted-foreground">Pronostici:</span>
                   <p className="font-medium">{event._count.predictions}</p>
                 </div>
               </div>
 
               {/* Expanded Details */}
               {expandedEvent === event.id && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 pt-4 border-t border-border">
                   <div className="space-y-3 text-sm">
                     <div>
-                      <span className="text-gray-500">Creato il:</span>
+                      <span className="text-muted-foreground">Creato il:</span>
                       <p className="font-medium">{formatDate(event.createdAt)}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Ultima modifica:</span>
+                      <span className="text-muted-foreground">Ultima modifica:</span>
                       <p className="font-medium">{formatDate(event.updatedAt)}</p>
                     </div>
                     {!canDelete(event) && (
-                      <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                      <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-500">
                         ⚠️ Non eliminabile: evento con pronostici esistenti
                       </div>
                     )}
@@ -216,10 +216,10 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
               )}
 
               {/* Actions */}
-              <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+              <div className="mt-4 pt-4 border-t border-border flex gap-2">
                 <button
                   onClick={() => onEdit(event)}
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-button"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-border shadow-sm text-sm font-medium rounded-md text-secondary-foreground bg-secondary hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary touch-button"
                 >
                   <PencilIcon className="h-4 w-4 mr-2" />
                   Modifica
@@ -227,7 +227,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                 <button
                   onClick={() => onDelete(event.id)}
                   disabled={!canDelete(event)}
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed touch-button"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 border border-destructive/30 shadow-sm text-sm font-medium rounded-md text-destructive bg-destructive/10 hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed touch-button"
                 >
                   <TrashIcon className="h-4 w-4 mr-2" />
                   Elimina
@@ -239,44 +239,44 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
       </div>
 
       {/* Desktop Table Layout */}
-      <div className="hidden lg:block bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-50">
+      <div className="hidden lg:block bg-card text-card-foreground border border-border rounded-lg shadow overflow-hidden">
+        <table className="w-full divide-y divide-border table-fixed">
+          <thead className="bg-muted">
             <tr>
-              <th className="w-1/4 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-1/4 px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Evento
               </th>
-              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Tipo
               </th>
-              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Data
               </th>
-              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Chiusura
               </th>
-              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-20 px-2 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Status
               </th>
-              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-16 px-2 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Pred.
               </th>
-              <th className="w-24 px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <th className="w-24 px-2 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Azioni
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-border">
             {events.map((event) => (
               <React.Fragment key={event.id}>
-                <tr className="hover:bg-gray-50">
+                <tr className="hover:bg-foreground/5">
                   <td className="px-3 py-3 whitespace-nowrap">
                     <div className="flex items-center">
                       <button
                         onClick={() => setExpandedEvent(
                           expandedEvent === event.id ? null : event.id
                         )}
-                        className="mr-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                        className="mr-1 text-muted-foreground hover:text-foreground flex-shrink-0"
                       >
                         {expandedEvent === event.id ? (
                           <ChevronUpIcon className="h-3 w-3" />
@@ -285,10 +285,10 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                         )}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-900 truncate" title={event.name}>
+                        <div className="text-sm font-medium text-foreground truncate" title={event.name}>
                           {event.name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           ID: {event.id.slice(-8)}
                         </div>
                       </div>
@@ -301,7 +301,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                     </span>
                   </td>
 
-                  <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-900">
+                  <td className="px-2 py-3 whitespace-nowrap text-xs text-foreground">
                     <div className="truncate" title={formatDate(event.date)}>
                       {new Date(event.date).toLocaleDateString('it-IT', {
                         day: '2-digit',
@@ -312,7 +312,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                     </div>
                   </td>
 
-                  <td className="px-2 py-3 whitespace-nowrap text-xs text-gray-900">
+                  <td className="px-2 py-3 whitespace-nowrap text-xs text-foreground">
                     <div className="truncate" title={formatDate(event.closingDate)}>
                       {new Date(event.closingDate).toLocaleDateString('it-IT', {
                         day: '2-digit',
@@ -329,7 +329,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                         value={event.status}
                         onChange={(e) => handleStatusUpdate(event.id, e.target.value)}
                         disabled={updatingStatus === event.id}
-                        className="text-xs border border-gray-300 rounded px-1 py-0.5 w-full focus:ring-1 focus:ring-red-500 focus:border-transparent"
+                        className="text-xs border border-border bg-input text-foreground rounded px-1 py-0.5 w-full focus:ring-1 focus:ring-primary focus:border-transparent"
                       >
                         <option value="UPCOMING">In Arrivo</option>
                         <option value="CLOSED">Chiuso</option>
@@ -345,7 +345,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                     )}
                   </td>
                   
-                  <td className="px-2 py-3 whitespace-nowrap text-center text-sm text-gray-900">
+                  <td className="px-2 py-3 whitespace-nowrap text-center text-sm text-foreground">
                     <span className="font-medium">{event._count.predictions}</span>
                   </td>
 
@@ -355,7 +355,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                       {canEdit(event) && (
                         <button
                           onClick={() => onEdit(event)}
-                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:ring-1 focus:ring-red-500"
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-secondary-foreground bg-secondary border border-border rounded hover:bg-secondary/80 focus:ring-1 focus:ring-primary"
                           title="Modifica evento"
                         >
                           <span className="mr-1">✏️</span>
@@ -367,7 +367,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                       {canDelete(event) && (
                         <button
                           onClick={() => onDelete(event.id)}
-                          className="text-red-600 hover:text-red-900 p-1"
+                          className="text-destructive hover:text-destructive/90 p-1"
                           title="Elimina evento"
                         >
                           <TrashIcon className="h-3 w-3" />
@@ -380,12 +380,12 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                 {/* Expanded Row */}
                 {expandedEvent === event.id && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                    <td colSpan={7} className="px-6 py-4 bg-muted">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Risultati */}
                         {event.status === 'COMPLETED' && (
                           <div>
-                            <h4 className="font-medium text-gray-900 mb-2">🏆 Risultati Ufficiali</h4>
+                            <h4 className="font-medium text-foreground mb-2">🏆 Risultati Ufficiali</h4>
                             <div className="space-y-2">
                               {event.firstPlace && (
                                 <div className="flex items-center text-sm">
@@ -395,7 +395,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                               )}
                               {event.secondPlace && (
                                 <div className="flex items-center text-sm">
-                                  <span className="text-gray-400 mr-2">🥈</span>
+                                  <span className="text-muted-foreground mr-2">🥈</span>
                                   <span>#{event.secondPlace.number} {event.secondPlace.name} ({event.secondPlace.team})</span>
                                 </div>
                               )}
@@ -411,7 +411,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                         
                         {/* Info Aggiuntive */}
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-2">📊 Statistiche</h4>
+                          <h4 className="font-medium text-foreground mb-2">📊 Statistiche</h4>
                           <div className="space-y-1 text-sm">
                             <div>Pronostici ricevuti: <span className="font-medium">{event._count.predictions}</span></div>
                             <div>Creato il: <span className="font-medium">{formatDate(event.createdAt)}</span></div>
@@ -420,7 +420,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
                           
                           {/* Warning per eliminazione */}
                           {!canDelete(event) && (
-                            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                            <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-500">
                               ⚠️ Non eliminabile: evento con pronostici esistenti
                             </div>
                           )}

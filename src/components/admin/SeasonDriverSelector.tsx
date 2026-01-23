@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Driver } from '@prisma/client'
 import Link from 'next/link'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import { XMarkIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 
 interface SeasonDriverSelectorProps {
   isOpen: boolean
@@ -42,28 +45,29 @@ export default function SeasonDriverSelector({ isOpen, onClose, seasonId, season
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card variant="default" className="w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="p-6 border-b border-border flex justify-between items-center">
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <UserGroupIcon className="h-6 w-6 text-primary" />
             Piloti Stagione {seasonName}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-            <span className="text-2xl">×</span>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-4 bg-blue-50 border-b border-blue-100 text-blue-800 text-sm">
+        <div className="p-4 bg-primary/10 border-b border-primary/20 text-primary text-sm">
           <p>
             I piloti sono ora gestiti specificamente per ogni stagione. 
-            Per aggiungere, modificare o rimuovere piloti, utilizza la pagina <Link href="/admin/drivers" className="underline font-semibold hover:text-blue-900">Gestione Piloti</Link>.
+            Per aggiungere, modificare o rimuovere piloti, utilizza la pagina <Link href="/admin/drivers" className="underline font-bold hover:text-foreground transition-colors">Gestione Piloti</Link>.
           </p>
         </div>
 
-        <div className="p-6 flex-grow overflow-y-auto">
+        <div className="p-6 flex-grow overflow-y-auto custom-scrollbar">
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-f1-red"></div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -71,21 +75,21 @@ export default function SeasonDriverSelector({ isOpen, onClose, seasonId, season
                 drivers.map((driver) => (
                   <div 
                     key={driver.id}
-                    className="flex items-center p-3 rounded-lg border border-gray-200 bg-white"
+                    className="flex items-center p-3 rounded-lg border border-border bg-muted/40 hover:bg-muted transition-colors"
                   >
-                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 text-sm font-bold text-gray-600">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 text-primary border border-primary/30 flex items-center justify-center mr-3 text-sm font-bold">
                       {driver.number}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{driver.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="font-bold text-foreground">{driver.name}</div>
+                      <div className="text-xs text-muted-foreground font-mono uppercase tracking-wider">
                         {driver.team}
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="col-span-2 text-center py-8 text-gray-500">
+                <div className="col-span-2 text-center py-8 text-muted-foreground">
                   Nessun pilota trovato in questa stagione.
                 </div>
               )}
@@ -93,26 +97,25 @@ export default function SeasonDriverSelector({ isOpen, onClose, seasonId, season
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50 rounded-b-lg">
-          <div className="text-sm text-gray-600">
-            {drivers.length} piloti presenti
+        <div className="p-6 border-t border-border flex justify-between items-center bg-muted rounded-b-xl">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-bold text-foreground">{drivers.length}</span> piloti presenti
           </div>
           <div className="flex gap-3">
-            <button
+            <Button
+              variant="secondary"
               onClick={onClose}
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
             >
               Chiudi
-            </button>
-            <Link
-                href="/admin/drivers"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
+            </Button>
+            <Link href="/admin/drivers">
+              <Button variant="primary">
                 Gestisci Piloti
+              </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

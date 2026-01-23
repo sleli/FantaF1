@@ -39,14 +39,14 @@ function SortableItem({ id, driver, index }: { id: string, driver: Driver, index
       style={style} 
       {...attributes} 
       {...listeners}
-      className="bg-white border border-gray-200 p-3 rounded-lg mb-2 flex items-center shadow-sm cursor-grab active:cursor-grabbing touch-manipulation"
+      className="bg-card border border-border p-3 rounded-lg mb-2 flex items-center shadow-sm cursor-grab active:cursor-grabbing touch-manipulation"
     >
       <span className="font-bold text-f1-red w-8">{index + 1}.</span>
       <div className="flex-1">
-        <span className="font-semibold text-gray-800">#{driver.number} {driver.name}</span>
-        <span className="text-gray-500 text-sm ml-2">({driver.team})</span>
+        <span className="font-semibold text-foreground">#{driver.number} {driver.name}</span>
+        <span className="text-muted-foreground text-sm ml-2">({driver.team})</span>
       </div>
-      <div className="text-gray-400">
+      <div className="text-muted-foreground">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
         </svg>
@@ -94,10 +94,10 @@ export default function SortableDriverList({ drivers, orderedDriverIds, onChange
                   const driver = getDriver(id);
                   if (!driver) return null;
                   return (
-                    <div key={id} className="bg-gray-50 border border-gray-200 p-3 rounded-lg flex items-center opacity-75">
-                         <span className="font-bold text-gray-500 w-8">{index + 1}.</span>
-                         <span className="font-semibold text-gray-700">#{driver.number} {driver.name}</span>
-                         <span className="text-gray-500 text-sm ml-2">({driver.team})</span>
+                    <div key={id} className="bg-muted border border-border p-3 rounded-lg flex items-center opacity-75">
+                         <span className="font-bold text-muted-foreground w-8">{index + 1}.</span>
+                         <span className="font-semibold text-foreground">#{driver.number} {driver.name}</span>
+                         <span className="text-muted-foreground text-sm ml-2">({driver.team})</span>
                     </div>
                   )
               })}

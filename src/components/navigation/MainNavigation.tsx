@@ -24,32 +24,39 @@ export default function MainNavigation() {
     { name: 'Classifica', href: '/leaderboard' },
   ];
 
+  if (isAdmin) {
+    navigationItems.push({ name: 'Admin', href: '/admin' });
+  }
+
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-40 transition-all duration-300">
+    <nav className="glass-nav sticky top-0 z-40 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 active:scale-95 transition-transform group">
-            <div className="w-8 h-8 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-sm flex items-center justify-center transform -skew-x-12 group-hover:skew-x-0 transition-transform duration-300">
-              <span className="text-white text-xs font-black italic transform skew-x-12 group-hover:skew-x-0 transition-transform duration-300">F1</span>
+          <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform group">
+            <div className="w-10 h-10 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-glow flex items-center justify-center transform -skew-x-12 group-hover:skew-x-0 transition-transform duration-300">
+              <span className="text-white text-sm font-black italic transform skew-x-12 group-hover:skew-x-0 transition-transform duration-300">F1</span>
             </div>
-            <h1 className="text-xl font-black text-gray-900 tracking-tighter italic">
+            <h1 className="text-2xl font-black text-foreground tracking-tighter italic">
               FANTA<span className="text-f1-red">F1</span>
             </h1>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-1 bg-secondary/30 p-1 rounded-full border border-border backdrop-blur-sm">
             {navigationItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                className={`px-6 py-2.5 rounded-full text-sm font-bold uppercase tracking-wide transition-all duration-300 relative overflow-hidden ${
                   isActivePage(item.href)
-                    ? 'text-white bg-f1-red shadow-md transform scale-105'
-                    : 'text-gray-500 hover:text-f1-red hover:bg-red-50'
+                    ? 'text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                 }`}
               >
+                {isActivePage(item.href) && (
+                  <div className="absolute inset-0 bg-primary -z-10" />
+                )}
                 {item.name}
               </Link>
             ))}

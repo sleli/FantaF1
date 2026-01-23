@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -111,7 +111,7 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
       {/* Mobile Hamburger Button */}
       <button
         onClick={onToggle}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-xl bg-white/80 backdrop-blur text-gray-800 shadow-sm border border-gray-200 hover:bg-gray-50 focus:outline-none transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-card text-foreground shadow-lg border border-border hover:bg-muted focus:outline-none transition-colors"
         aria-label="Toggle admin menu"
       >
         {isOpen ? (
@@ -123,14 +123,14 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200 shadow-sm">
+        <div className="flex flex-col flex-grow bg-card border-r border-border shadow-2xl">
           {/* Header */}
-          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-             <div className="w-8 h-8 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-sm flex items-center justify-center transform -skew-x-12">
+          <div className="p-6 border-b border-border flex items-center gap-3">
+             <div className="w-8 h-8 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-glow flex items-center justify-center transform -skew-x-12">
               <span className="text-white text-xs font-black italic transform skew-x-12">A</span>
             </div>
             <div>
-              <h1 className="text-lg font-black text-gray-900 tracking-tight italic">
+              <h1 className="text-lg font-black text-foreground tracking-tight italic">
                 ADMIN<span className="text-f1-red">PANEL</span>
               </h1>
             </div>
@@ -144,10 +144,10 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold uppercase tracking-wide transition-all ${
                     isActivePage(item.href)
-                      ? 'bg-f1-red text-white shadow-md transform scale-105'
-                      : 'text-gray-500 hover:bg-red-50 hover:text-f1-red'
+                      ? 'bg-f1-red text-white shadow-lg transform scale-105'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -156,8 +156,8 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
               );
             })}
             
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <div className="mt-8 pt-6 border-t border-border">
+              <p className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                 Public App
               </p>
               {publicNavItems.map((item) => {
@@ -166,7 +166,7 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     <Icon className="h-5 w-5" />
                     {item.name}
@@ -183,27 +183,27 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
         <div className="fixed inset-0 z-40 lg:hidden">
           {/* Background overlay */}
           <div 
-            className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={onClose}
           />
           
           {/* Sidebar panel */}
-          <div className="fixed top-0 left-0 h-full w-80 max-w-sm bg-white shadow-2xl transform transition-transform">
+          <div className="fixed top-0 left-0 h-full w-80 max-w-sm bg-card shadow-2xl transform transition-transform border-r border-border">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between p-6 border-b border-border">
               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-sm flex items-center justify-center transform -skew-x-12">
+                 <div className="w-8 h-8 bg-gradient-to-br from-f1-red to-red-700 rounded-lg shadow-glow flex items-center justify-center transform -skew-x-12">
                   <span className="text-white text-xs font-black italic transform skew-x-12">A</span>
                 </div>
                 <div>
-                  <h1 className="text-lg font-black text-gray-900 tracking-tight italic">
+                  <h1 className="text-lg font-black text-foreground tracking-tight italic">
                     ADMIN<span className="text-f1-red">PANEL</span>
                   </h1>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Close menu"
               >
                 <XMarkIcon className="h-6 w-6" />
@@ -220,10 +220,10 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide transition-all ${
                       isActive
                         ? 'bg-f1-red text-white shadow-lg'
-                        : 'text-gray-500 hover:bg-red-50 hover:text-f1-red'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -232,8 +232,8 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
                 );
               })}
               
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <h3 className="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+              <div className="mt-8 pt-6 border-t border-border">
+                <h3 className="px-4 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                   Navigazione Pubblica
                 </h3>
                 {publicNavItems.map((item) => {
@@ -243,7 +243,7 @@ export default function AdminSidebar({ isOpen, onToggle, onClose }: AdminSidebar
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wide text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                     >
                       <Icon className="h-5 w-5" />
                       {item.name}

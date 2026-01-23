@@ -7,6 +7,8 @@ import { PlusIcon, CalendarIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from 
 import EventForm from '@/components/admin/EventForm';
 import EventList from '@/components/admin/EventList';
 import { EventWithResults } from '@/lib/types';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 // Tipo per gli eventi con conteggio pronostici
 type AdminEvent = EventWithResults & {
@@ -161,101 +163,113 @@ export default function EventsAdminPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Gestione Eventi
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Gestisci gare e sprint del campionato F1
           </p>
         </div>
 
         {/* Statistiche */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <CalendarIcon className="h-8 w-8 text-blue-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Totali</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
+                <p className="text-sm font-medium text-muted-foreground">Totali</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.total}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
           
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <ClockIcon className="h-8 w-8 text-yellow-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">In Arrivo</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.upcoming}</p>
+                <p className="text-sm font-medium text-muted-foreground">In Arrivo</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.upcoming}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
           
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <XCircleIcon className="h-8 w-8 text-orange-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Chiusi</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.closed}</p>
+                <p className="text-sm font-medium text-muted-foreground">Chiusi</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.closed}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
           
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <CheckCircleIcon className="h-8 w-8 text-green-500" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Completati</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.completed}</p>
+                <p className="text-sm font-medium text-muted-foreground">Completati</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.completed}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
 
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <div className="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm">R</span>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Gare</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.races}</p>
+                <p className="text-sm font-medium text-muted-foreground">Gare</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.races}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
 
-          <div className="bg-white p-4 rounded-lg shadow">
+          <Card>
+            <div className="p-4">
             <div className="flex items-center">
               <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Sprint</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.sprints}</p>
+                <p className="text-sm font-medium text-muted-foreground">Sprint</p>
+                <p className="text-2xl font-semibold text-foreground">{stats.sprints}</p>
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="mb-6 bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg flex items-center justify-between">
             <div>
               <strong>Errore:</strong> {error}
             </div>
             <button 
               onClick={() => setError(null)}
-              className="ml-2 text-red-500 hover:text-red-700 font-bold"
+              className="ml-2 text-destructive hover:text-destructive/90 font-bold"
             >
               ✕
             </button>
@@ -263,7 +277,7 @@ export default function EventsAdminPage() {
         )}
 
         {/* Azioni e Filtri */}
-        <div className="bg-white rounded-lg shadow mb-6 p-6">
+        <div className="bg-card text-card-foreground border border-border rounded-lg shadow mb-6 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Ricerca */}
@@ -272,14 +286,14 @@ export default function EventsAdminPage() {
                 placeholder="Cerca eventi..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="px-4 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
               
               {/* Filtro Status */}
               <select
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="px-4 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="all">Tutti gli stati</option>
                 <option value="UPCOMING">In arrivo</option>
@@ -291,7 +305,7 @@ export default function EventsAdminPage() {
               <select
                 value={filters.type}
                 onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="px-4 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="all">Tutti i tipi</option>
                 <option value="RACE">Gare</option>
@@ -302,10 +316,10 @@ export default function EventsAdminPage() {
             {/* Pulsanti Azioni */}
             <div className="flex gap-2">
               {/* Pulsante Refresh */}
-              <button
+              <Button
                 onClick={fetchEvents}
                 disabled={loading}
-                className="inline-flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                variant="secondary"
                 title="Ricarica eventi"
               >
                 {loading ? (
@@ -315,19 +329,18 @@ export default function EventsAdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 )}
-              </button>
+              </Button>
               
               {/* Pulsante Nuovo Evento */}
-              <button
+              <Button
                 onClick={() => {
                   setEditingEvent(null);
                   setShowForm(true);
                 }}
-                className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                leftIcon={<PlusIcon className="h-5 w-5" />}
               >
-                <PlusIcon className="h-5 w-5 mr-2" />
                 Nuovo Evento
-              </button>
+              </Button>
             </div>
           </div>
         </div>

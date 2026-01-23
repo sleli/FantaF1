@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
   // If admin, render the admin layout
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background text-foreground">
         {/* Admin Sidebar */}
         <AdminSidebar
           isOpen={isSidebarOpen}

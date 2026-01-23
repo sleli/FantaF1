@@ -1,10 +1,14 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { Season, ScoringType } from '@prisma/client'
-import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
 import SeasonDriverSelector from '@/components/admin/SeasonDriverSelector'
+import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
+import Badge from '@/components/ui/Badge'
 
 export default function SeasonsPage() {
   const [seasons, setSeasons] = useState<Season[]>([])
@@ -145,7 +149,6 @@ export default function SeasonsPage() {
       })
 
       if (res.ok) {
-        // Optional: Show success message
         fetchSeasons()
       } else {
         alert('Errore durante il salvataggio dei piloti')
@@ -180,79 +183,82 @@ export default function SeasonsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Gestione Stagioni</h1>
-        <button 
-            className="bg-f1-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+    <div className="space-y-8">
+      {/* Header with Action Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#1a1a24] p-6 rounded-2xl border border-[#2a2a35] shadow-lg relative overflow-hidden">
+        {/* Decorative background element */}
+        <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-f1-red/10 to-transparent pointer-events-none" />
+        
+        <div>
+          <h1 className="text-3xl font-black italic tracking-tighter text-white">
+            GESTIONE <span className="text-f1-red">STAGIONI</span>
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Configura le stagioni, le date e le regole di punteggio.</p>
+        </div>
+        
+        <Button 
+            variant="primary"
             onClick={() => {
                 setEditingSeason(null)
                 setShowForm(!showForm)
             }}
+            leftIcon={showForm ? undefined : <PlusIcon className="h-5 w-5" />}
+            className="shadow-glow z-10"
         >
-            <span>{showForm ? 'Chiudi' : '+ Nuova Stagione'}</span>
-        </button>
+            {showForm ? 'Chiudi Form' : <><span className="hidden sm:inline">Nuova Stagione</span><span className="sm:hidden">Nuova</span></>}
+        </Button>
       </div>
       
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow mb-6 border border-gray-200">
-            <h2 className="text-lg font-semibold mb-4">{editingSeason ? 'Modifica Stagione' : 'Nuova Stagione'}</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome Stagione</label>
-                        <input 
-                            type="text" 
-                            required
-                            className="w-full border rounded-md p-2"
-                            value={formData.name}
-                            onChange={e => setFormData({...formData, name: e.target.value})}
-                            placeholder="es. 2025"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Numero Piloti</label>
-                        <input 
-                            type="number" 
-                            required
-                            min="1"
-                            max="30"
-                            className="w-full border rounded-md p-2"
-                            value={formData.driverCount}
-                            onChange={e => setFormData({...formData, driverCount: parseInt(e.target.value)})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Data Inizio</label>
-                        <input 
-                            type="date" 
-                            required
-                            className="w-full border rounded-md p-2"
-                            value={formData.startDate}
-                            onChange={e => setFormData({...formData, startDate: e.target.value})}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Data Fine</label>
-                        <input 
-                            type="date" 
-                            required
-                            className="w-full border rounded-md p-2"
-                            value={formData.endDate}
-                            onChange={e => setFormData({...formData, endDate: e.target.value})}
-                        />
-                    </div>
+        <Card variant="default" className="p-6 border-f1-red/30">
+            <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
+                {editingSeason ? <PencilSquareIcon className="h-6 w-6 text-f1-red"/> : <PlusIcon className="h-6 w-6 text-f1-red"/>}
+                {editingSeason ? 'Modifica Stagione' : 'Nuova Stagione'}
+            </h2>
+            <form onSubmit={handleCreate} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input 
+                        label="Nome Stagione"
+                        type="text" 
+                        required
+                        value={formData.name}
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                        placeholder="es. 2025"
+                    />
+                    <Input 
+                        label="Numero Piloti"
+                        type="number" 
+                        required
+                        min={1}
+                        max={30}
+                        value={formData.driverCount}
+                        onChange={e => setFormData({...formData, driverCount: parseInt(e.target.value)})}
+                    />
+                    <Input 
+                        label="Data Inizio"
+                        type="date" 
+                        required
+                        value={formData.startDate}
+                        onChange={e => setFormData({...formData, startDate: e.target.value})}
+                    />
+                    <Input 
+                        label="Data Fine"
+                        type="date" 
+                        required
+                        value={formData.endDate}
+                        onChange={e => setFormData({...formData, endDate: e.target.value})}
+                    />
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Modalità di Gioco</label>
-                        <select 
-                            className="w-full border rounded-md p-2"
+                        <Select
+                            label="Modalità di Gioco"
                             value={formData.scoringType}
                             onChange={e => setFormData({...formData, scoringType: e.target.value as ScoringType})}
                         >
                             <option value="LEGACY_TOP3">TOP 3 (Classico)</option>
                             <option value="FULL_GRID_DIFF">Differenza Punti (Griglia Completa)</option>
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-2 ml-1 flex items-center gap-2">
+                            <span className="w-1 h-1 rounded-full bg-primary inline-block" />
                             {formData.scoringType === 'LEGACY_TOP3' 
                                 ? 'I partecipanti pronosticano i primi 3 classificati. Punteggio basato su accuratezza.' 
                                 : 'Pronostico intera griglia. Punteggio basato sulla differenza assoluta tra posizione pronosticata e reale.'}
@@ -260,130 +266,136 @@ export default function SeasonsPage() {
                     </div>
 
                     {!editingSeason && seasons.length > 0 && (
-                        <div className="md:col-span-2 border-t pt-4 mt-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Importa Piloti (Opzionale)</label>
-                            <div className="flex items-center gap-2">
-                                <select
-                                    className="w-full border rounded-md p-2"
-                                    value={formData.copyDriversFromSeasonId}
-                                    onChange={e => setFormData({...formData, copyDriversFromSeasonId: e.target.value})}
-                                >
-                                    <option value="">-- Non importare piloti (Crea vuota) --</option>
-                                    {seasons.map(s => (
-                                        <option key={s.id} value={s.id}>
-                                            Copia da {s.name} ({new Date(s.startDate).getFullYear()})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                        <div className="md:col-span-2 border-t border-border pt-6 mt-2">
+                            <Select
+                                label="Importa Piloti (Opzionale)"
+                                value={formData.copyDriversFromSeasonId}
+                                onChange={e => setFormData({...formData, copyDriversFromSeasonId: e.target.value})}
+                            >
+                                <option value="">-- Non importare piloti (Crea vuota) --</option>
+                                {seasons.map(s => (
+                                    <option key={s.id} value={s.id}>
+                                        Copia da {s.name} ({new Date(s.startDate).getFullYear()})
+                                    </option>
+                                ))}
+                            </Select>
+                            <p className="text-xs text-muted-foreground mt-2 ml-1">
                                 Seleziona una stagione precedente per copiare automaticamente tutti i suoi piloti nella nuova stagione.
                             </p>
                         </div>
                     )}
                 </div>
-                <div className="flex justify-end pt-4 gap-2">
-                    <button 
+                <div className="flex justify-end pt-4 gap-3 border-t border-border">
+                    <Button 
                         type="button"
+                        variant="ghost"
                         onClick={closeForm}
-                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
                     >
                         Annulla
-                    </button>
-                    <button 
+                    </Button>
+                    <Button 
                         type="submit" 
-                        disabled={processing}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        variant="primary"
+                        isLoading={processing}
                     >
-                        {processing ? 'Salvataggio...' : (editingSeason ? 'Aggiorna' : 'Crea Stagione')}
-                    </button>
+                        {editingSeason ? 'Aggiorna Stagione' : 'Crea Stagione'}
+                    </Button>
                 </div>
             </form>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-f1-red"></div>
+        <div className="flex justify-center py-20">
+           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regole</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stato</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Azioni</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {seasons.map((season) => (
-                <tr key={season.id}>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{season.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(season.startDate).toLocaleDateString()} - {new Date(season.endDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {season.scoringType === 'FULL_GRID_DIFF' ? 'Differenza Griglia' : 'Legacy Top 3'} 
-                    <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">
-                        {season.driverCount} piloti
-                    </span>
-                  </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {season.isActive ? (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Attiva</span>
-                    ) : (
-                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Archiviata</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end gap-2">
-                        <button
-                            onClick={() => openDriverSelector(season)}
-                            className="text-gray-600 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
-                            title="Gestisci Piloti"
-                        >
-                            <UserGroupIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                            onClick={() => handleEdit(season)}
-                            className="text-gray-600 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
-                            title="Modifica Stagione"
-                        >
-                            <PencilSquareIcon className="h-5 w-5" />
-                        </button>
-                        {!season.isActive && (
-                            <button 
-                                onClick={() => handleSetActive(season.id)}
-                                disabled={processing}
-                                className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-50 transition-colors"
-                                title="Imposta come Attiva"
-                            >
-                                <CheckCircleIcon className="h-5 w-5" />
-                            </button>
-                        )}
-                        <button 
-                            onClick={() => handleDelete(season.id)}
-                            disabled={processing}
-                            className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
-                            title="Elimina Stagione"
-                        >
-                            <TrashIcon className="h-5 w-5" />
-                        </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {seasons.length === 0 && (
+        <Card className="overflow-hidden bg-card border-border">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">Nessuna stagione trovata</td>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Regole</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Stato</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Azioni</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {seasons.map((season) => (
+                  <tr key={season.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-foreground text-lg">{season.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {new Date(season.startDate).toLocaleDateString()} - {new Date(season.endDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium text-foreground">
+                            {season.scoringType === 'FULL_GRID_DIFF' ? 'Differenza Griglia' : 'Legacy Top 3'}
+                        </span>
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground w-fit">
+                            {season.driverCount} piloti
+                        </span>
+                      </div>
+                    </td>
+                     <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {season.isActive ? (
+                          <Badge variant="success">Attiva</Badge>
+                      ) : (
+                          <Badge variant="neutral">Archiviata</Badge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-2">
+                          <button
+                              onClick={() => openDriverSelector(season)}
+                              className="text-muted-foreground hover:text-blue-400 p-2 rounded-lg hover:bg-blue-900/20 transition-colors"
+                              title="Gestisci Piloti"
+                          >
+                              <UserGroupIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                              onClick={() => handleEdit(season)}
+                              className="text-muted-foreground hover:text-foreground p-2 rounded-lg hover:bg-muted transition-colors"
+                              title="Modifica Stagione"
+                          >
+                              <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+                          {!season.isActive && (
+                              <button 
+                                  onClick={() => handleSetActive(season.id)}
+                                  disabled={processing}
+                                  className="text-muted-foreground hover:text-green-400 p-2 rounded-lg hover:bg-green-900/20 transition-colors"
+                                  title="Imposta come Attiva"
+                              >
+                                  <CheckCircleIcon className="h-5 w-5" />
+                              </button>
+                          )}
+                          <button 
+                              onClick={() => handleDelete(season.id)}
+                              disabled={processing}
+                              className="text-muted-foreground hover:text-destructive p-2 rounded-lg hover:bg-destructive/20 transition-colors"
+                              title="Elimina Stagione"
+                          >
+                              <TrashIcon className="h-5 w-5" />
+                          </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {seasons.length === 0 && (
+                  <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                        <p className="text-lg font-medium">Nessuna stagione trovata</p>
+                        <p className="text-sm mt-1">Crea una nuova stagione per iniziare.</p>
+                      </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       {/* Driver Selector Modal */}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Card from '@/components/ui/Card';
 
 interface AdminStats {
   totalUsers: number;
@@ -77,50 +78,58 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Amministrativa</h1>
-      <p className="text-gray-600 mb-8">Panoramica generale del sistema FantaF1</p>
+      <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard Amministrativa</h1>
+      <p className="text-muted-foreground mb-8">Panoramica generale del sistema FantaF1</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Stats cards */}
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Utenti Totali</h2>
-          <p className="text-3xl font-bold mt-2 text-blue-600">
+        <Card>
+          <div className="p-6">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Utenti Totali</h2>
+          <p className="text-3xl font-bold mt-2 text-primary">
             {isLoading ? '...' : stats.totalUsers}
           </p>
-        </div>
+          </div>
+        </Card>
         
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Piloti Attivi</h2>
-          <p className="text-3xl font-bold mt-2 text-green-600">
+        <Card>
+          <div className="p-6">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Piloti Attivi</h2>
+          <p className="text-3xl font-bold mt-2 text-green-500">
             {isLoading ? '...' : stats.activeDrivers}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             su {stats.totalDrivers} totali
           </p>
-        </div>
+          </div>
+        </Card>
         
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Evento Attivo</h2>
-          <p className="text-3xl font-bold mt-2 text-purple-600">
+        <Card>
+          <div className="p-6">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Evento Attivo</h2>
+          <p className="text-3xl font-bold mt-2 text-purple-500">
             {isLoading ? '...' : stats.totalEvents}
           </p>
-        </div>
+          </div>
+        </Card>
 
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Pronostici (Attivo)</h2>
-          <p className="text-3xl font-bold mt-2 text-orange-600">
+        <Card>
+          <div className="p-6">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Pronostici (Attivo)</h2>
+          <p className="text-3xl font-bold mt-2 text-orange-500">
             {isLoading ? '...' : stats.totalPredictions}
           </p>
-        </div>
+          </div>
+        </Card>
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Azioni Rapide</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">Azioni Rapide</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link 
             href="/admin/drivers" 
-            className="p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            className="p-4 bg-card border border-border rounded-lg hover:border-primary/50 hover:bg-foreground/5 transition-colors"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -129,15 +138,15 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-900">Gestisci Piloti</h3>
-                <p className="text-xs text-blue-600">Aggiungi o modifica piloti</p>
+                <h3 className="text-sm font-medium text-foreground">Gestisci Piloti</h3>
+                <p className="text-xs text-muted-foreground">Aggiungi o modifica piloti</p>
               </div>
             </div>
           </Link>
 
           <Link 
             href="/admin/events" 
-            className="p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            className="p-4 bg-card border border-border rounded-lg hover:border-primary/50 hover:bg-foreground/5 transition-colors"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -146,15 +155,15 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-900">Eventi</h3>
-                <p className="text-xs text-green-600">Crea nuovi eventi</p>
+                <h3 className="text-sm font-medium text-foreground">Eventi</h3>
+                <p className="text-xs text-muted-foreground">Crea nuovi eventi</p>
               </div>
             </div>
           </Link>
 
           <Link 
             href="/admin/users" 
-            className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            className="p-4 bg-card border border-border rounded-lg hover:border-primary/50 hover:bg-foreground/5 transition-colors"
           >
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -163,22 +172,22 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-purple-900">Utenti</h3>
-                <p className="text-xs text-purple-600">Gestisci utenti</p>
+                <h3 className="text-sm font-medium text-foreground">Utenti</h3>
+                <p className="text-xs text-muted-foreground">Gestisci utenti</p>
               </div>
             </div>
           </Link>
 
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="p-4 bg-card border border-border rounded-lg">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-bold">📊</span>
                 </div>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-gray-600">Statistiche</h3>
-                <p className="text-xs text-gray-500">Prossimamente</p>
+                <h3 className="text-sm font-medium text-foreground">Statistiche</h3>
+                <p className="text-xs text-muted-foreground">Prossimamente</p>
               </div>
             </div>
           </div>

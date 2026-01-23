@@ -9,6 +9,8 @@ import EventSelector from '@/components/admin/EventSelector';
 import BulkOperations from '@/components/admin/BulkOperations';
 import UserSearch from '@/components/admin/UserSearch';
 import NotificationSystem, { useNotifications } from '@/components/admin/NotificationSystem';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 type EventWithCount = Event & {
   firstPlace?: Driver;
@@ -321,8 +323,8 @@ export default function BulkPredictionsPage() {
 
   if (status === 'loading') {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -335,30 +337,35 @@ export default function BulkPredictionsPage() {
       />
       <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <Card>
+        <div className="p-6">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           📊 Gestione Bulk Pronostici
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Modifica rapidamente i pronostici di tutti gli utenti per qualsiasi gara.
           Ottimizzato per l'inserimento rapido di dati storici.
         </p>
-      </div>
+        </div>
+      </Card>
 
       {/* Event Selection */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <Card>
+        <div className="p-6">
         <EventSelector
           events={events}
           selectedEvent={selectedEvent}
           onEventSelect={handleEventSelect}
           hasUnsavedChanges={hasUnsavedChanges}
         />
-      </div>
+        </div>
+      </Card>
 
       {selectedEvent && (
         <>
           {/* Controls */}
-          <div className="bg-white shadow rounded-lg p-6">
+          <Card>
+            <div className="p-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               <UserSearch
                 searchTerm={searchTerm}
@@ -369,23 +376,23 @@ export default function BulkPredictionsPage() {
               
               <div className="flex gap-2">
                 <div className="relative">
-                  <button
+                  <Button
                     onClick={handleBulkSave}
                     disabled={!hasUnsavedChanges || isLoading}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    isLoading={isLoading}
                   >
-                    {isLoading ? 'Salvando...' : 'Salva Tutto'}
-                  </button>
+                    Salva Tutto
+                  </Button>
 
                   {saveProgress && (
                     <div className="absolute top-full left-0 right-0 mt-2">
-                      <div className="bg-gray-200 rounded-full h-2">
+                      <div className="bg-muted rounded-full h-2">
                         <div
-                          className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(saveProgress.current / saveProgress.total) * 100}%` }}
                         />
                       </div>
-                      <div className="text-xs text-gray-600 mt-1 text-center">
+                      <div className="text-xs text-muted-foreground mt-1 text-center">
                         {Math.round((saveProgress.current / saveProgress.total) * 100)}%
                       </div>
                     </div>
@@ -400,10 +407,11 @@ export default function BulkPredictionsPage() {
                 />
               </div>
             </div>
-          </div>
+            </div>
+          </Card>
 
           {/* Predictions Grid */}
-          <div className="bg-white shadow rounded-lg">
+          <div className="bg-card text-card-foreground border border-border shadow rounded-lg">
             <BulkPredictionsGrid
               users={filteredUsers}
               drivers={drivers}

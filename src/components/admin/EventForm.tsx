@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import SortableDriverList from '../predictions/SortableDriverList';
 import type { Driver } from '@prisma/client';
+import Badge from '@/components/ui/Badge';
 
 interface Season {
   id: string;
@@ -257,15 +258,15 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-card text-card-foreground rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-semibold text-foreground">
             {isEditing ? 'Modifica Evento' : 'Nuovo Evento'}
           </h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
@@ -273,14 +274,14 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
         {/* Tabs */}
         {isEditing && (
-          <div className="border-b border-gray-200">
+          <div className="border-b border-border">
             <nav className="flex">
               <button
                 onClick={() => setActiveTab('basic')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 ${
                   activeTab === 'basic'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Dati Base
@@ -289,14 +290,14 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 onClick={() => setActiveTab('results')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 ${
                   activeTab === 'results'
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Risultati
                 {hasResults && (
-                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Inseriti
+                  <span className="ml-2">
+                    <Badge variant="success">Inseriti</Badge>
                   </span>
                 )}
               </button>
@@ -306,8 +307,8 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
         {/* Error */}
         {error && (
-          <div className="p-4 bg-red-50 border-l-4 border-red-400">
-            <p className="text-red-700">{error}</p>
+          <div className="p-4 bg-destructive/10 border-l-4 border-destructive">
+            <p className="text-destructive">{error}</p>
           </div>
         )}
 
@@ -317,14 +318,14 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
             <div className="space-y-6">
               {/* Nome */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Nome Evento *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="es. Gran Premio di Monaco"
                   maxLength={100}
                 />
@@ -332,13 +333,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
               {/* Tipo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Tipo Evento *
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => handleInputChange('type', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="RACE">Gara</option>
                   <option value="SPRINT">Sprint</option>
@@ -348,34 +349,34 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
               {/* Date */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Data Evento *
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.date}
                     onChange={(e) => handleInputChange('date', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Chiusura Pronostici *
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.closingDate}
                     onChange={(e) => handleInputChange('closingDate', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
               </div>
 
               {/* Info Predizioni */}
               {isEditing && hasPredictions && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm text-primary">
                     <strong>Informazione:</strong> Questo evento ha già {event?._count?.predictions} pronostici.
                     Le modifiche sono ora consentite per tutti gli eventi.
                   </p>
@@ -386,8 +387,8 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
           {activeTab === 'results' && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+                <p className="text-sm text-primary">
                   {scoringType === 'FULL_GRID_DIFF' 
                     ? 'Ordina la griglia di arrivo completa. Il primo pilota in alto è il vincitore.' 
                     : 'Inserisci i risultati ufficiali dell\'evento.'}
@@ -397,7 +398,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
               {scoringType === 'FULL_GRID_DIFF' ? (
                 <div className="space-y-4">
-                  <h3 className="font-medium text-gray-900">Ordine di Arrivo Completo</h3>
+                  <h3 className="font-medium text-foreground">Ordine di Arrivo Completo</h3>
                   <SortableDriverList 
                     drivers={drivers}
                     orderedDriverIds={results}
@@ -408,13 +409,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                 <>
                   {/* Primo Posto */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       🥇 Primo Posto
                     </label>
                     <select
                       value={formData.firstPlaceId}
                       onChange={(e) => handleInputChange('firstPlaceId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">Seleziona pilota...</option>
                       {drivers.map(driver => (
@@ -427,13 +428,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
                   {/* Secondo Posto */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       🥈 Secondo Posto
                     </label>
                     <select
                       value={formData.secondPlaceId}
                       onChange={(e) => handleInputChange('secondPlaceId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">Seleziona pilota...</option>
                       {drivers
@@ -448,13 +449,13 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
                   {/* Terzo Posto */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">
                       🥉 Terzo Posto
                     </label>
                     <select
                       value={formData.thirdPlaceId}
                       onChange={(e) => handleInputChange('thirdPlaceId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       <option value="">Seleziona pilota...</option>
                       {drivers
@@ -473,18 +474,18 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
           >
             Annulla
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !!formError}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed rounded-lg transition-colors"
           >
             {loading ? 'Salvando...' : (isEditing ? 'Aggiorna' : 'Crea Evento')}
           </button>
@@ -493,7 +494,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
         {/* Form Validation Error */}
         {formError && (
           <div className="px-6 pb-4">
-            <p className="text-sm text-red-600">{formError}</p>
+            <p className="text-sm text-destructive">{formError}</p>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Driver, Event } from '@prisma/client';
+import Badge from '@/components/ui/Badge';
 
 type EventWithCount = Event & {
   firstPlace?: Driver;
@@ -36,11 +37,11 @@ export default function EventSelector({
   const getStatusBadge = (event: EventWithCount) => {
     switch (event.status) {
       case 'UPCOMING':
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Prossimo</span>;
+        return <Badge variant="info">Prossimo</Badge>;
       case 'CLOSED':
-        return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Chiuso</span>;
+        return <Badge variant="warning">Chiuso</Badge>;
       case 'COMPLETED':
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Completato</span>;
+        return <Badge variant="success">Completato</Badge>;
       default:
         return null;
     }
@@ -53,18 +54,18 @@ export default function EventSelector({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">
+        <h2 className="text-lg font-medium text-foreground">
           Seleziona Gara
         </h2>
         {hasUnsavedChanges && (
-          <span className="text-sm text-orange-600 font-medium">
+          <span className="text-sm text-orange-500 font-medium">
             ⚠️ Hai modifiche non salvate
           </span>
         )}
       </div>
 
       {events.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-muted-foreground">
           <p>Nessuna gara disponibile.</p>
         </div>
       ) : (
@@ -74,10 +75,10 @@ export default function EventSelector({
               key={event.id}
               onClick={() => onEventSelect(event)}
               className={`
-                relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md
+                relative p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md bg-card text-card-foreground
                 ${selectedEvent?.id === event.id 
-                  ? 'border-red-500 bg-red-50' 
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-primary bg-primary/10' 
+                  : 'border-border hover:border-primary/40'
                 }
               `}
             >
@@ -85,7 +86,7 @@ export default function EventSelector({
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{getTypeIcon(event.type)}</span>
-                  <span className="text-sm font-medium text-gray-600">
+                  <span className="text-sm font-medium text-muted-foreground">
                     {event.type}
                   </span>
                 </div>
@@ -93,22 +94,22 @@ export default function EventSelector({
               </div>
 
               {/* Event Name */}
-              <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+              <h3 className="font-medium text-foreground mb-2 line-clamp-2">
                 {event.name}
               </h3>
 
               {/* Date */}
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-muted-foreground mb-2">
                 📅 {formatDate(event.date)}
               </p>
 
               {/* Predictions Count */}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   Pronostici: {event._count.predictions}
                 </span>
                 {selectedEvent?.id === event.id && (
-                  <span className="text-red-600 font-medium">
+                  <span className="text-primary font-medium">
                     Selezionato
                   </span>
                 )}
@@ -116,8 +117,8 @@ export default function EventSelector({
 
               {/* Results (if completed) */}
               {event.status === 'COMPLETED' && event.firstPlace && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <div className="text-xs text-gray-600 space-y-1">
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-xs text-muted-foreground space-y-1">
                     <div>🥇 {event.firstPlace.name}</div>
                     {event.secondPlace && <div>🥈 {event.secondPlace.name}</div>}
                     {event.thirdPlace && <div>🥉 {event.thirdPlace.name}</div>}
@@ -130,11 +131,11 @@ export default function EventSelector({
       )}
 
       {selectedEvent && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-medium text-blue-900 mb-2">
+        <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+          <h3 className="font-medium text-foreground mb-2">
             Gara Selezionata: {selectedEvent.name}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
             <div>
               <span className="font-medium">Tipo:</span> {selectedEvent.type}
             </div>
@@ -146,8 +147,8 @@ export default function EventSelector({
             </div>
           </div>
           {selectedEvent.status === 'COMPLETED' && selectedEvent.firstPlace && (
-            <div className="mt-3 pt-3 border-t border-blue-300">
-              <div className="text-sm text-blue-800">
+            <div className="mt-3 pt-3 border-t border-primary/20">
+              <div className="text-sm text-muted-foreground">
                 <span className="font-medium">Risultati:</span>
                 <div className="mt-1 flex flex-wrap gap-4">
                   <span>🥇 {selectedEvent.firstPlace.name}</span>

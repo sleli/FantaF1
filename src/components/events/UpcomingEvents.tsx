@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import Card from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 
 interface Event {
   id: string;
@@ -71,13 +74,15 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
   if (isLoading) {
     return (
       <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Prossimi Eventi</h2>
-        <div className="bg-white rounded-lg shadow-md border p-6">
+        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+        <Card>
+          <div className="p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
           </div>
-        </div>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -85,28 +90,30 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
   if (error) {
     return (
       <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Prossimi Eventi</h2>
-        <div className="bg-white rounded-lg shadow-md border p-6">
-          <div className="text-center text-red-600">
+        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+        <Card>
+          <div className="p-6">
+          <div className="text-center text-destructive">
             <p>Errore nel caricamento degli eventi: {error}</p>
-            <button 
+            <button
               onClick={fetchUpcomingEvents}
-              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              className="mt-2 text-sm text-primary hover:text-primary/90 underline"
             >
               Riprova
             </button>
           </div>
-        </div>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Prossimi Eventi</h2>
-      <div className="bg-white rounded-lg shadow-md border overflow-hidden">
+      <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+      <Card className="overflow-hidden">
         {upcomingEvents.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {upcomingEvents.map((event) => {
               const eventDate = new Date(event.date);
               const closingDate = new Date(event.closingDate);
@@ -114,30 +121,24 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
               const isClosingSoon = closingDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000; // Meno di 24h
               
               return (
-                <div key={event.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div key={event.id} className="p-6 hover:bg-foreground/5 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-foreground">
                           {event.name}
                         </h3>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          event.type === 'RACE' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <Badge variant={event.type === 'RACE' ? 'error' : 'info'}>
                           {event.type}
-                        </span>
+                        </Badge>
                         {isClosingSoon && (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            ⏰ Chiusura imminente
-                          </span>
+                          <Badge variant="warning">⏰ Chiusura imminente</Badge>
                         )}
                       </div>
                       
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center">
-                          <span className="text-gray-500 mr-2">📅 Evento:</span>
+                          <span className="text-muted-foreground mr-2">📅 Evento:</span>
                           <span className="font-medium">
                             {eventDate.toLocaleDateString('it-IT', {
                               day: '2-digit',
@@ -150,8 +151,8 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
                         </div>
                         
                         <div className="flex items-center">
-                          <span className="text-gray-500 mr-2">🔒 Chiusura:</span>
-                          <span className={`font-medium ${isClosingSoon ? 'text-yellow-600' : ''}`}>
+                          <span className="text-muted-foreground mr-2">🔒 Chiusura:</span>
+                          <span className={`font-medium ${isClosingSoon ? 'text-yellow-500' : ''}`}>
                             {closingDate.toLocaleDateString('it-IT', {
                               day: '2-digit',
                               month: '2-digit',
@@ -163,15 +164,15 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
                         </div>
                         
                         <div className="flex items-center">
-                          <span className="text-gray-500 mr-2">👥 Pronostici:</span>
+                          <span className="text-muted-foreground mr-2">👥 Pronostici:</span>
                           <span className="font-medium">
                             {event._count?.predictions || 0}
                           </span>
                         </div>
                         
                         <div className="flex items-center">
-                          <span className="text-gray-500 mr-2">⏱️ Tempo rimasto:</span>
-                          <span className={`font-medium ${isClosingSoon ? 'text-yellow-600' : 'text-green-600'}`}>
+                          <span className="text-muted-foreground mr-2">⏱️ Tempo rimasto:</span>
+                          <span className={`font-medium ${isClosingSoon ? 'text-yellow-500' : 'text-green-500'}`}>
                             {(() => {
                               const diff = closingDate.getTime() - now.getTime();
                               if (diff <= 0) return 'Chiuso';
@@ -192,21 +193,22 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
                     <div className="flex items-center space-x-3">
                       {/* Gestisci button - only for admins */}
                       {isAdmin && (
-                        <button
+                        <Button
                           onClick={() => handleEditEvent(event)}
-                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<span>✏️</span>}
                         >
-                          <span className="mr-2">✏️</span>
                           Gestisci
-                        </button>
+                        </Button>
                       )}
                       
                       {/* Pronostici button - for all users */}
                       <Link
                         href={`/predictions?event=${event.id}`}
-                        className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        className="inline-flex items-center justify-center text-sm font-bold uppercase tracking-wider rounded transition-all duration-200 bg-primary text-primary-foreground hover:bg-primary/90 border border-transparent px-5 py-2.5 gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       >
-                        <span className="mr-2">🎯</span>
+                        <span className="flex-shrink-0">🎯</span>
                         Pronostici
                       </Link>
                     </div>
@@ -216,24 +218,24 @@ export default function UpcomingEvents({ onEditEvent, refreshTrigger }: Upcoming
             })}
           </div>
         ) : (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-6 text-center text-muted-foreground">
             <div className="text-4xl mb-4">📅</div>
             <p className="text-lg font-medium mb-2">Nessun evento in programma</p>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Non ci sono eventi con stato "In Arrivo" al momento.
             </p>
             {isAdmin && (
               <Link 
                 href="/admin/events"
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center text-sm font-bold uppercase tracking-wider rounded transition-all duration-200 bg-primary text-primary-foreground hover:bg-primary/90 border border-transparent px-6 py-3.5 gap-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
-                <span className="mr-2">➕</span>
+                <span className="flex-shrink-0">➕</span>
                 Crea il primo evento
               </Link>
             )}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

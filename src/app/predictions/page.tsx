@@ -191,15 +191,15 @@ export default function PredictionsPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-f1-dark">I Miei Pronostici</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">I Miei Pronostici</h1>
+          <p className="mt-2 text-muted-foreground">
             Gestisci i tuoi pronostici per gli eventi di Formula 1
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-          <div className="border-b border-gray-200">
+        <div className="bg-card text-card-foreground rounded-lg shadow-sm border border-border mb-8">
+          <div className="border-b border-border">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
                 onClick={() => {
@@ -209,8 +209,8 @@ export default function PredictionsPage() {
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'existing'
-                    ? 'border-f1-red text-f1-red'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
                 Pronostici Esistenti ({predictions.length})
@@ -222,8 +222,8 @@ export default function PredictionsPage() {
                 }}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'new'
-                    ? 'border-f1-red text-f1-red'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
                 Nuovo Pronostico {availableEvents.length > 0 && `(${availableEvents.length})`}
@@ -250,18 +250,18 @@ export default function PredictionsPage() {
                 {availableEvents.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="w-24 h-24 mx-auto mb-4">
-                      <svg className="w-full h-full text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-full h-full text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Nessun evento disponibile</h3>
-                    <p className="text-gray-500">
+                    <h3 className="text-lg font-medium text-foreground mb-2">Nessun evento disponibile</h3>
+                    <p className="text-muted-foreground">
                       Non ci sono eventi aperti per nuovi pronostici al momento.
                     </p>
                   </div>
                 ) : !selectedEvent ? (
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    <h3 className="text-lg font-medium text-foreground mb-4">
                       Seleziona un evento per il tuo pronostico:
                     </h3>
                     <div className="grid gap-4">
@@ -269,15 +269,15 @@ export default function PredictionsPage() {
                         <div
                           key={event.id}
                           onClick={() => setSelectedEvent(event)}
-                          className="p-4 border border-gray-200 rounded-lg hover:border-f1-red hover:bg-red-50 cursor-pointer transition-colors"
+                          className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <h4 className="font-semibold text-f1-dark">{event.name}</h4>
-                              <p className="text-sm text-gray-600 mt-1">
+                              <h4 className="font-semibold text-foreground">{event.name}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
                                 {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
                               </p>
-                              <p className="text-sm text-blue-600 mt-1">
+                              <p className="text-sm text-primary mt-1">
                                 Chiusura: {new Date(event.closingDate).toLocaleDateString('it-IT', {
                                   month: 'short',
                                   day: 'numeric',
@@ -286,7 +286,7 @@ export default function PredictionsPage() {
                                 })}
                               </p>
                             </div>
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </div>
