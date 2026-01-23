@@ -312,7 +312,7 @@ export default function SeasonsPage() {
       ) : (
         <Card className="overflow-hidden bg-card border-border">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
+            <table className="f1-table min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Nome</th>

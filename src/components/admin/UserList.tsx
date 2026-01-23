@@ -285,7 +285,7 @@ export default function UserList({ users, onEdit, onDelete, onRefresh }: UserLis
       {/* Desktop Table Layout */}
       <div className="hidden lg:block bg-card text-card-foreground border border-border rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-border">
+          <table className="f1-table min-w-full divide-y divide-border">
             <thead className="bg-muted">
               <tr>
                 <th 

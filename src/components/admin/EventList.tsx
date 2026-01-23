@@ -240,7 +240,7 @@ export default function EventList({ events, onEdit, onDelete, onRefresh }: Event
 
       {/* Desktop Table Layout */}
       <div className="hidden lg:block bg-card text-card-foreground border border-border rounded-lg shadow overflow-hidden">
-        <table className="w-full divide-y divide-border table-fixed">
+        <table className="f1-table w-full divide-y divide-border table-fixed">
           <thead className="bg-muted">
             <tr>
               <th className="w-1/4 px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">

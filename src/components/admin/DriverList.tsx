@@ -21,7 +21,7 @@ export function DriverList({ drivers, onEdit, onDelete, isLoading = false }: Dri
   return (
     <div className="bg-card text-card-foreground border border-border shadow-md rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
+        <table className="f1-table min-w-full divide-y divide-border">
           <thead className="bg-muted">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">

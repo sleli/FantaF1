@@ -3,38 +3,38 @@
 @layer base {
   :root {
     /* Default to Dark Mode (F1 Style) */
-    --background: #15151e;
+    --background: #000000;
     --foreground: #ffffff;
     
-    --card: #1e1e26;
+    --card: #000000;
     --card-foreground: #e0e0e0;
     
-    --popover: #1e1e26;
+    --popover: #000000;
     --popover-foreground: #e0e0e0;
     
-    --primary: #E10600;
+    --primary: #FF1801;
     --primary-foreground: #ffffff;
     
-    --secondary: #38383f;
+    --secondary: #15151e;
     --secondary-foreground: #ffffff;
     
-    --muted: #282830;
+    --muted: #15151e;
     --muted-foreground: #a1a1aa;
     
-    --accent: #282830;
+    --accent: #15151e;
     --accent-foreground: #ffffff;
     
     --destructive: #991b1b;
     --destructive-foreground: #ffffff;
     
-    --border: #282830;
-    --input: #1a1a24;
-    --ring: #E10600;
+    --border: rgba(255, 255, 255, 0.12);
+    --input: #0b0b0d;
+    --ring: #FF1801;
 
-    --f1-red: #E10600;
+    --f1-red: #FF1801;
     --f1-red-hover: #B91C1C;
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-bg: rgba(21, 21, 30, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-bg: rgba(0, 0, 0, 0.7);
     --font-titillium: 'Titillium Web', sans-serif;
 
     /* Radius */
@@ -52,7 +52,7 @@
     --popover: #ffffff;
     --popover-foreground: #111827;
     
-    --primary: #E10600;
+    --primary: #FF1801;
     --primary-foreground: #ffffff;
     
     --secondary: #e5e7eb;
@@ -69,7 +69,7 @@
     
     --border: #e5e7eb;
     --input: #ffffff;
-    --ring: #E10600;
+    --ring: #FF1801;
 
     --glass-border: rgba(0, 0, 0, 0.1);
     --glass-bg: rgba(255, 255, 255, 0.85);
@@ -85,12 +85,7 @@ html {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  /* Carbon fiber subtle pattern - Default Dark */
-  background-image: 
-    linear-gradient(45deg, #1a1a24 25%, transparent 25%, transparent 75%, #1a1a24 75%, #1a1a24),
-    linear-gradient(45deg, #1a1a24 25%, transparent 25%, transparent 75%, #1a1a24 75%, #1a1a24);
-  background-size: 20px 20px;
-  background-position: 0 0, 10px 10px;
+  background-image: none;
 }
 
 /* Light Mode Background Override */
@@ -100,12 +95,54 @@ body {
     linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb);
 }
 
+@layer base {
+  table.f1-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  table.f1-table thead {
+    background-color: var(--muted);
+    box-shadow: inset 0 -2px 0 0 var(--primary);
+  }
+
+  table.f1-table th,
+  table.f1-table td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+  }
+
+  table.f1-table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  table.f1-table tbody {
+    background-color: var(--card);
+  }
+
+  table.f1-table th + th,
+  table.f1-table td + td {
+    border-left: 1px solid var(--border);
+  }
+
+  @media (min-width: 768px) {
+    table.f1-table th,
+    table.f1-table td {
+      padding: 0.875rem 1.5rem;
+    }
+  }
+}
+
 /* Glassmorphism Utilities */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
 .glass-nav {

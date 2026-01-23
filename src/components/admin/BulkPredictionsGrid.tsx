@@ -200,7 +200,7 @@ export default memo(function BulkPredictionsGrid({
 
       {/* Grid */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
+        <table className="f1-table min-w-full divide-y divide-border">
           <thead className="bg-muted">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider w-48">
