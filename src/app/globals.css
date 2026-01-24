@@ -3,38 +3,38 @@
 @layer base {
   :root {
     /* Default to Dark Mode (F1 Style) */
-    --background: #000000;
-    --foreground: #ffffff;
+    --background: #0f1115;
+    --foreground: #c9ced6;
     
-    --card: #000000;
-    --card-foreground: #e0e0e0;
+    --card: #161a22;
+    --card-foreground: #c9ced6;
     
-    --popover: #000000;
-    --popover-foreground: #e0e0e0;
+    --popover: #161a22;
+    --popover-foreground: #c9ced6;
     
-    --primary: #FF1801;
-    --primary-foreground: #ffffff;
+    --primary: #E10600;
+    --primary-foreground: #f3f4f5;
     
-    --secondary: #15151e;
-    --secondary-foreground: #ffffff;
+    --secondary: #1c2230;
+    --secondary-foreground: #c9ced6;
     
-    --muted: #15151e;
-    --muted-foreground: #a1a1aa;
+    --muted: #131722;
+    --muted-foreground: #8c95a6;
     
-    --accent: #15151e;
-    --accent-foreground: #ffffff;
+    --accent: #1c2230;
+    --accent-foreground: #c9ced6;
     
     --destructive: #991b1b;
-    --destructive-foreground: #ffffff;
+    --destructive-foreground: #f3f4f5;
     
-    --border: rgba(255, 255, 255, 0.12);
-    --input: #0b0b0d;
+    --border: rgba(201, 206, 214, 0.1);
+    --input: #121520;
     --ring: #FF1801;
 
-    --f1-red: #FF1801;
+    --f1-red: #E10600;
     --f1-red-hover: #B91C1C;
-    --glass-border: rgba(255, 255, 255, 0.14);
-    --glass-bg: rgba(0, 0, 0, 0.7);
+    --glass-border: rgba(201, 206, 214, 0.08);
+    --glass-bg: rgba(15, 17, 21, 0.66);
     --font-titillium: 'Titillium Web', sans-serif;
 
     /* Radius */
@@ -142,7 +142,7 @@ body {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
 }
 
 .glass-nav {

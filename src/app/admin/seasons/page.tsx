@@ -185,15 +185,15 @@ export default function SeasonsPage() {
   return (
     <div className="space-y-8">
       {/* Header with Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#1a1a24] p-6 rounded-2xl border border-[#2a2a35] shadow-lg relative overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-secondary p-6 rounded-2xl border border-border shadow-lg relative overflow-hidden">
         {/* Decorative background element */}
         <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-f1-red/10 to-transparent pointer-events-none" />
         
         <div>
-          <h1 className="text-3xl font-black italic tracking-tighter text-white">
+          <h1 className="text-3xl font-black italic tracking-tighter text-foreground">
             GESTIONE <span className="text-f1-red">STAGIONI</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Configura le stagioni, le date e le regole di punteggio.</p>
+          <p className="text-muted-foreground text-sm mt-1">Configura le stagioni, le date e le regole di punteggio.</p>
         </div>
         
         <Button 
@@ -211,7 +211,7 @@ export default function SeasonsPage() {
       
       {showForm && (
         <Card variant="default" className="p-6 border-f1-red/30">
-            <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold mb-6 text-foreground flex items-center gap-2">
                 {editingSeason ? <PencilSquareIcon className="h-6 w-6 text-f1-red"/> : <PlusIcon className="h-6 w-6 text-f1-red"/>}
                 {editingSeason ? 'Modifica Stagione' : 'Nuova Stagione'}
             </h2>

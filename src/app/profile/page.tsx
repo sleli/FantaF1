@@ -85,9 +85,9 @@ function ProfilePage() {
                     : 'border-border hover:border-muted-foreground text-muted-foreground'
                 }`}
               >
-                <div className="w-full h-20 rounded border border-border relative overflow-hidden mb-2" style={{ backgroundColor: '#15151e' }}>
-                  <div className="absolute top-0 left-0 right-0 h-4 border-b border-border" style={{ backgroundColor: '#1a1a24' }}></div>
-                  <div className="absolute top-8 left-2 right-2 h-2 rounded-full w-1/2" style={{ backgroundColor: '#38383f' }}></div>
+                <div className="w-full h-20 rounded border border-border relative overflow-hidden mb-2" style={{ backgroundColor: '#0b0b0d' }}>
+                  <div className="absolute top-0 left-0 right-0 h-4 border-b border-border" style={{ backgroundColor: '#101014' }}></div>
+                  <div className="absolute top-8 left-2 right-2 h-2 rounded-full w-1/2" style={{ backgroundColor: '#1a1a24' }}></div>
                 </div>
                 <span className="font-bold">Tema Scuro</span>
               </button>

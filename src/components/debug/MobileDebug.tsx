@@ -53,12 +53,12 @@ export default function MobileDebug({ enabled = false }: MobileDebugProps) {
 
       {/* Debug panel */}
       {isVisible && (
-        <div className="fixed bottom-16 right-4 z-50 bg-black bg-opacity-90 text-white p-4 rounded-lg max-w-sm text-xs overflow-auto max-h-96">
+        <div className="fixed bottom-16 right-4 z-50 bg-card text-card-foreground border border-border p-4 rounded-lg max-w-sm text-xs overflow-auto max-h-96 shadow-lg">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-sm">Mobile Debug</h3>
             <button
               onClick={() => setIsVisible(false)}
-              className="text-white hover:text-gray-300"
+              className="text-muted-foreground hover:text-foreground"
             >
               ✕
             </button>
