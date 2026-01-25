@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Driver, Event } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PredictionForm from '@/components/predictions/PredictionForm'
-import PredictionList from '@/components/predictions/PredictionList'
+import PredictionsViewer from '@/components/predictions/PredictionsViewer'
 import PublicLayout from '@/components/layout/PublicLayout'
 
 export default function PredictionsPage() {
@@ -57,8 +57,12 @@ export default function PredictionsPage() {
       }
 
       if (predictionsRes.ok) {
-        const predictionsData = await predictionsRes.json()
-        setPredictions(predictionsData)
+        if (predictionsRes.status === 204) {
+          setPredictions([])
+        } else {
+          const predictionsData = await predictionsRes.json()
+          setPredictions(predictionsData)
+        }
       }
     } catch (error) {
       console.error('Errore nel caricamento dati:', error)
@@ -233,15 +237,15 @@ export default function PredictionsPage() {
 
           <div className="p-6">
             {activeTab === 'existing' && !editingPrediction && (
-              <PredictionList
-                predictions={predictions}
+              <PredictionsViewer
+                personalPredictions={predictions}
                 drivers={drivers}
+                isLoading={isLoading}
                 onEdit={(prediction) => {
                   setEditingPrediction(prediction)
                   setActiveTab('new')
                 }}
                 onDelete={handleDeletePrediction}
-                isLoading={isLoading}
               />
             )}
 

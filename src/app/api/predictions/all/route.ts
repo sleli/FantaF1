@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
             date: true,
             closingDate: true,
             status: true,
+            results: true,
+            firstPlaceId: true,
+            secondPlaceId: true,
+            thirdPlaceId: true,
             season: {
               select: {
                 scoringType: true
@@ -101,6 +105,13 @@ export async function GET(request: NextRequest) {
             secondPlace: null,
             thirdPlace: null,
             rankings: [], // Nascondi rankings
+            event: {
+              ...prediction.event,
+              results: [],
+              firstPlaceId: null,
+              secondPlaceId: null,
+              thirdPlaceId: null,
+            },
             // Aggiungi un flag per indicare che la predizione esiste ma è nascosta
             isHidden: true
           }

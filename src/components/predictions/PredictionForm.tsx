@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Driver, Event, ScoringType } from '@prisma/client'
 import SortableDriverList from './SortableDriverList'
 import Card from '@/components/ui/Card'
@@ -51,8 +51,7 @@ export default function PredictionForm({
   
   // New State
   const [orderedDriverIds, setOrderedDriverIds] = useState<string[]>([])
-  
-  const [errors, setErrors] = useState<string[]>([])
+  const [touched, setTouched] = useState(false)
 
   // Helper to get initial order based on history or random
   const getInitialOrder = useCallback(() => {
@@ -129,39 +128,60 @@ export default function PredictionForm({
     })
   }
 
-  const validateSelection = (data?: any) => {
+  const activeDrivers = useMemo(() => drivers.filter(d => d.active), [drivers])
+  const activeDriverIds = useMemo(() => activeDrivers.map(d => d.id), [activeDrivers])
+  const requiredDriverCount = useMemo(() => {
+    if (scoringType === ScoringType.FULL_GRID_DIFF) return activeDrivers.length
+    return 3
+  }, [scoringType, activeDrivers.length])
+
+  const validationErrors = useMemo(() => {
     const newErrors: string[] = []
-    
-    // Use derived data if provided, otherwise fallback to state
-    const currentFirst = data?.firstPlaceId ?? firstPlaceId
-    const currentSecond = data?.secondPlaceId ?? secondPlaceId
-    const currentThird = data?.thirdPlaceId ?? thirdPlaceId
-    
+
     if (scoringType === ScoringType.FULL_GRID_DIFF) {
-        // Relaxed validation: Allow partial ordering
-        // if (orderedDriverIds.length !== driverCount) {
-        //    newErrors.push(`Devi ordinare tutti i ${driverCount} piloti`)
-        // }
+      const unique = new Set(orderedDriverIds)
+      if (unique.size !== orderedDriverIds.length) {
+        newErrors.push('Sono presenti piloti duplicati nella griglia')
+      }
+
+      if (orderedDriverIds.length !== requiredDriverCount) {
+        newErrors.push(`Devi ordinare tutti i ${requiredDriverCount} piloti`)
+      }
+
+      const unknownIds = orderedDriverIds.filter(id => !activeDriverIds.includes(id))
+      if (unknownIds.length > 0) {
+        newErrors.push('La griglia contiene piloti non validi')
+      }
     } else {
-        if (!currentFirst) newErrors.push('Seleziona il pilota per il 1° posto')
-        if (!currentSecond) newErrors.push('Seleziona il pilota per il 2° posto')
-        if (!currentThird) newErrors.push('Seleziona il pilota per il 3° posto')
-        
-        const selectedDrivers = [currentFirst, currentSecond, currentThird].filter(Boolean)
-        const uniqueDrivers = new Set(selectedDrivers)
-        
-        if (selectedDrivers.length === 3 && uniqueDrivers.size !== 3) {
+      if (!firstPlaceId) newErrors.push('Seleziona il pilota per il 1° posto')
+      if (!secondPlaceId) newErrors.push('Seleziona il pilota per il 2° posto')
+      if (!thirdPlaceId) newErrors.push('Seleziona il pilota per il 3° posto')
+
+      const selectedDrivers = [firstPlaceId, secondPlaceId, thirdPlaceId].filter(Boolean)
+      const uniqueDrivers = new Set(selectedDrivers)
+      if (selectedDrivers.length === 3 && uniqueDrivers.size !== 3) {
         newErrors.push('Devi selezionare 3 piloti diversi')
-        }
+      }
     }
 
     if (!isEventOpen) {
-      newErrors.push('L\'evento non è più aperto per i pronostici')
+      newErrors.push("L'evento non è più aperto per i pronostici")
     }
-    
-    setErrors(newErrors)
-    return newErrors.length === 0
-  }
+
+    return newErrors
+  }, [
+    scoringType,
+    orderedDriverIds,
+    requiredDriverCount,
+    activeDriverIds,
+    firstPlaceId,
+    secondPlaceId,
+    thirdPlaceId,
+    isEventOpen,
+  ])
+
+  const isValid = validationErrors.length === 0
+  const displayedErrors = touched ? validationErrors : []
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -196,9 +216,12 @@ export default function PredictionForm({
         }
     }
 
-    if (validateSelection(dataToSubmit)) {
-      onSubmit(dataToSubmit)
+    if (!isValid) {
+      setTouched(true)
+      return
     }
+
+    onSubmit(dataToSubmit)
   }
 
   const resetForm = () => {
@@ -209,7 +232,7 @@ export default function PredictionForm({
         setSecondPlaceId('')
         setThirdPlaceId('')
     }
-    setErrors([])
+    setTouched(false)
   }
 
   // Countdown timer logic (same as before)
@@ -278,7 +301,10 @@ export default function PredictionForm({
                 <SortableDriverList 
                     drivers={drivers}
                     orderedDriverIds={orderedDriverIds}
-                    onChange={setOrderedDriverIds}
+                    onChange={(newOrder) => {
+                      setTouched(true)
+                      setOrderedDriverIds(newOrder)
+                    }}
                     disabled={!isEventOpen || isLoading}
                 />
             </div>
@@ -289,7 +315,10 @@ export default function PredictionForm({
                 <Select
                   label="🥇 1° Posto (25 punti)"
                   value={firstPlaceId}
-                  onChange={(e) => setFirstPlaceId(e.target.value)}
+                  onChange={(e) => {
+                    setTouched(true)
+                    setFirstPlaceId(e.target.value)
+                  }}
                   disabled={!isEventOpen || isLoading}
                 >
                   <option value="">Seleziona un pilota...</option>
@@ -303,7 +332,10 @@ export default function PredictionForm({
                 <Select
                   label="🥈 2° Posto (15 punti)"
                   value={secondPlaceId}
-                  onChange={(e) => setSecondPlaceId(e.target.value)}
+                  onChange={(e) => {
+                    setTouched(true)
+                    setSecondPlaceId(e.target.value)
+                  }}
                   disabled={!isEventOpen || isLoading}
                 >
                   <option value="">Seleziona un pilota...</option>
@@ -316,7 +348,10 @@ export default function PredictionForm({
                 <Select
                   label="🥉 3° Posto (10 punti)"
                   value={thirdPlaceId}
-                  onChange={(e) => setThirdPlaceId(e.target.value)}
+                  onChange={(e) => {
+                    setTouched(true)
+                    setThirdPlaceId(e.target.value)
+                  }}
                   disabled={!isEventOpen || isLoading}
                 >
                   <option value="">Seleziona un pilota...</option>
@@ -330,7 +365,7 @@ export default function PredictionForm({
         )}
 
         {/* Errori */}
-        {errors.length > 0 && (
+        {displayedErrors.length > 0 && (
           <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4">
              <div className="flex">
               <div className="flex-shrink-0">
@@ -343,7 +378,7 @@ export default function PredictionForm({
                   Errori di validazione:
                 </h3>
                 <ul className="mt-2 text-sm text-destructive list-disc list-inside">
-                  {errors.map((error, index) => (
+                  {displayedErrors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}
                 </ul>
@@ -367,7 +402,7 @@ export default function PredictionForm({
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             type="submit"
-            disabled={!isEventOpen || isLoading}
+            disabled={!isEventOpen || isLoading || !isValid}
             className="prediction-submit-button flex-1"
             isLoading={isLoading}
           >

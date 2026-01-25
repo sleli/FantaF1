@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Event, Driver } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PublicLayout from '@/components/layout/PublicLayout'
-import AllPredictionsList from '@/components/predictions/AllPredictionsList'
+import PredictionsViewer from '@/components/predictions/PredictionsViewer'
 
 export default function AllPredictionsPage() {
   const { data: session, status } = useSession()
@@ -14,7 +14,8 @@ export default function AllPredictionsPage() {
   
   const [events, setEvents] = useState<Event[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
-  const [predictions, setPredictions] = useState<PredictionWithDetails[]>([])
+  const [allPredictions, setAllPredictions] = useState<PredictionWithDetails[]>([])
+  const [personalPredictions, setPersonalPredictions] = useState<PredictionWithDetails[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -69,14 +70,35 @@ export default function AllPredictionsPage() {
     try {
       setIsLoading(true)
       
-      const url = selectedEventId === 'all' 
+      const allUrl = selectedEventId === 'all' 
         ? '/api/predictions/all'
         : `/api/predictions/all?eventId=${selectedEventId}`
-      
-      const response = await fetch(url)
-      if (response.ok) {
-        const predictionsData = await response.json()
-        setPredictions(predictionsData)
+
+      const personalUrl = selectedEventId === 'all'
+        ? '/api/predictions'
+        : `/api/predictions?eventId=${selectedEventId}`
+
+      const [allRes, personalRes] = await Promise.all([
+        fetch(allUrl),
+        fetch(personalUrl),
+      ])
+
+      if (allRes.ok) {
+        if (allRes.status === 204) {
+          setAllPredictions([])
+        } else {
+          const predictionsData = await allRes.json()
+          setAllPredictions(predictionsData)
+        }
+      }
+
+      if (personalRes.ok) {
+        if (personalRes.status === 204) {
+          setPersonalPredictions([])
+        } else {
+          const personalData = await personalRes.json()
+          setPersonalPredictions(personalData || [])
+        }
       }
     } catch (error) {
       console.error('Errore nel caricamento pronostici:', error)
@@ -135,11 +157,12 @@ export default function AllPredictionsPage() {
 
         {/* Lista pronostici */}
         <div className="bg-card text-card-foreground rounded-lg shadow-md border border-border">
-          <AllPredictionsList
-            predictions={predictions}
+          <PredictionsViewer
+            personalPredictions={personalPredictions}
+            allPredictions={allPredictions}
             drivers={drivers}
             isLoading={isLoading}
-            selectedEventId={selectedEventId}
+            defaultScope="all"
           />
         </div>
       </div>

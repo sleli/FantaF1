@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import PredictionForm from './PredictionForm'
 import { ScoringType } from '@prisma/client'
@@ -159,5 +159,62 @@ describe('PredictionForm View Modes', () => {
     const listItems = screen.getByTestId('sortable-list').children
     expect(listItems[0]).toHaveTextContent('d3')
     expect(listItems[1]).toHaveTextContent('d1')
+  })
+
+  it('disabilita il salvataggio finché la selezione Top 3 non è valida', () => {
+    const legacyEvent = { ...mockEvent, season: { scoringType: ScoringType.LEGACY_TOP3 } }
+    const onSubmit = jest.fn()
+    render(
+      <PredictionForm
+        event={legacyEvent}
+        drivers={mockDrivers}
+        onSubmit={onSubmit}
+        isLoading={false}
+      />
+    )
+
+    const saveButton = screen.getByRole('button', { name: 'Salva Pronostico' })
+    expect(saveButton).toBeDisabled()
+
+    const selects = screen.getAllByRole('combobox')
+    fireEvent.change(selects[0], { target: { value: 'd1' } })
+    fireEvent.change(selects[1], { target: { value: 'd2' } })
+    fireEvent.change(selects[2], { target: { value: 'd3' } })
+
+    expect(saveButton).toBeEnabled()
+  })
+
+  it('mostra errori dopo interazione quando ci sono campi mancanti', () => {
+    const legacyEvent = { ...mockEvent, season: { scoringType: ScoringType.LEGACY_TOP3 } }
+    render(
+      <PredictionForm
+        event={legacyEvent}
+        drivers={mockDrivers}
+        onSubmit={jest.fn()}
+        isLoading={false}
+      />
+    )
+
+    const selects = screen.getAllByRole('combobox')
+    fireEvent.change(selects[0], { target: { value: 'd1' } })
+
+    expect(screen.getByText('Errori di validazione:')).toBeInTheDocument()
+    expect(screen.getByText('Seleziona il pilota per il 2° posto')).toBeInTheDocument()
+    expect(screen.getByText('Seleziona il pilota per il 3° posto')).toBeInTheDocument()
+  })
+
+  it('in modalità griglia abilita il salvataggio dopo l’inizializzazione dell’ordine', async () => {
+    const gridEvent = { ...mockEvent, season: { scoringType: ScoringType.FULL_GRID_DIFF } }
+    render(
+      <PredictionForm
+        event={gridEvent}
+        drivers={mockDrivers}
+        onSubmit={jest.fn()}
+        isLoading={false}
+      />
+    )
+
+    const saveButton = screen.getByRole('button', { name: 'Salva Pronostico' })
+    await waitFor(() => expect(saveButton).toBeEnabled())
   })
 })

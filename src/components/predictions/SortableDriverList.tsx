@@ -1,4 +1,5 @@
 import React from 'react';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 import {
   DndContext, 
   closestCenter,
@@ -34,23 +35,29 @@ function SortableItem({ id, driver, index }: { id: string, driver: Driver, index
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className="bg-card border border-border p-3 rounded-lg mb-2 flex items-center shadow-sm cursor-grab active:cursor-grabbing touch-manipulation"
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-card border border-border rounded-lg flex items-center gap-3 px-3 py-2 touch-manipulation"
     >
-      <span className="font-bold text-f1-red w-8">{index + 1}.</span>
-      <div className="flex-1">
-        <span className="font-semibold text-foreground">#{driver.number} {driver.name}</span>
-        <span className="text-muted-foreground text-sm ml-2">({driver.team})</span>
+      <div className="w-9 text-right tabular-nums text-sm text-muted-foreground">
+        {index + 1}.
       </div>
-      <div className="text-muted-foreground">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-        </svg>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium text-foreground">
+          #{driver.number} {driver.name}
+        </div>
+        <div className="truncate text-xs text-muted-foreground">{driver.team}</div>
       </div>
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={`Trascina ${driver.name}`}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+      >
+        <Bars3Icon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
@@ -94,10 +101,15 @@ export default function SortableDriverList({ drivers, orderedDriverIds, onChange
                   const driver = getDriver(id);
                   if (!driver) return null;
                   return (
-                    <div key={id} className="bg-muted border border-border p-3 rounded-lg flex items-center opacity-75">
-                         <span className="font-bold text-muted-foreground w-8">{index + 1}.</span>
-                         <span className="font-semibold text-foreground">#{driver.number} {driver.name}</span>
-                         <span className="text-muted-foreground text-sm ml-2">({driver.team})</span>
+                    <div key={id} className="bg-muted border border-border rounded-lg flex items-center gap-3 px-3 py-2 opacity-75">
+                         <div className="w-9 text-right tabular-nums text-sm text-muted-foreground">{index + 1}.</div>
+                         <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium text-foreground">#{driver.number} {driver.name}</div>
+                          <div className="truncate text-xs text-muted-foreground">{driver.team}</div>
+                         </div>
+                         <div className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground">
+                          <Bars3Icon className="h-5 w-5" />
+                         </div>
                     </div>
                   )
               })}
