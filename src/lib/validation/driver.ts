@@ -7,8 +7,19 @@ export interface DriverValidationErrors {
   general?: string
 }
 
+// Type for driver form data - only required fields for validation
+type DriverFormData = {
+  name: string;
+  team: string;
+  number: number;
+  active: boolean;
+  seasonId: string;
+  imageUrl?: string | null;
+  driverCode?: string | null;
+};
+
 export function validateDriver(
-  driver: Omit<Driver, 'id' | 'createdAt' | 'updatedAt'>,
+  driver: DriverFormData,
   existingDrivers: Driver[] = [],
   editingDriverId?: string
 ): DriverValidationErrors {

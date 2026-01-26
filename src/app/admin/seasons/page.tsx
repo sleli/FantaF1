@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Season, ScoringType } from '@prisma/client'
-import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { PencilSquareIcon, UserGroupIcon, CheckCircleIcon, TrashIcon, PlusIcon, CloudArrowDownIcon, EyeIcon } from '@heroicons/react/24/outline'
 import SeasonDriverSelector from '@/components/admin/SeasonDriverSelector'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
@@ -31,8 +31,18 @@ export default function SeasonsPage() {
     scoringType: 'LEGACY_TOP3' as ScoringType,
     driverCount: 20,
     isActive: false,
-    copyDriversFromSeasonId: ''
+    copyDriversFromSeasonId: '',
+    // F1 Import fields
+    year: new Date().getFullYear(),
+    importDriversFromF1: false,
+    importEventsFromF1: false
   })
+
+  // F1 Import Preview State
+  const [previewDrivers, setPreviewDrivers] = useState<any[]>([])
+  const [previewEvents, setPreviewEvents] = useState<any[]>([])
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
   const fetchSeasons = async () => {
     setLoading(true)
@@ -90,11 +100,49 @@ export default function SeasonsPage() {
         scoringType: 'LEGACY_TOP3',
         driverCount: 20,
         isActive: false,
-        copyDriversFromSeasonId: ''
+        copyDriversFromSeasonId: '',
+        year: new Date().getFullYear(),
+        importDriversFromF1: false,
+        importEventsFromF1: false
     })
+    // Reset preview state
+    setPreviewDrivers([])
+    setPreviewEvents([])
+    setPreviewError(null)
   }
 
-  const handleEdit = (season: Season) => {
+  // F1 Import Preview Handler
+  const handlePreviewImport = async () => {
+    if (!formData.importDriversFromF1 && !formData.importEventsFromF1) return
+
+    setLoadingPreview(true)
+    setPreviewError(null)
+    setPreviewDrivers([])
+    setPreviewEvents([])
+
+    try {
+      if (formData.importDriversFromF1) {
+        const res = await fetch(`/api/admin/f1-import/drivers?year=${formData.year}`)
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Errore caricamento piloti')
+        setPreviewDrivers(data.drivers || [])
+      }
+
+      if (formData.importEventsFromF1) {
+        const res = await fetch(`/api/admin/f1-import/events?year=${formData.year}`)
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Errore caricamento eventi')
+        setPreviewEvents(data.events || [])
+      }
+    } catch (error) {
+      console.error('Preview error:', error)
+      setPreviewError(error instanceof Error ? error.message : 'Errore durante il caricamento')
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  const handleEdit = (season: Season & { year?: number | null }) => {
     setEditingSeason(season)
     setFormData({
         name: season.name,
@@ -103,7 +151,10 @@ export default function SeasonsPage() {
         scoringType: season.scoringType,
         driverCount: season.driverCount,
         isActive: season.isActive,
-        copyDriversFromSeasonId: ''
+        copyDriversFromSeasonId: '',
+        year: season.year ?? new Date().getFullYear(),
+        importDriversFromF1: false,
+        importEventsFromF1: false
     })
     setShowForm(true)
   }
@@ -265,14 +316,14 @@ export default function SeasonsPage() {
                         </p>
                     </div>
 
-                    {!editingSeason && seasons.length > 0 && (
+                    {!editingSeason && seasons.length > 0 && !formData.importDriversFromF1 && (
                         <div className="md:col-span-2 border-t border-border pt-6 mt-2">
                             <Select
-                                label="Importa Piloti (Opzionale)"
+                                label="Copia Piloti da Stagione Esistente"
                                 value={formData.copyDriversFromSeasonId}
                                 onChange={e => setFormData({...formData, copyDriversFromSeasonId: e.target.value})}
                             >
-                                <option value="">-- Non importare piloti (Crea vuota) --</option>
+                                <option value="">-- Non copiare piloti --</option>
                                 {seasons.map(s => (
                                     <option key={s.id} value={s.id}>
                                         Copia da {s.name} ({new Date(s.startDate).getFullYear()})
@@ -281,6 +332,158 @@ export default function SeasonsPage() {
                             </Select>
                             <p className="text-xs text-muted-foreground mt-2 ml-1">
                                 Seleziona una stagione precedente per copiare automaticamente tutti i suoi piloti nella nuova stagione.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* F1 API Import Section */}
+                    {!editingSeason && (
+                        <div className="md:col-span-2 border-t border-border pt-6 mt-2">
+                            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                                <CloudArrowDownIcon className="h-5 w-5 text-f1-red" />
+                                Importa da F1 API
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <Input
+                                    label="Anno F1"
+                                    type="number"
+                                    min={2023}
+                                    max={2030}
+                                    value={formData.year}
+                                    onChange={e => {
+                                        setFormData({...formData, year: parseInt(e.target.value) || new Date().getFullYear()})
+                                        setPreviewDrivers([])
+                                        setPreviewEvents([])
+                                    }}
+                                />
+
+                                <div className="flex flex-col justify-end">
+                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.importDriversFromF1}
+                                            onChange={e => {
+                                                setFormData({
+                                                    ...formData,
+                                                    importDriversFromF1: e.target.checked,
+                                                    copyDriversFromSeasonId: e.target.checked ? '' : formData.copyDriversFromSeasonId
+                                                })
+                                                setPreviewDrivers([])
+                                            }}
+                                            className="w-4 h-4 rounded border-border text-f1-red focus:ring-f1-red"
+                                        />
+                                        <span className="text-foreground text-sm font-medium">Importa Piloti</span>
+                                    </label>
+                                </div>
+
+                                <div className="flex flex-col justify-end">
+                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.importEventsFromF1}
+                                            onChange={e => {
+                                                setFormData({...formData, importEventsFromF1: e.target.checked})
+                                                setPreviewEvents([])
+                                            }}
+                                            className="w-4 h-4 rounded border-border text-f1-red focus:ring-f1-red"
+                                        />
+                                        <span className="text-foreground text-sm font-medium">Importa Eventi</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {(formData.importDriversFromF1 || formData.importEventsFromF1) && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handlePreviewImport}
+                                    isLoading={loadingPreview}
+                                    leftIcon={<EyeIcon className="h-5 w-5" />}
+                                    className="mb-4"
+                                >
+                                    Anteprima Import
+                                </Button>
+                            )}
+
+                            {previewError && (
+                                <div className="bg-destructive/10 border border-destructive/30 text-destructive p-4 rounded-lg mb-4">
+                                    {previewError}
+                                </div>
+                            )}
+
+                            {/* Drivers Preview */}
+                            {previewDrivers.length > 0 && (
+                                <div className="mb-4 p-4 bg-muted/50 rounded-lg border border-border">
+                                    <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                                        <span className="bg-f1-red text-white text-xs px-2 py-0.5 rounded">
+                                            {previewDrivers.length}
+                                        </span>
+                                        Piloti da importare
+                                    </h4>
+                                    <div className="max-h-48 overflow-y-auto space-y-2">
+                                        {previewDrivers.map((d, i) => (
+                                            <div key={i} className="flex items-center gap-3 p-2 bg-background rounded border border-border/50">
+                                                {d.imageUrl ? (
+                                                    <img
+                                                        src={d.imageUrl}
+                                                        alt={d.name}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                                                        {d.number}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <div className="font-medium text-foreground text-sm">
+                                                        #{d.number} {d.name}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">{d.team}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Events Preview */}
+                            {previewEvents.length > 0 && (
+                                <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                                    <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                                        <span className="bg-f1-red text-white text-xs px-2 py-0.5 rounded">
+                                            {previewEvents.length}
+                                        </span>
+                                        Eventi da importare
+                                    </h4>
+                                    <div className="max-h-48 overflow-y-auto space-y-2">
+                                        {previewEvents.map((e, i) => (
+                                            <div key={i} className="flex items-center justify-between p-2 bg-background rounded border border-border/50">
+                                                <div>
+                                                    <div className="font-medium text-foreground text-sm">{e.name}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {new Date(e.date).toLocaleDateString('it-IT', {
+                                                            weekday: 'short',
+                                                            day: 'numeric',
+                                                            month: 'short'
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                <span className={`text-xs px-2 py-0.5 rounded ${
+                                                    e.type === 'RACE'
+                                                        ? 'bg-f1-red/20 text-f1-red'
+                                                        : 'bg-blue-500/20 text-blue-400'
+                                                }`}>
+                                                    {e.type === 'RACE' ? 'Gara' : 'Sprint'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <p className="text-xs text-muted-foreground mt-3 ml-1">
+                                Importa automaticamente piloti e calendario dal campionato F1 ufficiale tramite API.
                             </p>
                         </div>
                     )}

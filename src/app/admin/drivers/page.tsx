@@ -39,7 +39,15 @@ export default function DriversAdminPage() {
     }
   }
 
-  const handleCreateDriver = async (driverData: Omit<Driver, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateDriver = async (driverData: {
+    name: string;
+    team: string;
+    number: number;
+    active: boolean;
+    seasonId: string;
+    imageUrl?: string | null;
+    driverCode?: string | null;
+  }) => {
     try {
       setIsLoading(true)
       setError(null)
@@ -67,7 +75,15 @@ export default function DriversAdminPage() {
     }
   }
 
-  const handleUpdateDriver = async (driverData: Omit<Driver, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateDriver = async (driverData: {
+    name: string;
+    team: string;
+    number: number;
+    active: boolean;
+    seasonId: string;
+    imageUrl?: string | null;
+    driverCode?: string | null;
+  }) => {
     if (!editingDriver) return
     
     try {

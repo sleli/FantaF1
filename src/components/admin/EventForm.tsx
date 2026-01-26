@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CloudArrowDownIcon } from '@heroicons/react/24/outline';
 import SortableDriverList from '../predictions/SortableDriverList';
 import type { Driver } from '@prisma/client';
 import Badge from '@/components/ui/Badge';
@@ -18,6 +18,7 @@ interface Event {
   date: Date;
   closingDate: Date;
   status: 'UPCOMING' | 'CLOSED' | 'COMPLETED';
+  sessionKey?: number | null; // OpenF1 session key for fetching results
   firstPlace?: Driver;
   secondPlace?: Driver;
   thirdPlace?: Driver;
@@ -26,6 +27,14 @@ interface Event {
   _count: { predictions: number };
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface FetchedResultItem {
+  position: number;
+  driverNumber: number;
+  driverId: string | null;
+  driverName: string;
+  driverTeam?: string | null;
 }
 
 interface EventFormProps {
@@ -50,6 +59,11 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'results'>('basic');
+
+  // Fetch results from F1 API state
+  const [fetchingResults, setFetchingResults] = useState(false);
+  const [fetchedResults, setFetchedResults] = useState<FetchedResultItem[]>([]);
+  const [fetchMessage, setFetchMessage] = useState<string | null>(null);
 
   const isEditing = !!event;
   // Check if has results based on scoring type logic later, or just check existence
@@ -254,6 +268,55 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
   };
 
 
+  // Fetch results from OpenF1 API
+  const handleFetchResults = async () => {
+    if (!event?.sessionKey) return;
+
+    setFetchingResults(true);
+    setFetchMessage(null);
+    setFetchedResults([]);
+
+    try {
+      const res = await fetch(`/api/admin/events/${event.id}/fetch-results`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Errore nel recupero risultati');
+      }
+
+      if (data.results && data.results.length > 0) {
+        setFetchedResults(data.results);
+        setFetchMessage(data.message);
+
+        // Auto-populate results
+        if (scoringType === 'FULL_GRID_DIFF') {
+          const driverIds = data.results
+            .filter((r: FetchedResultItem) => r.driverId)
+            .map((r: FetchedResultItem) => r.driverId);
+          setResults(driverIds);
+        } else {
+          // Legacy TOP3
+          if (data.results[0]?.driverId) {
+            setFormData(prev => ({ ...prev, firstPlaceId: data.results[0].driverId }));
+          }
+          if (data.results[1]?.driverId) {
+            setFormData(prev => ({ ...prev, secondPlaceId: data.results[1].driverId }));
+          }
+          if (data.results[2]?.driverId) {
+            setFormData(prev => ({ ...prev, thirdPlaceId: data.results[2].driverId }));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching results:', err);
+      setFetchMessage(err instanceof Error ? err.message : 'Errore sconosciuto');
+    } finally {
+      setFetchingResults(false);
+    }
+  };
+
   const formError = validateForm();
 
   return (
@@ -387,10 +450,74 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
           {activeTab === 'results' && (
             <div className="space-y-6">
+              {/* Fetch from OpenF1 Button */}
+              {event?.sessionKey && (
+                <div className="bg-secondary/50 border border-border rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h4 className="font-medium text-foreground flex items-center gap-2">
+                        <CloudArrowDownIcon className="h-5 w-5 text-f1-red" />
+                        Recupera da OpenF1
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Session Key: {event.sessionKey}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleFetchResults}
+                      disabled={fetchingResults}
+                      className="px-4 py-2 text-sm font-medium bg-f1-red text-white hover:bg-f1-red/90 disabled:bg-muted disabled:text-muted-foreground rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      {fetchingResults ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                          Caricamento...
+                        </>
+                      ) : (
+                        <>
+                          <CloudArrowDownIcon className="h-4 w-4" />
+                          Recupera Risultati
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {fetchMessage && (
+                    <p className={`text-xs mt-3 ${
+                      fetchedResults.length > 0 ? 'text-green-500' : 'text-destructive'
+                    }`}>
+                      {fetchMessage}
+                    </p>
+                  )}
+
+                  {fetchedResults.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-2">Anteprima Top 5:</p>
+                      <div className="space-y-1">
+                        {fetchedResults.slice(0, 5).map((r, i) => (
+                          <div key={i} className="text-xs flex items-center gap-2">
+                            <span className="w-6 text-right font-medium text-muted-foreground">P{r.position}</span>
+                            <span className={r.driverId ? 'text-foreground' : 'text-destructive'}>
+                              {r.driverName}
+                            </span>
+                          </div>
+                        ))}
+                        {fetchedResults.length > 5 && (
+                          <p className="text-xs text-muted-foreground ml-8">
+                            ...e altri {fetchedResults.length - 5} piloti
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
                 <p className="text-sm text-primary">
-                  {scoringType === 'FULL_GRID_DIFF' 
-                    ? 'Ordina la griglia di arrivo completa. Il primo pilota in alto è il vincitore.' 
+                  {scoringType === 'FULL_GRID_DIFF'
+                    ? 'Ordina la griglia di arrivo completa. Il primo pilota in alto è il vincitore.'
                     : 'Inserisci i risultati ufficiali dell\'evento.'}
                   {' '}Questo cambierà automaticamente lo stato dell'evento a "Completato" e attiverà il calcolo dei punteggi.
                 </p>

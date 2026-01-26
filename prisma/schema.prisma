@@ -69,6 +69,8 @@ model Driver {
   number                 Int
   seasonId               String
   active                 Boolean      @default(true)
+  imageUrl               String?      // Headshot URL da OpenF1
+  driverCode             String?      // Codice 3 lettere (VER, HAM, etc.)
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
   firstPlaceResults      Event[]      @relation("FirstPlaceResult")
@@ -90,6 +92,10 @@ model Event {
   date          DateTime
   closingDate   DateTime
   status        EventStatus  @default(UPCOMING)
+  sessionKey    Int?         // OpenF1 session_key per recuperare risultati
+  meetingKey    Int?         // OpenF1 meeting_key per riferimento
+  circuitName   String?      // Nome circuito
+  countryName   String?      // Nome paese
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   firstPlaceId  String?
@@ -130,6 +136,7 @@ model Prediction {
 model Season {
   id          String      @id @default(cuid())
   name        String      @unique
+  year        Int?        // Anno per le chiamate API F1 (es. 2026)
   startDate   DateTime
   endDate     DateTime
   isActive    Boolean     @default(false)

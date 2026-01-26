@@ -5,9 +5,20 @@ import { Driver } from '@prisma/client'
 import { validateDriver, hasValidationErrors, F1_2025_TEAMS, type DriverValidationErrors } from '@/lib/validation/driver'
 import Button from '@/components/ui/Button'
 
+// Form data type with optional API fields
+type DriverFormData = {
+  name: string;
+  team: string;
+  number: number;
+  active: boolean;
+  seasonId: string;
+  imageUrl?: string | null;
+  driverCode?: string | null;
+};
+
 interface DriverFormProps {
   driver?: Driver
-  onSubmit: (data: Omit<Driver, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSubmit: (data: DriverFormData) => void
   onCancel: () => void
   isLoading?: boolean
   existingDrivers?: Driver[]
@@ -20,12 +31,14 @@ export function DriverForm({
   isLoading = false,
   existingDrivers = []
 }: DriverFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DriverFormData>({
     name: driver?.name || '',
     team: driver?.team || '',
     number: driver?.number || 0,
     active: driver?.active !== undefined ? driver.active : true,
-    seasonId: driver?.seasonId || ''
+    seasonId: driver?.seasonId || '',
+    imageUrl: driver?.imageUrl || null,
+    driverCode: driver?.driverCode || null
   })
 
   const [errors, setErrors] = useState<DriverValidationErrors>({})
