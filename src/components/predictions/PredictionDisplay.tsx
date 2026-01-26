@@ -1,5 +1,6 @@
 import { PredictionWithDetails } from '@/lib/types'
 import { Driver, ScoringType } from '@prisma/client'
+import DriverAvatar from '@/components/ui/DriverAvatar'
 
 interface PredictionDisplayProps {
   prediction: PredictionWithDetails
@@ -17,8 +18,9 @@ export default function PredictionDisplay({ prediction, drivers }: PredictionDis
               {(prediction.rankings as string[] || []).map((id, idx) => {
                   const d = drivers?.find(driver => driver.id === id)
                   return (
-                      <div key={`${prediction.id}-${idx}`} className="flex items-center text-sm py-2 border-b border-border/60 last:border-0">
+                      <div key={`${prediction.id}-${idx}`} className="flex items-center gap-3 text-sm py-2 border-b border-border/60 last:border-0">
                           <span className={`w-8 font-bold ${idx < 3 ? 'text-primary' : 'text-muted-foreground'}`}>{idx + 1}.</span>
+                          {d && <DriverAvatar imageUrl={d.imageUrl} name={d.name} size="sm" />}
                           <span className="font-medium text-foreground truncate flex-1">{d ? `${d.name}` : '...'}</span>
                           {d && <span className="text-muted-foreground text-xs ml-2">({d.team})</span>}
                       </div>
@@ -42,9 +44,14 @@ export default function PredictionDisplay({ prediction, drivers }: PredictionDis
             {prediction.event.type === 'SPRINT' ? '12.5 pt' : '25 pt'}
           </span>
         </div>
-        <div className="text-foreground">
-          <p className="font-semibold">#{prediction.firstPlace?.number} {prediction.firstPlace?.name}</p>
-          <p className="text-sm text-muted-foreground">{prediction.firstPlace?.team}</p>
+        <div className="flex items-center gap-3 text-foreground">
+          {prediction.firstPlace && (
+            <DriverAvatar imageUrl={prediction.firstPlace.imageUrl} name={prediction.firstPlace.name} size="md" />
+          )}
+          <div>
+            <p className="font-semibold">#{prediction.firstPlace?.number} {prediction.firstPlace?.name}</p>
+            <p className="text-sm text-muted-foreground">{prediction.firstPlace?.team}</p>
+          </div>
         </div>
       </div>
 
@@ -56,9 +63,14 @@ export default function PredictionDisplay({ prediction, drivers }: PredictionDis
             {prediction.event.type === 'SPRINT' ? '7.5 pt' : '15 pt'}
           </span>
         </div>
-        <div className="text-foreground">
-          <p className="font-semibold">#{prediction.secondPlace?.number} {prediction.secondPlace?.name}</p>
-          <p className="text-sm text-muted-foreground">{prediction.secondPlace?.team}</p>
+        <div className="flex items-center gap-3 text-foreground">
+          {prediction.secondPlace && (
+            <DriverAvatar imageUrl={prediction.secondPlace.imageUrl} name={prediction.secondPlace.name} size="md" />
+          )}
+          <div>
+            <p className="font-semibold">#{prediction.secondPlace?.number} {prediction.secondPlace?.name}</p>
+            <p className="text-sm text-muted-foreground">{prediction.secondPlace?.team}</p>
+          </div>
         </div>
       </div>
 
@@ -70,9 +82,14 @@ export default function PredictionDisplay({ prediction, drivers }: PredictionDis
             {prediction.event.type === 'SPRINT' ? '5 pt' : '10 pt'}
           </span>
         </div>
-        <div className="text-foreground">
-          <p className="font-semibold">#{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}</p>
-          <p className="text-sm text-muted-foreground">{prediction.thirdPlace?.team}</p>
+        <div className="flex items-center gap-3 text-foreground">
+          {prediction.thirdPlace && (
+            <DriverAvatar imageUrl={prediction.thirdPlace.imageUrl} name={prediction.thirdPlace.name} size="md" />
+          )}
+          <div>
+            <p className="font-semibold">#{prediction.thirdPlace?.number} {prediction.thirdPlace?.name}</p>
+            <p className="text-sm text-muted-foreground">{prediction.thirdPlace?.team}</p>
+          </div>
         </div>
       </div>
     </div>

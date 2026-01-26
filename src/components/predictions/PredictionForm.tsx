@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Driver, Event, ScoringType } from '@prisma/client';
 import SortableDriverList from './SortableDriverList';
 import DriverPickerSheet from './DriverPickerSheet';
-import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import DriverAvatar from '@/components/ui/DriverAvatar';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface ExtendedEvent extends Event {
@@ -85,6 +85,15 @@ function PositionCard({
         >
           {position}°
         </div>
+
+        {/* Driver avatar when selected */}
+        {driver && (
+          <DriverAvatar
+            imageUrl={driver.imageUrl}
+            name={driver.name}
+            size="md"
+          />
+        )}
 
         {/* Driver info or placeholder */}
         <div className="flex-1 min-w-0">
@@ -422,177 +431,176 @@ export default function PredictionForm({
 
   return (
     <>
-      <Card>
-        <div className="p-4 md:p-6">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h2 className="text-xl md:text-2xl font-black text-foreground">
-                {isModifying ? 'Modifica Pronostico' : 'Nuovo Pronostico'}
-              </h2>
-              <Badge variant={event.type === 'RACE' ? 'race' : 'sprint'}>
-                {event.type === 'RACE' ? 'Gara' : 'Sprint'}
-              </Badge>
+      {/* Header section - compact on mobile */}
+      <div className="mb-4 px-1 md:px-0">
+        <div className="flex flex-wrap items-center gap-2 mb-1">
+          <h2 className="text-lg md:text-2xl font-black text-foreground">
+            {isModifying ? 'Modifica Pronostico' : 'Nuovo Pronostico'}
+          </h2>
+          <Badge variant={event.type === 'RACE' ? 'race' : 'sprint'}>
+            {event.type === 'RACE' ? 'Gara' : 'Sprint'}
+          </Badge>
+        </div>
+
+        <p className="font-semibold text-foreground text-sm md:text-base">{event.name}</p>
+        <p className="text-xs md:text-sm text-muted-foreground">
+          {new Date(event.date).toLocaleDateString('it-IT', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+
+        {/* Countdown badge */}
+        <div className="mt-2">
+          {isEventOpen ? (
+            <Badge variant="upcoming" size="lg">
+              Chiusura: {timeLeft}
+            </Badge>
+          ) : (
+            <Badge variant="closed" size="lg">
+              Pronostici chiusi
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Closed event warning */}
+      {!isEventOpen && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-4 mx-1 md:mx-0">
+          <p className="text-destructive font-medium text-sm">
+            I pronostici per questo evento sono stati chiusi.
+          </p>
+        </div>
+      )}
+
+      {/* Grid section - full width on mobile, Card on desktop */}
+      <div className="md:bg-card md:border md:border-border md:rounded-xl md:p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          {viewMode === 'GRID' ? (
+            <div>
+              <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 px-1 md:px-0">
+                Ordina la griglia di arrivo prevista:
+              </p>
+              <SortableDriverList
+                drivers={drivers}
+                orderedDriverIds={orderedDriverIds}
+                onChange={(newOrder) => {
+                  setTouched(true);
+                  setOrderedDriverIds(newOrder);
+                }}
+                disabled={!isEventOpen || isLoading}
+              />
             </div>
+          ) : (
+            <div className="space-y-3 px-1 md:px-0">
+              <p className="text-sm text-muted-foreground">
+                Seleziona i piloti per il podio:
+              </p>
 
-            <p className="font-semibold text-foreground">{event.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {new Date(event.date).toLocaleDateString('it-IT', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
+              <PositionCard
+                position={1}
+                label="Seleziona 1° posto"
+                points="25 punti"
+                driver={firstPlaceId ? getDriver(firstPlaceId) : null}
+                onClick={() => setPickerPosition(1)}
+                disabled={!isEventOpen || isLoading}
+              />
 
-            {/* Countdown badge */}
-            <div className="mt-3">
-              {isEventOpen ? (
-                <Badge variant="upcoming" size="lg">
-                  Chiusura: {timeLeft}
-                </Badge>
-              ) : (
-                <Badge variant="closed" size="lg">
-                  Pronostici chiusi
-                </Badge>
-              )}
+              <PositionCard
+                position={2}
+                label="Seleziona 2° posto"
+                points="15 punti"
+                driver={secondPlaceId ? getDriver(secondPlaceId) : null}
+                onClick={() => setPickerPosition(2)}
+                disabled={!isEventOpen || isLoading}
+              />
+
+              <PositionCard
+                position={3}
+                label="Seleziona 3° posto"
+                points="10 punti"
+                driver={thirdPlaceId ? getDriver(thirdPlaceId) : null}
+                onClick={() => setPickerPosition(3)}
+                disabled={!isEventOpen || isLoading}
+              />
             </div>
-          </div>
+          )}
 
-          {/* Closed event warning */}
-          {!isEventOpen && (
-            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-6">
-              <p className="text-destructive font-medium text-sm">
-                I pronostici per questo evento sono stati chiusi.
+          {/* Validation errors */}
+          {displayedErrors.length > 0 && (
+            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mx-1 md:mx-0">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-destructive"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-destructive mb-1">
+                    Errori di validazione:
+                  </h3>
+                  <ul className="text-sm text-destructive list-disc list-inside space-y-0.5">
+                    {displayedErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sprint note */}
+          {event.type === 'SPRINT' && (
+            <div className="bg-accent-cyan/10 border border-accent-cyan/30 rounded-xl p-4 mx-1 md:mx-0">
+              <p className="text-accent-cyan text-sm">
+                <strong>Sprint:</strong>{' '}
+                {scoringType === ScoringType.FULL_GRID_DIFF
+                  ? 'Le penalità saranno dimezzate (x 0.5)'
+                  : 'I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)'}
               </p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {viewMode === 'GRID' ? (
-              <div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Ordina la griglia di arrivo prevista:
-                </p>
-                <SortableDriverList
-                  drivers={drivers}
-                  orderedDriverIds={orderedDriverIds}
-                  onChange={(newOrder) => {
-                    setTouched(true);
-                    setOrderedDriverIds(newOrder);
-                  }}
-                  disabled={!isEventOpen || isLoading}
-                />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Seleziona i piloti per il podio:
-                </p>
+          {/* Desktop buttons */}
+          <div className="hidden md:flex gap-4">
+            <Button
+              type="submit"
+              disabled={!isEventOpen || isLoading || !isValid}
+              className="flex-1"
+              isLoading={isLoading}
+              size="lg"
+            >
+              {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
+            </Button>
 
-                <PositionCard
-                  position={1}
-                  label="Seleziona 1° posto"
-                  points="25 punti"
-                  driver={firstPlaceId ? getDriver(firstPlaceId) : null}
-                  onClick={() => setPickerPosition(1)}
-                  disabled={!isEventOpen || isLoading}
-                />
-
-                <PositionCard
-                  position={2}
-                  label="Seleziona 2° posto"
-                  points="15 punti"
-                  driver={secondPlaceId ? getDriver(secondPlaceId) : null}
-                  onClick={() => setPickerPosition(2)}
-                  disabled={!isEventOpen || isLoading}
-                />
-
-                <PositionCard
-                  position={3}
-                  label="Seleziona 3° posto"
-                  points="10 punti"
-                  driver={thirdPlaceId ? getDriver(thirdPlaceId) : null}
-                  onClick={() => setPickerPosition(3)}
-                  disabled={!isEventOpen || isLoading}
-                />
-              </div>
-            )}
-
-            {/* Validation errors */}
-            {displayedErrors.length > 0 && (
-              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-destructive"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-destructive mb-1">
-                      Errori di validazione:
-                    </h3>
-                    <ul className="text-sm text-destructive list-disc list-inside space-y-0.5">
-                      {displayedErrors.map((error, index) => (
-                        <li key={index}>{error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sprint note */}
-            {event.type === 'SPRINT' && (
-              <div className="bg-accent-cyan/10 border border-accent-cyan/30 rounded-xl p-4">
-                <p className="text-accent-cyan text-sm">
-                  <strong>Sprint:</strong>{' '}
-                  {scoringType === ScoringType.FULL_GRID_DIFF
-                    ? 'Le penalità saranno dimezzate (x 0.5)'
-                    : 'I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)'}
-                </p>
-              </div>
-            )}
-
-            {/* Desktop buttons */}
-            <div className="hidden md:flex gap-4">
+            {(firstPlaceId ||
+              secondPlaceId ||
+              thirdPlaceId ||
+              orderedDriverIds.length > 0) && (
               <Button
-                type="submit"
-                disabled={!isEventOpen || isLoading || !isValid}
-                className="flex-1"
-                isLoading={isLoading}
+                type="button"
+                onClick={resetForm}
+                disabled={isLoading}
+                variant="outline"
                 size="lg"
               >
-                {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
+                Reset
               </Button>
-
-              {(firstPlaceId ||
-                secondPlaceId ||
-                thirdPlaceId ||
-                orderedDriverIds.length > 0) && (
-                <Button
-                  type="button"
-                  onClick={resetForm}
-                  disabled={isLoading}
-                  variant="outline"
-                  size="lg"
-                >
-                  Reset
-                </Button>
-              )}
-            </div>
-          </form>
-        </div>
-      </Card>
+            )}
+          </div>
+        </form>
+      </div>
 
       {/* Mobile floating button */}
       <div className="md:hidden fixed bottom-20 left-0 right-0 p-4 z-40 safe-area-bottom">

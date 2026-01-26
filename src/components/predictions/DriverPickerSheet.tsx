@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Driver } from '@prisma/client';
 import MobileDrawer, { DrawerContent, DrawerListItem } from '@/components/ui/MobileDrawer';
 import Input from '@/components/ui/Input';
+import DriverAvatar from '@/components/ui/DriverAvatar';
 import { MagnifyingGlassIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 interface DriverPickerSheetProps {
@@ -210,10 +211,13 @@ function DriverCard({
         #{driver.number}
       </div>
 
-      {/* Driver placeholder */}
-      <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-3 mb-2 flex-shrink-0 flex items-center justify-center text-lg font-bold text-muted-foreground">
-        {driver.name.charAt(0)}
-      </div>
+      {/* Driver avatar */}
+      <DriverAvatar
+        imageUrl={driver.imageUrl}
+        name={driver.name}
+        size="lg"
+        className="mb-2"
+      />
 
       {/* Driver name */}
       <span

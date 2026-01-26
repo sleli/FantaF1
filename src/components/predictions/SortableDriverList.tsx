@@ -12,7 +12,6 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverEvent,
   DragOverlay,
 } from '@dnd-kit/core';
 import {
@@ -24,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Driver } from '@prisma/client';
-import Badge from '@/components/ui/Badge';
+import DriverAvatar from '@/components/ui/DriverAvatar';
 
 // Sortable Item Component
 function SortableItem({
@@ -54,31 +53,10 @@ function SortableItem({
     transition,
   };
 
-  // Podium badge for top 3
-  const getPodiumBadge = (pos: number) => {
-    if (pos === 0)
-      return (
-        <Badge variant="gold" size="sm">
-          1°
-        </Badge>
-      );
-    if (pos === 1)
-      return (
-        <Badge variant="silver" size="sm">
-          2°
-        </Badge>
-      );
-    if (pos === 2)
-      return (
-        <Badge variant="bronze" size="sm">
-          3°
-        </Badge>
-      );
-    return null;
-  };
-
   const itemClasses = `
-    bg-card border rounded-xl flex items-center gap-3 px-3 py-3
+    bg-card border rounded-lg flex items-center
+    gap-2 px-2 py-2
+    md:gap-3 md:px-3 md:py-3 md:rounded-xl
     touch-manipulation transition-all duration-200
     ${
       isDragging || isOverlay
@@ -94,8 +72,8 @@ function SortableItem({
       {/* Position number */}
       <div
         className={`
-          w-10 h-10 rounded-lg flex items-center justify-center
-          font-bold text-sm tabular-nums
+          w-7 h-7 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center
+          font-bold text-xs md:text-sm tabular-nums flex-shrink-0
           ${
             index < 3
               ? 'bg-primary/10 text-primary'
@@ -106,31 +84,39 @@ function SortableItem({
         {index + 1}
       </div>
 
+      {/* Driver avatar */}
+      <div className="flex-shrink-0">
+        <DriverAvatar
+          imageUrl={driver.imageUrl}
+          name={driver.name}
+          size="sm"
+        />
+      </div>
+
       {/* Driver info */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-bold text-muted-foreground">
+        <div className="flex items-center gap-1 md:gap-2">
+          <span className="text-[10px] md:text-xs font-bold text-muted-foreground">
             #{driver.number}
           </span>
-          <span className="font-bold text-foreground truncate">
+          <span className="text-sm md:text-base font-semibold md:font-bold text-foreground truncate">
             {driver.name}
           </span>
-          {getPodiumBadge(index)}
         </div>
-        <div className="text-xs text-muted-foreground truncate">
+        <div className="text-[10px] md:text-xs text-muted-foreground truncate">
           {driver.team}
         </div>
       </div>
 
-      {/* Drag handle - larger touch target */}
+      {/* Drag handle */}
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label={`Trascina ${driver.name}`}
         className={`
-          inline-flex items-center justify-center
-          w-12 h-12 rounded-xl
+          inline-flex items-center justify-center flex-shrink-0
+          w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl
           border border-border bg-surface-3
           text-muted-foreground
           hover:text-foreground hover:bg-surface-4 hover:border-primary/30
@@ -140,7 +126,7 @@ function SortableItem({
           ${isDragging ? 'bg-primary text-white border-primary' : ''}
         `}
       >
-        <Bars3Icon className="h-6 w-6" />
+        <Bars3Icon className="h-5 w-5 md:h-6 md:w-6" />
       </button>
     </div>
   );
@@ -151,15 +137,15 @@ function StaticItem({ driver, index }: { driver: Driver; index: number }) {
   return (
     <div
       className={`
-        bg-muted border border-border rounded-xl
-        flex items-center gap-3 px-3 py-3 opacity-60
+        bg-muted border border-border rounded-lg md:rounded-xl
+        flex items-center gap-2 px-2 py-2 md:gap-3 md:px-3 md:py-3 opacity-60
         ${index < 3 ? 'bg-surface-2' : ''}
       `}
     >
       <div
         className={`
-          w-10 h-10 rounded-lg flex items-center justify-center
-          font-bold text-sm tabular-nums
+          w-7 h-7 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center
+          font-bold text-xs md:text-sm tabular-nums flex-shrink-0
           ${
             index < 3
               ? 'bg-primary/10 text-primary'
@@ -169,21 +155,28 @@ function StaticItem({ driver, index }: { driver: Driver; index: number }) {
       >
         {index + 1}
       </div>
+      <div className="flex-shrink-0">
+        <DriverAvatar
+          imageUrl={driver.imageUrl}
+          name={driver.name}
+          size="sm"
+        />
+      </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-bold text-muted-foreground">
+        <div className="flex items-center gap-1 md:gap-2">
+          <span className="text-[10px] md:text-xs font-bold text-muted-foreground">
             #{driver.number}
           </span>
-          <span className="font-bold text-foreground truncate">
+          <span className="text-sm md:text-base font-semibold md:font-bold text-foreground truncate">
             {driver.name}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground truncate">
+        <div className="text-[10px] md:text-xs text-muted-foreground truncate">
           {driver.team}
         </div>
       </div>
-      <div className="w-12 h-12 rounded-xl border border-border flex items-center justify-center text-muted-foreground">
-        <Bars3Icon className="h-6 w-6" />
+      <div className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl border border-border flex items-center justify-center text-muted-foreground flex-shrink-0">
+        <Bars3Icon className="h-5 w-5 md:h-6 md:w-6" />
       </div>
     </div>
   );
@@ -270,55 +263,27 @@ export default function SortableDriverList({
         items={orderedDriverIds}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2">
-          {/* Instructions */}
-          <div className="text-xs text-muted-foreground mb-3 flex items-center gap-2">
+        <div className="space-y-1.5 md:space-y-2">
+          {/* Instructions - hidden on mobile for space */}
+          <div className="hidden md:flex text-xs text-muted-foreground mb-3 items-center gap-2">
             <Bars3Icon className="w-4 h-4" />
             <span>Tieni premuto e trascina per riordinare</span>
           </div>
 
-          {/* Top 3 section */}
-          <div className="space-y-2 mb-4">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
-              <span className="text-lg">🏆</span>
-              <span>Podio</span>
-            </div>
-            {orderedDriverIds.slice(0, 3).map((id, index) => {
-              const driver = getDriver(id);
-              if (!driver) return null;
-              return (
-                <SortableItem
-                  key={id}
-                  id={id}
-                  driver={driver}
-                  index={index}
-                  isDragging={activeId === id}
-                />
-              );
-            })}
-          </div>
-
-          {/* Rest of grid */}
-          {orderedDriverIds.length > 3 && (
-            <div className="space-y-2 pt-4 border-t border-border">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                Resto della griglia
-              </div>
-              {orderedDriverIds.slice(3).map((id, index) => {
-                const driver = getDriver(id);
-                if (!driver) return null;
-                return (
-                  <SortableItem
-                    key={id}
-                    id={id}
-                    driver={driver}
-                    index={index + 3}
-                    isDragging={activeId === id}
-                  />
-                );
-              })}
-            </div>
-          )}
+          {/* Single continuous list */}
+          {orderedDriverIds.map((id, index) => {
+            const driver = getDriver(id);
+            if (!driver) return null;
+            return (
+              <SortableItem
+                key={id}
+                id={id}
+                driver={driver}
+                index={index}
+                isDragging={activeId === id}
+              />
+            );
+          })}
         </div>
       </SortableContext>
 

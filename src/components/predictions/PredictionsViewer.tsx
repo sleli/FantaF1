@@ -4,6 +4,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Select from '@/components/ui/Select'
+import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
 import { MAX_PENALTY } from '@/lib/scoring'
 
@@ -162,8 +163,10 @@ function PredictionTable({
 
     return {
       position: index + 1,
+      driver,
       driverName: driver?.name || '—',
       team: driver?.team || '—',
+      imageUrl: driver?.imageUrl || null,
       points,
     }
   })
@@ -185,7 +188,14 @@ function PredictionTable({
           {rows.map((row) => (
             <tr key={`${prediction.id}-${row.position}`} className="bg-card">
               <td className="px-3 py-2 tabular-nums text-muted-foreground">{row.position}</td>
-              <td className="px-3 py-2 font-medium text-foreground">{row.driverName}</td>
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-2">
+                  {row.driver && (
+                    <DriverAvatar imageUrl={row.imageUrl} name={row.driverName} size="xs" />
+                  )}
+                  <span className="font-medium text-foreground">{row.driverName}</span>
+                </div>
+              </td>
               <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{row.team}</td>
               {eventResult && (
                 <td className="px-3 py-2 tabular-nums text-right text-foreground">
