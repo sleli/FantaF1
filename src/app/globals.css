@@ -5,28 +5,28 @@
     /* Default to Dark Mode (F1 Style) */
     --background: #0f1115;
     --foreground: #c9ced6;
-    
+
     --card: #161a22;
     --card-foreground: #c9ced6;
-    
+
     --popover: #161a22;
     --popover-foreground: #c9ced6;
-    
+
     --primary: #E10600;
     --primary-foreground: #f3f4f5;
-    
+
     --secondary: #1c2230;
     --secondary-foreground: #c9ced6;
-    
+
     --muted: #131722;
     --muted-foreground: #8c95a6;
-    
+
     --accent: #1c2230;
     --accent-foreground: #c9ced6;
-    
+
     --destructive: #991b1b;
     --destructive-foreground: #f3f4f5;
-    
+
     --border: rgba(201, 206, 214, 0.1);
     --input: #121520;
     --ring: #FF1801;
@@ -39,6 +39,27 @@
 
     /* Radius */
     --radius: 0.5rem;
+
+    /* Night Race Premium - Accent Palette */
+    --accent-gold: #FFD700;
+    --accent-silver: #C0C0C0;
+    --accent-bronze: #CD7F32;
+    --accent-green: #22C55E;
+    --accent-amber: #F59E0B;
+    --accent-cyan: #06B6D4;
+
+    /* Surface Hierarchy */
+    --surface-0: #0A0A0F;
+    --surface-1: #0F1115;
+    --surface-2: #161A22;
+    --surface-3: #1C2230;
+    --surface-4: #252D3D;
+
+    /* Glow Effects */
+    --glow-red: 0 0 20px rgba(225, 6, 0, 0.4);
+    --glow-green: 0 0 15px rgba(34, 197, 94, 0.3);
+    --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+    --glow-cyan: 0 0 15px rgba(6, 182, 212, 0.3);
   }
 
   .light {
@@ -240,5 +261,252 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary); 
+  background: var(--primary);
+}
+
+/* Night Race Premium - Animations */
+@keyframes pulse-urgent {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.4);
+  }
+  50% {
+    opacity: 0.9;
+    box-shadow: 0 0 20px 4px rgba(225, 6, 0, 0.6);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(225, 6, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(225, 6, 0, 0.6);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes countdown-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Night Race Premium - Utility Classes */
+.racing-glow {
+  box-shadow: var(--glow-red);
+}
+
+.racing-glow-green {
+  box-shadow: var(--glow-green);
+}
+
+.racing-glow-gold {
+  box-shadow: var(--glow-gold);
+}
+
+.touch-active:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-pulse-urgent {
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slide-in-down 0.2s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-countdown-pulse {
+  animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+/* Racing Line Accent */
+.racing-line-left {
+  position: relative;
+}
+
+.racing-line-left::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+.racing-line-top {
+  position: relative;
+}
+
+.racing-line-top::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+/* Surface Classes */
+.surface-0 { background-color: var(--surface-0); }
+.surface-1 { background-color: var(--surface-1); }
+.surface-2 { background-color: var(--surface-2); }
+.surface-3 { background-color: var(--surface-3); }
+.surface-4 { background-color: var(--surface-4); }
+
+/* Elevation Shadows */
+.elevation-1 {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.elevation-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35), 0 6px 6px rgba(0, 0, 0, 0.2);
+}
+
+.elevation-4 {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4), 0 10px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Drag States */
+.dragging {
+  transform: scale(1.02);
+  box-shadow: var(--glow-red), 0 14px 28px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+}
+
+.drop-zone-indicator {
+  position: relative;
+}
+
+.drop-zone-indicator::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px;
+  box-shadow: 0 0 10px var(--primary);
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-urgent,
+  .animate-glow-pulse,
+  .animate-slide-in-up,
+  .animate-slide-in-down,
+  .animate-fade-in,
+  .animate-scale-in,
+  .animate-countdown-pulse,
+  .skeleton {
+    animation: none;
+  }
+
+  .touch-active:active {
+    transform: none;
+  }
 }

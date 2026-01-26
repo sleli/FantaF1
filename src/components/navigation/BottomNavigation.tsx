@@ -6,15 +6,13 @@ import {
   HomeIcon,
   ChartBarIcon,
   TrophyIcon,
-  UserIcon,
-  UserGroupIcon
+  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
   TrophyIcon as TrophyIconSolid,
-  UserIcon as UserIconSolid,
-  UserGroupIcon as UserGroupIconSolid
+  UserGroupIcon as UserGroupIconSolid,
 } from '@heroicons/react/24/solid';
 
 export default function BottomNavigation() {
@@ -55,8 +53,14 @@ export default function BottomNavigation() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 glass-nav border-t border-border pb-safe-bottom z-50 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.1)]">
-      <nav className="flex justify-around items-center h-16 px-2 safe-area-bottom">
+    <div
+      className="
+        md:hidden fixed bottom-0 left-0 right-0 z-50
+        glass-nav border-t border-border
+        shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.3)]
+      "
+    >
+      <nav className="flex justify-around items-center h-[72px] px-2 safe-area-bottom">
         {navigationItems.map((item) => {
           const isActive = isActivePage(item.href);
           const Icon = isActive ? item.activeIcon : item.icon;
@@ -65,18 +69,59 @@ export default function BottomNavigation() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 relative group ${
-                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-              }`}
+              className={`
+                flex flex-col items-center justify-center
+                w-full h-full space-y-1 relative group
+                touch-active
+                ${isActive ? 'text-primary' : 'text-muted-foreground'}
+              `}
             >
-              <div className={`p-1.5 rounded-2xl transition-all duration-300 ${
-                isActive ? 'bg-primary/10' : 'bg-transparent group-hover:bg-foreground/5'
-              }`}>
-                <Icon className={`h-6 w-6 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
-              </div>
-              <span className="text-[10px] font-bold leading-none transition-colors">{item.name}</span>
+              {/* Active pill indicator */}
               {isActive && (
-                <span className="absolute bottom-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(225,6,0,0.8)]" />
+                <span
+                  className="
+                    absolute top-2 left-1/2 -translate-x-1/2
+                    w-12 h-8 bg-primary/15 rounded-2xl
+                    animate-scale-in
+                  "
+                />
+              )}
+
+              {/* Icon container */}
+              <div
+                className={`
+                  relative z-10 p-1 rounded-2xl transition-all duration-300
+                  ${isActive ? '' : 'group-hover:bg-foreground/5 group-active:scale-95'}
+                `}
+              >
+                <Icon
+                  className={`
+                    h-7 w-7 transition-all duration-300
+                    ${isActive ? 'scale-110' : 'scale-100'}
+                  `}
+                />
+              </div>
+
+              {/* Label */}
+              <span
+                className={`
+                  relative z-10 text-[11px] font-bold leading-none
+                  transition-colors duration-200
+                  ${isActive ? 'text-primary' : 'group-hover:text-foreground'}
+                `}
+              >
+                {item.name}
+              </span>
+
+              {/* Bottom dot indicator */}
+              {isActive && (
+                <span
+                  className="
+                    absolute bottom-2 w-1.5 h-1.5 bg-primary rounded-full
+                    shadow-[0_0_8px_rgba(225,6,0,0.8)]
+                    animate-fade-in
+                  "
+                />
               )}
             </Link>
           );
