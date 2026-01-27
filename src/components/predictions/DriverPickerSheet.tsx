@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Driver } from '@prisma/client';
-import MobileDrawer, { DrawerContent, DrawerListItem } from '@/components/ui/MobileDrawer';
+import MobileDrawer, { DrawerContent } from '@/components/ui/MobileDrawer';
 import Input from '@/components/ui/Input';
 import DriverAvatar from '@/components/ui/DriverAvatar';
 import { MagnifyingGlassIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -29,39 +29,51 @@ export default function DriverPickerSheet({
   position,
 }: DriverPickerSheetProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Auto-focus search input when opening
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      // Small delay to allow drawer animation
+      const timeout = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOpen]);
 
   // Filter drivers based on search and excluded IDs
   const filteredDrivers = useMemo(() => {
-    return drivers.filter((driver) => {
-      // Check if excluded
-      if (excludedDriverIds.includes(driver.id)) {
-        return false;
-      }
+    return drivers
+      .filter((driver) => {
+        // Check if excluded
+        if (excludedDriverIds.includes(driver.id)) {
+          return false;
+        }
 
-      // Check search query
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          driver.name.toLowerCase().includes(query) ||
-          driver.team.toLowerCase().includes(query) ||
-          driver.number.toString().includes(query)
-        );
-      }
+        // Check search query
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          return (
+            driver.name.toLowerCase().includes(query) ||
+            driver.team.toLowerCase().includes(query) ||
+            driver.number.toString().includes(query)
+          );
+        }
 
-      return true;
-    });
+        return true;
+      })
+      // Sort alphabetically by name
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [drivers, excludedDriverIds, searchQuery]);
 
-  // Group drivers by team
-  const driversByTeam = useMemo(() => {
-    const grouped = new Map<string, Driver[]>();
-
-    filteredDrivers.forEach((driver) => {
-      const existing = grouped.get(driver.team) || [];
-      grouped.set(driver.team, [...existing, driver]);
-    });
-
-    return grouped;
+  // Get unique first letters for alphabet rail
+  const alphabetLetters = useMemo(() => {
+    const letters = new Set(
+      filteredDrivers.map((d) => d.name.charAt(0).toUpperCase())
+    );
+    return Array.from(letters).sort();
   }, [filteredDrivers]);
 
   const handleSelect = useCallback(
@@ -77,6 +89,19 @@ export default function DriverPickerSheet({
     setSearchQuery('');
     onClose();
   }, [onClose]);
+
+  // Scroll to letter
+  const scrollToLetter = useCallback((letter: string) => {
+    if (!listRef.current) return;
+
+    const element = listRef.current.querySelector(
+      `[data-letter="${letter}"]`
+    ) as HTMLElement;
+
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
 
   const positionLabel = position
     ? position === 1
@@ -99,9 +124,10 @@ export default function DriverPickerSheet({
       <div className="px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
         <div className="relative">
           <Input
+            ref={searchInputRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cerca pilota o team..."
+            placeholder="Cerca pilota..."
             leftIcon={<MagnifyingGlassIcon className="w-5 h-5" />}
             className="pr-10"
           />
@@ -122,132 +148,134 @@ export default function DriverPickerSheet({
         </div>
       </div>
 
-      {/* Driver Grid */}
-      <DrawerContent className="pb-6">
-        {filteredDrivers.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">Nessun pilota trovato</p>
-          </div>
-        ) : searchQuery ? (
-          // Flat list when searching
-          <div className="grid grid-cols-2 gap-3">
-            {filteredDrivers.map((driver) => (
-              <DriverCard
-                key={driver.id}
-                driver={driver}
-                isSelected={selectedDriver?.id === driver.id}
-                onSelect={() => handleSelect(driver)}
-              />
-            ))}
-          </div>
-        ) : (
-          // Grouped by team when not searching
-          <div className="space-y-6">
-            {Array.from(driversByTeam.entries()).map(([team, teamDrivers]) => (
-              <div key={team}>
-                <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 px-1">
-                  {team}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {teamDrivers.map((driver) => (
-                    <DriverCard
+      {/* Driver List - Single Column, Open Design */}
+      <div className="relative flex">
+        {/* Main list */}
+        <div ref={listRef} className="flex-1">
+          <DrawerContent className="py-2 px-0">
+            {filteredDrivers.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">Nessun pilota trovato</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/30">
+                {filteredDrivers.map((driver, index) => {
+                  const isFirstOfLetter =
+                    index === 0 ||
+                    driver.name.charAt(0).toUpperCase() !==
+                      filteredDrivers[index - 1]?.name.charAt(0).toUpperCase();
+
+                  return (
+                    <DriverListItem
                       key={driver.id}
                       driver={driver}
                       isSelected={selectedDriver?.id === driver.id}
                       onSelect={() => handleSelect(driver)}
+                      dataLetter={
+                        isFirstOfLetter
+                          ? driver.name.charAt(0).toUpperCase()
+                          : undefined
+                      }
                     />
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+          </DrawerContent>
+        </div>
+
+        {/* Alphabet Rail - Only show when not searching and list is long enough */}
+        {!searchQuery && filteredDrivers.length > 10 && (
+          <div className="absolute right-0 top-0 bottom-0 w-6 flex flex-col justify-center py-2 bg-gradient-to-l from-card via-card to-transparent">
+            <div className="flex flex-col items-center gap-0.5">
+              {alphabetLetters.map((letter) => (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => scrollToLetter(letter)}
+                  className="
+                    w-5 h-5 text-[10px] font-bold text-muted-foreground
+                    hover:text-primary active:text-primary
+                    transition-colors touch-manipulation
+                  "
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
           </div>
         )}
-      </DrawerContent>
+      </div>
     </MobileDrawer>
   );
 }
 
-// Driver card component
-function DriverCard({
+// Single column driver list item - Open Design
+function DriverListItem({
   driver,
   isSelected,
   onSelect,
+  dataLetter,
 }: {
   driver: Driver;
   isSelected: boolean;
   onSelect: () => void;
+  dataLetter?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
+      data-letter={dataLetter}
       className={`
-        relative flex flex-col items-center p-4 rounded-xl
-        border transition-all duration-200
-        touch-active min-h-[100px]
+        w-full flex items-center gap-3 px-4 py-3
+        text-left transition-all duration-150
+        touch-active min-h-[64px]
         ${
           isSelected
-            ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(225,6,0,0.2)]'
-            : 'bg-surface-2 border-border hover:border-primary/50 hover:bg-surface-3'
+            ? 'bg-primary/10'
+            : 'hover:bg-surface-3 active:bg-surface-3'
         }
       `}
     >
-      {/* Selection indicator */}
-      {isSelected && (
-        <div className="absolute top-2 right-2">
-          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <CheckIcon className="w-3 h-3 text-white" />
-          </div>
-        </div>
-      )}
-
-      {/* Driver number badge */}
-      <div
-        className={`
-          absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-bold
-          ${isSelected ? 'bg-primary text-white' : 'bg-surface-3 text-muted-foreground'}
-        `}
-      >
-        #{driver.number}
-      </div>
-
       {/* Driver avatar */}
       <DriverAvatar
         imageUrl={driver.imageUrl}
         name={driver.name}
-        size="lg"
-        className="mb-2"
+        size="md"
       />
 
-      {/* Driver name */}
-      <span
-        className={`
-          text-sm font-bold text-center leading-tight
-          ${isSelected ? 'text-primary' : 'text-foreground'}
-        `}
-      >
-        {driver.name.split(' ').pop()}
-      </span>
+      {/* Driver info */}
+      <div className="flex-1 min-w-0">
+        <div
+          className={`
+            font-semibold truncate
+            ${isSelected ? 'text-primary' : 'text-foreground'}
+          `}
+        >
+          {driver.name}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="font-bold">#{driver.number}</span>
+          <span className="opacity-50">·</span>
+          <span className="truncate">{driver.team}</span>
+        </div>
+      </div>
 
-      {/* Team (truncated) */}
-      <span className="text-[10px] text-muted-foreground text-center truncate w-full mt-0.5">
-        {driver.team}
-      </span>
+      {/* Selection indicator */}
+      {isSelected && (
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+          <CheckIcon className="w-4 h-4 text-white" />
+        </div>
+      )}
     </button>
   );
 }
 
 // Hook for managing picker state
-import { useMemo as useMemoHook, useState as useStateHook } from 'react';
-
-interface UseDriverPickerOptions {
-  drivers: Driver[];
-  excludedDriverIds?: string[];
-}
-
-export function useDriverPicker({ drivers, excludedDriverIds = [] }: UseDriverPickerOptions) {
-  const [isOpen, setIsOpen] = useStateHook(false);
-  const [selectedPosition, setSelectedPosition] = useStateHook<number | null>(null);
+export function useDriverPicker() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
 
   const openPicker = useCallback((position: number) => {
     setSelectedPosition(position);

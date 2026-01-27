@@ -147,15 +147,15 @@ export default function AllPredictionsList({
 
 
 
-// Componente per singola carta pronostico
-function PredictionCard({ 
-  prediction, 
+// Componente per singola carta pronostico - Open Design
+function PredictionCard({
+  prediction,
   drivers = [],
-  showEventInfo = false 
-}: { 
+  showEventInfo = false
+}: {
   prediction: PredictionWithDetails
   drivers?: Driver[]
-  showEventInfo?: boolean 
+  showEventInfo?: boolean
 }) {
   const scoringType = (prediction.event as any).season?.scoringType || ScoringType.LEGACY_TOP3
 
@@ -163,31 +163,30 @@ function PredictionCard({
     const d = date instanceof Date ? date : new Date(date)
     return d.toLocaleDateString('it-IT', {
       day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+      month: 'short',
     })
   }
 
   return (
-    <div className="bg-card text-card-foreground rounded-lg p-4 border border-border hover:border-primary/40 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-card text-card-foreground rounded-xl p-5 border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-200">
       {/* Header con info utente */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-5">
         {prediction.user.image ? (
-          <img 
-            src={prediction.user.image} 
-            alt={prediction.user.name || 'User'} 
-            className="w-10 h-10 rounded-full border-2 border-border shadow-sm"
+          <img
+            src={prediction.user.image}
+            alt={prediction.user.name || 'User'}
+            className="w-12 h-12 rounded-full border-2 border-border shadow-sm object-cover"
             loading="lazy"
           />
         ) : (
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center border-2 border-border shadow-sm">
-                <span className="text-muted-foreground font-bold text-sm">
-                    {(prediction.user.name || 'U').charAt(0).toUpperCase()}
-                </span>
-            </div>
+          <div className="w-12 h-12 rounded-full bg-surface-3 flex items-center justify-center border-2 border-border shadow-sm">
+            <span className="text-foreground font-bold text-base">
+              {(prediction.user.name || 'U').charAt(0).toUpperCase()}
+            </span>
+          </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground truncate">
+          <p className="font-bold text-foreground truncate text-base">
             {prediction.user.name || 'Utente Anonimo'}
           </p>
           {showEventInfo && (
@@ -195,24 +194,27 @@ function PredictionCard({
               {prediction.event.name}
             </p>
           )}
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {formatDate(prediction.createdAt)}
+          </p>
         </div>
         {prediction.points !== null && (
-          <div className="flex flex-col items-end">
-            <span className="text-lg font-bold text-green-500 leading-none">
-                {prediction.points}
+          <div className="flex flex-col items-center px-3 py-2 rounded-xl bg-accent-green/10">
+            <span className="text-xl font-black text-accent-green leading-none tabular-nums">
+              {prediction.points}
             </span>
-            <span className="text-[10px] text-green-500 uppercase font-medium">punti</span>
+            <span className="text-[10px] text-accent-green uppercase font-semibold mt-0.5">punti</span>
           </div>
         )}
       </div>
 
       {/* Pronostico */}
-      <div className="space-y-2 min-h-[120px]">
+      <div className="min-h-[140px]">
         {prediction.isHidden ? (
           // Mostra placeholder per pronostici nascosti
-          <div className="flex flex-col items-center justify-center h-full py-6 bg-muted/40 rounded-lg border border-dashed border-border">
-            <div className="text-2xl mb-2">🔒</div>
-            <div className="text-muted-foreground text-sm font-medium">
+          <div className="flex flex-col items-center justify-center h-full py-8 bg-surface-2 rounded-xl border border-dashed border-border/50">
+            <div className="text-3xl mb-3">🔒</div>
+            <div className="text-foreground text-sm font-semibold">
               Pronostico nascosto
             </div>
             <div className="text-xs text-muted-foreground mt-1 px-4 text-center">
@@ -220,15 +222,8 @@ function PredictionCard({
             </div>
           </div>
         ) : (
-          <PredictionDisplay prediction={prediction} drivers={drivers} />
+          <PredictionDisplay prediction={prediction} drivers={drivers} compact />
         )}
-      </div>
-
-      {/* Footer con data */}
-      <div className="mt-4 pt-3 border-t border-border flex justify-between items-center">
-        <p className="text-xs text-muted-foreground">
-          Inviato il {formatDate(prediction.createdAt)}
-        </p>
       </div>
     </div>
   )

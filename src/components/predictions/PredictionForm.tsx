@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Driver, Event, ScoringType } from '@prisma/client';
 import SortableDriverList from './SortableDriverList';
 import DriverPickerSheet from './DriverPickerSheet';
+import PodiumProgress, { PodiumProgressBadge } from './PodiumProgress';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import DriverAvatar from '@/components/ui/DriverAvatar';
-import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 interface ExtendedEvent extends Event {
   season?: {
@@ -33,7 +34,7 @@ interface PredictionFormProps {
   isModifying?: boolean;
 }
 
-// Position card for LEGACY_TOP3 mode
+// Position card for LEGACY_TOP3 mode - Open Design
 function PositionCard({
   position,
   label,
@@ -49,7 +50,22 @@ function PositionCard({
   onClick: () => void;
   disabled?: boolean;
 }) {
-  const badgeVariant = position === 1 ? 'gold' : position === 2 ? 'silver' : 'bronze';
+  const positionColors = {
+    1: {
+      badge: 'bg-accent-gold/20 text-accent-gold',
+      ring: 'ring-accent-gold/30',
+    },
+    2: {
+      badge: 'bg-accent-silver/20 text-accent-silver',
+      ring: 'ring-accent-silver/30',
+    },
+    3: {
+      badge: 'bg-accent-bronze/20 text-accent-bronze',
+      ring: 'ring-accent-bronze/30',
+    },
+  };
+
+  const colors = positionColors[position];
 
   return (
     <button
@@ -57,30 +73,20 @@ function PositionCard({
       onClick={onClick}
       disabled={disabled}
       className={`
-        w-full p-4 rounded-xl border transition-all duration-200
-        text-left touch-active min-h-[80px]
-        ${
-          disabled
-            ? 'bg-muted border-border opacity-60 cursor-not-allowed'
-            : driver
-            ? 'bg-surface-2 border-primary/30 hover:border-primary'
-            : 'bg-surface-2 border-border hover:border-primary/50 hover:bg-surface-3'
-        }
+        w-full py-4 px-3 transition-all duration-200
+        text-left touch-active min-h-[72px]
+        border-b border-dashed border-border/40 last:border-b-0
+        ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
+        ${driver ? '' : 'hover:bg-surface-2/50'}
       `}
     >
       <div className="flex items-center gap-3">
         {/* Position badge */}
         <div
           className={`
-            w-12 h-12 rounded-xl flex items-center justify-center
-            font-black text-lg
-            ${
-              position === 1
-                ? 'bg-accent-gold/20 text-accent-gold'
-                : position === 2
-                ? 'bg-accent-silver/20 text-accent-silver'
-                : 'bg-accent-bronze/20 text-accent-bronze'
-            }
+            w-11 h-11 rounded-full flex items-center justify-center
+            font-black text-lg flex-shrink-0
+            ${colors.badge}
           `}
         >
           {position}°
@@ -99,24 +105,21 @@ function PositionCard({
         <div className="flex-1 min-w-0">
           {driver ? (
             <>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs font-bold text-muted-foreground">
-                  #{driver.number}
-                </span>
-                <span className="font-bold text-foreground truncate">
-                  {driver.name}
-                </span>
+              <div className="font-semibold text-foreground truncate">
+                {driver.name}
               </div>
-              <div className="text-xs text-muted-foreground truncate">
-                {driver.team}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="font-bold">#{driver.number}</span>
+                <span className="opacity-50">·</span>
+                <span className="truncate">{driver.team}</span>
               </div>
             </>
           ) : (
             <>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground font-medium">
                 {label}
               </span>
-              <div className="text-xs text-muted-foreground mt-0.5">
+              <div className="text-xs text-muted-foreground/70 mt-0.5">
                 {points}
               </div>
             </>
@@ -431,37 +434,38 @@ export default function PredictionForm({
 
   return (
     <>
-      {/* Header section - compact on mobile */}
-      <div className="mb-4 px-1 md:px-0">
-        <div className="flex flex-wrap items-center gap-2 mb-1">
-          <h2 className="text-lg md:text-2xl font-black text-foreground">
-            {isModifying ? 'Modifica Pronostico' : 'Nuovo Pronostico'}
-          </h2>
-          <Badge variant={event.type === 'RACE' ? 'race' : 'sprint'}>
+      {/* Compact Header - Mobile optimized */}
+      <div className="mb-4">
+        {/* Event type and title row */}
+        <div className="flex items-center gap-2 mb-2">
+          <Badge variant={event.type === 'RACE' ? 'race' : 'sprint'} size="sm">
             {event.type === 'RACE' ? 'Gara' : 'Sprint'}
           </Badge>
+          <h2 className="text-lg font-bold text-foreground truncate">
+            {event.name}
+          </h2>
         </div>
 
-        <p className="font-semibold text-foreground text-sm md:text-base">{event.name}</p>
-        <p className="text-xs md:text-sm text-muted-foreground">
-          {new Date(event.date).toLocaleDateString('it-IT', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </p>
+        {/* Date and countdown row */}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">
+            {new Date(event.date).toLocaleDateString('it-IT', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
 
-        {/* Countdown badge */}
-        <div className="mt-2">
           {isEventOpen ? (
-            <Badge variant="upcoming" size="lg">
-              Chiusura: {timeLeft}
-            </Badge>
+            <div className="flex items-center gap-1.5 text-accent-amber">
+              <ClockIcon className="w-4 h-4" />
+              <span className="font-semibold">{timeLeft}</span>
+            </div>
           ) : (
-            <Badge variant="closed" size="lg">
-              Pronostici chiusi
+            <Badge variant="closed" size="sm">
+              Chiuso
             </Badge>
           )}
         </div>
@@ -469,40 +473,56 @@ export default function PredictionForm({
 
       {/* Closed event warning */}
       {!isEventOpen && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mb-4 mx-1 md:mx-0">
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 mb-4">
           <p className="text-destructive font-medium text-sm">
             I pronostici per questo evento sono stati chiusi.
           </p>
         </div>
       )}
 
-      {/* Grid section - full width on mobile, Card on desktop */}
-      <div className="md:bg-card md:border md:border-border md:rounded-xl md:p-6">
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {viewMode === 'GRID' ? (
-            <div>
-              <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 px-1 md:px-0">
-                Ordina la griglia di arrivo prevista:
+      {/* Form Content */}
+      <form onSubmit={handleSubmit}>
+        {viewMode === 'GRID' ? (
+          /* GRID Mode - Full grid drag and drop */
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <p className="text-sm text-muted-foreground">
+                Ordina la griglia di arrivo:
               </p>
-              <SortableDriverList
-                drivers={drivers}
-                orderedDriverIds={orderedDriverIds}
-                onChange={(newOrder) => {
-                  setTouched(true);
-                  setOrderedDriverIds(newOrder);
-                }}
-                disabled={!isEventOpen || isLoading}
+              <Badge variant="neutral" size="sm">
+                {orderedDriverIds.length} piloti
+              </Badge>
+            </div>
+            <SortableDriverList
+              drivers={drivers}
+              orderedDriverIds={orderedDriverIds}
+              onChange={(newOrder) => {
+                setTouched(true);
+                setOrderedDriverIds(newOrder);
+              }}
+              disabled={!isEventOpen || isLoading}
+            />
+          </div>
+        ) : (
+          /* TOP3 Mode - Position cards with progress */
+          <div>
+            {/* Progress indicator */}
+            <div className="mb-4 flex items-center justify-between px-1">
+              <p className="text-sm text-muted-foreground">
+                Seleziona il podio:
+              </p>
+              <PodiumProgressBadge
+                firstPlaceId={firstPlaceId}
+                secondPlaceId={secondPlaceId}
+                thirdPlaceId={thirdPlaceId}
               />
             </div>
-          ) : (
-            <div className="space-y-3 px-1 md:px-0">
-              <p className="text-sm text-muted-foreground">
-                Seleziona i piloti per il podio:
-              </p>
 
+            {/* Position cards - Open design (no outer card wrapper) */}
+            <div className="bg-card rounded-xl border border-border overflow-hidden md:bg-transparent md:border-0">
               <PositionCard
                 position={1}
-                label="Seleziona 1° posto"
+                label="Seleziona vincitore"
                 points="25 punti"
                 driver={firstPlaceId ? getDriver(firstPlaceId) : null}
                 onClick={() => setPickerPosition(1)}
@@ -527,97 +547,93 @@ export default function PredictionForm({
                 disabled={!isEventOpen || isLoading}
               />
             </div>
-          )}
 
-          {/* Validation errors */}
-          {displayedErrors.length > 0 && (
-            <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 mx-1 md:mx-0">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-destructive"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-destructive mb-1">
-                    Errori di validazione:
-                  </h3>
-                  <ul className="text-sm text-destructive list-disc list-inside space-y-0.5">
-                    {displayedErrors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
+            {/* Visual progress stepper - Show on mobile when not all selected */}
+            {!isTop3Complete && (
+              <div className="mt-6 md:hidden">
+                <PodiumProgress
+                  firstPlaceId={firstPlaceId}
+                  secondPlaceId={secondPlaceId}
+                  thirdPlaceId={thirdPlaceId}
+                />
               </div>
-            </div>
-          )}
-
-          {/* Sprint note */}
-          {event.type === 'SPRINT' && (
-            <div className="bg-accent-cyan/10 border border-accent-cyan/30 rounded-xl p-4 mx-1 md:mx-0">
-              <p className="text-accent-cyan text-sm">
-                <strong>Sprint:</strong>{' '}
-                {scoringType === ScoringType.FULL_GRID_DIFF
-                  ? 'Le penalità saranno dimezzate (x 0.5)'
-                  : 'I punteggi saranno dimezzati (12.5 - 7.5 - 5 punti)'}
-              </p>
-            </div>
-          )}
-
-          {/* Desktop buttons */}
-          <div className="hidden md:flex gap-4">
-            <Button
-              type="submit"
-              disabled={!isEventOpen || isLoading || !isValid}
-              className="flex-1"
-              isLoading={isLoading}
-              size="lg"
-            >
-              {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
-            </Button>
-
-            {(firstPlaceId ||
-              secondPlaceId ||
-              thirdPlaceId ||
-              orderedDriverIds.length > 0) && (
-              <Button
-                type="button"
-                onClick={resetForm}
-                disabled={isLoading}
-                variant="outline"
-                size="lg"
-              >
-                Reset
-              </Button>
             )}
           </div>
-        </form>
-      </div>
+        )}
 
-      {/* Mobile floating button */}
-      <div className="md:hidden fixed bottom-20 left-0 right-0 p-4 z-40 safe-area-bottom">
-        <div className="max-w-md mx-auto">
+        {/* Validation errors */}
+        {displayedErrors.length > 0 && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 mt-4">
+            <ul className="text-sm text-destructive list-disc list-inside space-y-0.5">
+              {displayedErrors.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Sprint note */}
+        {event.type === 'SPRINT' && (
+          <div className="bg-accent-cyan/10 border border-accent-cyan/30 rounded-xl p-3 mt-4">
+            <p className="text-accent-cyan text-sm">
+              <strong>Sprint:</strong>{' '}
+              {scoringType === ScoringType.FULL_GRID_DIFF
+                ? 'Le penalità saranno dimezzate (x 0.5)'
+                : 'Punteggi dimezzati (12.5 - 7.5 - 5 punti)'}
+            </p>
+          </div>
+        )}
+
+        {/* Desktop buttons */}
+        <div className="hidden md:flex gap-4 mt-6">
           <Button
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
             disabled={!isEventOpen || isLoading || !isValid}
-            fullWidth
-            size="lg"
+            className="flex-1"
             isLoading={isLoading}
-            className="shadow-elevation-4"
+            size="lg"
           >
             {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
           </Button>
+
+          {(firstPlaceId ||
+            secondPlaceId ||
+            thirdPlaceId ||
+            orderedDriverIds.length > 0) && (
+            <Button
+              type="button"
+              onClick={resetForm}
+              disabled={isLoading}
+              variant="outline"
+              size="lg"
+            >
+              Reset
+            </Button>
+          )}
         </div>
-      </div>
+      </form>
+
+      {/* Mobile sticky footer button - above BottomNavigation (z-50) */}
+      {isEventOpen && (
+        <div className="md:hidden fixed bottom-[88px] left-0 right-0 px-4 pb-4 pt-3 bg-gradient-to-t from-background via-background/95 to-transparent z-[60]">
+          <div className="max-w-md mx-auto">
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!isEventOpen || isLoading || !isValid}
+              fullWidth
+              size="lg"
+              isLoading={isLoading}
+              className="shadow-elevation-4 prediction-submit-button"
+            >
+              {isModifying ? 'Aggiorna Pronostico' : 'Salva Pronostico'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Extra bottom padding for mobile to account for sticky button + BottomNavigation */}
+      <div className="h-40 md:hidden" />
 
       {/* Driver Picker Sheet for TOP3 mode */}
       {viewMode === 'TOP3' && (

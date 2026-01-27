@@ -33,3 +33,4 @@ tasks/
 *.sql
 .vercel
 .trae/
+next-env.d.ts

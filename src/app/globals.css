@@ -493,6 +493,103 @@ body {
   box-shadow: 0 0 10px var(--primary);
 }
 
+/* Open Design - Driver Item Styles */
+.driver-item-open {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.driver-item-open.dragging {
+  background-color: var(--surface-2);
+  border-radius: 0.75rem;
+  box-shadow: 0 0 30px rgba(225, 6, 0, 0.15);
+  transform: scale(1.02);
+  z-index: 50;
+}
+
+/* Position Badge Styles */
+.position-badge {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.position-badge-gold {
+  background-color: rgba(255, 215, 0, 0.2);
+  color: var(--accent-gold);
+}
+
+.position-badge-silver {
+  background-color: rgba(192, 192, 192, 0.2);
+  color: var(--accent-silver);
+}
+
+.position-badge-bronze {
+  background-color: rgba(205, 127, 50, 0.2);
+  color: var(--accent-bronze);
+}
+
+.position-badge-default {
+  background-color: var(--surface-3);
+  color: var(--muted-foreground);
+}
+
+/* Divider Styles for Open Design */
+.divider-dashed {
+  border-bottom: 1px dashed;
+  border-color: rgba(201, 206, 214, 0.15);
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.divider-podium {
+  height: 1px;
+  background-color: rgba(225, 6, 0, 0.3);
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+/* Drag Handle Glow */
+.drag-handle-active {
+  color: var(--primary);
+  background-color: rgba(225, 6, 0, 0.1);
+}
+
+/* Progress Indicator Animations */
+@keyframes progress-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.animate-progress-pulse {
+  animation: progress-pulse 1.5s ease-in-out infinite;
+}
+
+/* Floating Element Effect */
+.floating-element {
+  box-shadow:
+    0 0 30px rgba(225, 6, 0, 0.2),
+    0 14px 28px rgba(0, 0, 0, 0.4);
+  transform: scale(1.03);
+  z-index: 100;
+}
+
 /* Reduced Motion Preference */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-urgent,
@@ -502,11 +599,17 @@ body {
   .animate-fade-in,
   .animate-scale-in,
   .animate-countdown-pulse,
+  .animate-progress-pulse,
   .skeleton {
     animation: none;
   }
 
   .touch-active:active {
+    transform: none;
+  }
+
+  .driver-item-open.dragging,
+  .floating-element {
     transform: none;
   }
 }

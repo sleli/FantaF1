@@ -25,19 +25,46 @@ import { CSS } from '@dnd-kit/utilities';
 import { Driver } from '@prisma/client';
 import DriverAvatar from '@/components/ui/DriverAvatar';
 
-// Sortable Item Component
+// Position badge component for podium distinction
+function PositionBadge({ position }: { position: number }) {
+  const isPodium = position <= 3;
+
+  const badgeClasses = isPodium
+    ? position === 1
+      ? 'bg-accent-gold/20 text-accent-gold'
+      : position === 2
+      ? 'bg-accent-silver/20 text-accent-silver'
+      : 'bg-accent-bronze/20 text-accent-bronze'
+    : 'bg-surface-3 text-muted-foreground';
+
+  return (
+    <div
+      className={`
+        w-9 h-9 rounded-full flex items-center justify-center
+        font-black text-sm tabular-nums flex-shrink-0
+        ${badgeClasses}
+      `}
+    >
+      {position}
+    </div>
+  );
+}
+
+// Sortable Item Component - Open Design (no card borders)
 function SortableItem({
   id,
   driver,
   index,
   isDragging,
   isOverlay,
+  isLastPodiumItem,
 }: {
   id: string;
   driver: Driver;
   index: number;
   isDragging?: boolean;
   isOverlay?: boolean;
+  isLastPodiumItem?: boolean;
 }) {
   const {
     attributes,
@@ -53,131 +80,119 @@ function SortableItem({
     transition,
   };
 
-  const itemClasses = `
-    bg-card border rounded-lg flex items-center
-    gap-2 px-2 py-2
-    md:gap-3 md:px-3 md:py-3 md:rounded-xl
-    touch-manipulation transition-all duration-200
-    ${
-      isDragging || isOverlay
-        ? 'border-primary shadow-[0_0_20px_rgba(225,6,0,0.3)] scale-[1.02] z-50 bg-surface-2'
-        : 'border-border hover:border-primary/30'
-    }
-    ${isOver && !isDragging ? 'border-primary border-dashed' : ''}
-    ${index < 3 ? 'bg-surface-2' : ''}
-  `;
+  const position = index + 1;
 
   return (
-    <div ref={setNodeRef} style={style} className={itemClasses}>
-      {/* Position number */}
+    <div ref={setNodeRef} style={style}>
       <div
         className={`
-          w-7 h-7 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center
-          font-bold text-xs md:text-sm tabular-nums flex-shrink-0
+          flex items-center gap-3 py-4 px-2
+          transition-all duration-200
           ${
-            index < 3
-              ? 'bg-primary/10 text-primary'
-              : 'bg-surface-3 text-muted-foreground'
+            isDragging || isOverlay
+              ? 'bg-surface-2 rounded-xl shadow-[0_0_30px_rgba(225,6,0,0.15)] scale-[1.02] z-50 relative'
+              : ''
           }
+          ${isOver && !isDragging ? 'bg-surface-2/50' : ''}
         `}
       >
-        {index + 1}
-      </div>
+        {/* Position badge */}
+        <PositionBadge position={position} />
 
-      {/* Driver avatar */}
-      <div className="flex-shrink-0">
+        {/* Driver avatar - always visible, size md */}
         <DriverAvatar
           imageUrl={driver.imageUrl}
           name={driver.name}
-          size="sm"
+          size="md"
         />
-      </div>
 
-      {/* Driver info */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1 md:gap-2">
-          <span className="text-[10px] md:text-xs font-bold text-muted-foreground">
-            #{driver.number}
-          </span>
-          <span className="text-sm md:text-base font-semibold md:font-bold text-foreground truncate">
+        {/* Driver info */}
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-foreground truncate">
             {driver.name}
-          </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-bold">#{driver.number}</span>
+            <span className="opacity-50">·</span>
+            <span className="truncate">{driver.team}</span>
+          </div>
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground truncate">
-          {driver.team}
-        </div>
+
+        {/* Drag handle */}
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Trascina ${driver.name}`}
+          className={`
+            inline-flex items-center justify-center flex-shrink-0
+            w-10 h-10 rounded-xl
+            text-muted-foreground
+            hover:text-foreground hover:bg-surface-3
+            focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+            transition-all duration-200
+            touch-none cursor-grab active:cursor-grabbing
+            ${isDragging || isOverlay ? 'text-primary' : ''}
+          `}
+        >
+          <Bars3Icon className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* Drag handle */}
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label={`Trascina ${driver.name}`}
-        className={`
-          inline-flex items-center justify-center flex-shrink-0
-          w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl
-          border border-border bg-surface-3
-          text-muted-foreground
-          hover:text-foreground hover:bg-surface-4 hover:border-primary/30
-          focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-          transition-all duration-200
-          touch-none cursor-grab active:cursor-grabbing
-          ${isDragging ? 'bg-primary text-white border-primary' : ''}
-        `}
-      >
-        <Bars3Icon className="h-5 w-5 md:h-6 md:w-6" />
-      </button>
+      {/* Divider - solid after podium, dashed for others */}
+      {isLastPodiumItem ? (
+        <div className="h-px bg-primary/30 mx-2" />
+      ) : (
+        <div className="border-b border-dashed border-border/40 mx-2" />
+      )}
     </div>
   );
 }
 
-// Static item for disabled state
-function StaticItem({ driver, index }: { driver: Driver; index: number }) {
+// Static item for disabled state - Open Design
+function StaticItem({
+  driver,
+  index,
+  isLastPodiumItem,
+}: {
+  driver: Driver;
+  index: number;
+  isLastPodiumItem?: boolean;
+}) {
+  const position = index + 1;
+
   return (
-    <div
-      className={`
-        bg-muted border border-border rounded-lg md:rounded-xl
-        flex items-center gap-2 px-2 py-2 md:gap-3 md:px-3 md:py-3 opacity-60
-        ${index < 3 ? 'bg-surface-2' : ''}
-      `}
-    >
-      <div
-        className={`
-          w-7 h-7 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center
-          font-bold text-xs md:text-sm tabular-nums flex-shrink-0
-          ${
-            index < 3
-              ? 'bg-primary/10 text-primary'
-              : 'bg-surface-3 text-muted-foreground'
-          }
-        `}
-      >
-        {index + 1}
-      </div>
-      <div className="flex-shrink-0">
+    <div className="opacity-60">
+      <div className="flex items-center gap-3 py-4 px-2">
+        <PositionBadge position={position} />
+
         <DriverAvatar
           imageUrl={driver.imageUrl}
           name={driver.name}
-          size="sm"
+          size="md"
         />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1 md:gap-2">
-          <span className="text-[10px] md:text-xs font-bold text-muted-foreground">
-            #{driver.number}
-          </span>
-          <span className="text-sm md:text-base font-semibold md:font-bold text-foreground truncate">
+
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-foreground truncate">
             {driver.name}
-          </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-bold">#{driver.number}</span>
+            <span className="opacity-50">·</span>
+            <span className="truncate">{driver.team}</span>
+          </div>
         </div>
-        <div className="text-[10px] md:text-xs text-muted-foreground truncate">
-          {driver.team}
+
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground">
+          <Bars3Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="w-9 h-9 md:w-12 md:h-12 rounded-lg md:rounded-xl border border-border flex items-center justify-center text-muted-foreground flex-shrink-0">
-        <Bars3Icon className="h-5 w-5 md:h-6 md:w-6" />
-      </div>
+
+      {isLastPodiumItem ? (
+        <div className="h-px bg-primary/30 mx-2" />
+      ) : (
+        <div className="border-b border-dashed border-border/40 mx-2" />
+      )}
     </div>
   );
 }
@@ -205,8 +220,8 @@ export default function SortableDriverList({
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 8,
+        delay: 100, // Reduced from 200ms for faster response
+        tolerance: 5, // More precise
       },
     }),
     useSensor(KeyboardSensor, {
@@ -241,11 +256,18 @@ export default function SortableDriverList({
 
   if (disabled) {
     return (
-      <div className="space-y-2">
+      <div>
         {orderedDriverIds.map((id, index) => {
           const driver = getDriver(id);
           if (!driver) return null;
-          return <StaticItem key={id} driver={driver} index={index} />;
+          return (
+            <StaticItem
+              key={id}
+              driver={driver}
+              index={index}
+              isLastPodiumItem={index === 2}
+            />
+          );
         })}
       </div>
     );
@@ -263,14 +285,20 @@ export default function SortableDriverList({
         items={orderedDriverIds}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-1.5 md:space-y-2">
-          {/* Instructions - hidden on mobile for space */}
-          <div className="hidden md:flex text-xs text-muted-foreground mb-3 items-center gap-2">
+        <div>
+          {/* Mobile instructions - now visible */}
+          <div className="flex md:hidden text-xs text-muted-foreground mb-3 items-center gap-2 px-2">
             <Bars3Icon className="w-4 h-4" />
             <span>Tieni premuto e trascina per riordinare</span>
           </div>
 
-          {/* Single continuous list */}
+          {/* Desktop instructions */}
+          <div className="hidden md:flex text-xs text-muted-foreground mb-3 items-center gap-2 px-2">
+            <Bars3Icon className="w-4 h-4" />
+            <span>Trascina per riordinare la griglia</span>
+          </div>
+
+          {/* Driver list - open design with dividers */}
           {orderedDriverIds.map((id, index) => {
             const driver = getDriver(id);
             if (!driver) return null;
@@ -281,6 +309,7 @@ export default function SortableDriverList({
                 driver={driver}
                 index={index}
                 isDragging={activeId === id}
+                isLastPodiumItem={index === 2}
               />
             );
           })}
@@ -290,12 +319,32 @@ export default function SortableDriverList({
       {/* Drag Overlay - Shows the item being dragged */}
       <DragOverlay>
         {activeDriver && (
-          <SortableItem
-            id={activeId!}
-            driver={activeDriver}
-            index={activeIndex}
-            isOverlay
-          />
+          <div className="bg-surface-2 rounded-xl shadow-[0_0_30px_rgba(225,6,0,0.25)] scale-[1.03]">
+            <div className="flex items-center gap-3 py-4 px-2">
+              <PositionBadge position={activeIndex + 1} />
+
+              <DriverAvatar
+                imageUrl={activeDriver.imageUrl}
+                name={activeDriver.name}
+                size="md"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-foreground truncate">
+                  {activeDriver.name}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-bold">#{activeDriver.number}</span>
+                  <span className="opacity-50">·</span>
+                  <span className="truncate">{activeDriver.team}</span>
+                </div>
+              </div>
+
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-primary">
+                <Bars3Icon className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
         )}
       </DragOverlay>
     </DndContext>
