@@ -96,7 +96,9 @@ describe('PredictionForm View Modes', () => {
       />
     )
     
-    expect(screen.getByText('🥇 1° Posto (25 punti)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Seleziona vincitore/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Seleziona 2° posto/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Seleziona 3° posto/i })).toBeInTheDocument()
     expect(screen.queryByTestId('sortable-list')).not.toBeInTheDocument()
   })
 
@@ -112,7 +114,7 @@ describe('PredictionForm View Modes', () => {
     )
     
     expect(screen.getByTestId('sortable-list')).toBeInTheDocument()
-    expect(screen.queryByText('🥇 1° Posto (25 punti)')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Seleziona vincitore/i })).not.toBeInTheDocument()
   })
 
   it('pre-fills Legacy prediction correctly', () => {
@@ -132,11 +134,10 @@ describe('PredictionForm View Modes', () => {
         initialPrediction={initialPrediction}
       />
     )
-    
-    const selects = screen.getAllByRole('combobox')
-    expect(selects[0]).toHaveValue('d1')
-    expect(selects[1]).toHaveValue('d2')
-    expect(selects[2]).toHaveValue('d3')
+
+    expect(screen.getByRole('button', { name: /1°.*Driver 1/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /2°.*Driver 2/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /3°.*Driver 3/i })).toBeInTheDocument()
   })
 
   it('pre-fills Grid prediction correctly', () => {
@@ -173,15 +174,20 @@ describe('PredictionForm View Modes', () => {
       />
     )
 
-    const saveButton = screen.getByRole('button', { name: 'Salva Pronostico' })
-    expect(saveButton).toBeDisabled()
+    screen.getAllByRole('button', { name: 'Salva Pronostico' }).forEach((btn) => {
+      expect(btn).toBeDisabled()
+    })
 
-    const selects = screen.getAllByRole('combobox')
-    fireEvent.change(selects[0], { target: { value: 'd1' } })
-    fireEvent.change(selects[1], { target: { value: 'd2' } })
-    fireEvent.change(selects[2], { target: { value: 'd3' } })
+    fireEvent.click(screen.getByRole('button', { name: /Seleziona vincitore/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Driver 1/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Seleziona 2° posto/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Driver 2/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Seleziona 3° posto/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Driver 3/i }))
 
-    expect(saveButton).toBeEnabled()
+    screen.getAllByRole('button', { name: 'Salva Pronostico' }).forEach((btn) => {
+      expect(btn).toBeEnabled()
+    })
   })
 
   it('mostra errori dopo interazione quando ci sono campi mancanti', () => {
@@ -195,10 +201,9 @@ describe('PredictionForm View Modes', () => {
       />
     )
 
-    const selects = screen.getAllByRole('combobox')
-    fireEvent.change(selects[0], { target: { value: 'd1' } })
+    fireEvent.click(screen.getByRole('button', { name: /Seleziona vincitore/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Driver 1/i }))
 
-    expect(screen.getByText('Errori di validazione:')).toBeInTheDocument()
     expect(screen.getByText('Seleziona il pilota per il 2° posto')).toBeInTheDocument()
     expect(screen.getByText('Seleziona il pilota per il 3° posto')).toBeInTheDocument()
   })
@@ -214,7 +219,10 @@ describe('PredictionForm View Modes', () => {
       />
     )
 
-    const saveButton = screen.getByRole('button', { name: 'Salva Pronostico' })
-    await waitFor(() => expect(saveButton).toBeEnabled())
+    await waitFor(() => {
+      screen.getAllByRole('button', { name: 'Salva Pronostico' }).forEach((btn) => {
+        expect(btn).toBeEnabled()
+      })
+    })
   })
 })

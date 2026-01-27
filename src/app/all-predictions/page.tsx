@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Event, Driver } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PublicLayout from '@/components/layout/PublicLayout'
+import Card from '@/components/ui/Card'
 import PredictionsViewer from '@/components/predictions/PredictionsViewer'
 
 export default function AllPredictionsPage() {
@@ -134,7 +135,7 @@ export default function AllPredictionsPage() {
         </div>
 
         {/* Filtro per evento */}
-        <div className="bg-card text-card-foreground rounded-lg shadow-md p-6 mb-8 border border-border">
+        <Card className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <label htmlFor="event-filter" className="text-sm font-medium text-foreground">
               Filtra per evento:
@@ -153,18 +154,16 @@ export default function AllPredictionsPage() {
               ))}
             </select>
           </div>
-        </div>
+        </Card>
 
         {/* Lista pronostici */}
-        <div className="bg-card text-card-foreground rounded-lg shadow-md border border-border">
-          <PredictionsViewer
-            personalPredictions={personalPredictions}
-            allPredictions={allPredictions}
-            drivers={drivers}
-            isLoading={isLoading}
-            defaultScope="all"
-          />
-        </div>
+        <PredictionsViewer
+          personalPredictions={personalPredictions}
+          allPredictions={allPredictions}
+          drivers={drivers}
+          isLoading={isLoading}
+          defaultScope="all"
+        />
       </div>
     </PublicLayout>
   )

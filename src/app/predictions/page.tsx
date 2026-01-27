@@ -201,131 +201,128 @@ export default function PredictionsPage() {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-card text-card-foreground rounded-lg shadow-sm border border-border mb-8">
-          <div className="border-b border-border">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
-              <button
-                onClick={() => {
-                  setActiveTab('existing')
-                  setSelectedEvent(null)
-                  setEditingPrediction(null)
-                }}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'existing'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                Pronostici Esistenti ({predictions.length})
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('new')
-                  setEditingPrediction(null)
-                }}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'new'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                }`}
-              >
-                Nuovo Pronostico {availableEvents.length > 0 && `(${availableEvents.length})`}
-              </button>
-            </nav>
+        <div className="mb-6">
+          <div className="inline-flex rounded-xl bg-muted/40 p-1 border border-border">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('existing')
+                setSelectedEvent(null)
+                setEditingPrediction(null)
+              }}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                activeTab === 'existing'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Pronostici Esistenti ({predictions.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('new')
+                setEditingPrediction(null)
+              }}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                activeTab === 'new'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Nuovo Pronostico {availableEvents.length > 0 && `(${availableEvents.length})`}
+            </button>
           </div>
+        </div>
 
-          <div className="p-6">
-            {activeTab === 'existing' && !editingPrediction && (
-              <PredictionsViewer
-                personalPredictions={predictions}
-                drivers={drivers}
-                isLoading={isLoading}
-                onEdit={(prediction) => {
-                  setEditingPrediction(prediction)
-                  setActiveTab('new')
-                }}
-                onDelete={handleDeletePrediction}
-              />
-            )}
+        <div className="space-y-6">
+          {activeTab === 'existing' && !editingPrediction && (
+            <PredictionsViewer
+              personalPredictions={predictions}
+              drivers={drivers}
+              isLoading={isLoading}
+              onEdit={(prediction) => {
+                setEditingPrediction(prediction)
+                setActiveTab('new')
+              }}
+              onDelete={handleDeletePrediction}
+            />
+          )}
 
-            {activeTab === 'new' && !editingPrediction && (
-              <div>
-                {availableEvents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-24 h-24 mx-auto mb-4">
-                      <svg className="w-full h-full text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-foreground mb-2">Nessun evento disponibile</h3>
-                    <p className="text-muted-foreground">
-                      Non ci sono eventi aperti per nuovi pronostici al momento.
-                    </p>
+          {activeTab === 'new' && !editingPrediction && (
+            <div>
+              {availableEvents.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 mx-auto mb-4">
+                    <svg className="w-full h-full text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                ) : !selectedEvent ? (
-                  <div>
-                    <h3 className="text-lg font-medium text-foreground mb-4">
-                      Seleziona un evento per il tuo pronostico:
-                    </h3>
-                    <div className="grid gap-4">
-                      {availableEvents.map((event) => (
-                        <div
-                          key={event.id}
-                          onClick={() => setSelectedEvent(event)}
-                          className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-semibold text-foreground">{event.name}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
-                              </p>
-                              <p className="text-sm text-primary mt-1">
-                                Chiusura: {new Date(event.closingDate).toLocaleDateString('it-IT', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                            </div>
-                            <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
+                  <h3 className="text-lg font-medium text-foreground mb-2">Nessun evento disponibile</h3>
+                  <p className="text-muted-foreground">
+                    Non ci sono eventi aperti per nuovi pronostici al momento.
+                  </p>
+                </div>
+              ) : !selectedEvent ? (
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Seleziona un evento per il tuo pronostico:</h3>
+                  <div className="grid gap-4">
+                    {availableEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        onClick={() => setSelectedEvent(event)}
+                        className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-foreground">{event.name}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
+                            </p>
+                            <p className="text-sm text-primary mt-1">
+                              Chiusura: {new Date(event.closingDate).toLocaleDateString('it-IT', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
                           </div>
+                          <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <PredictionForm
-                    event={selectedEvent}
-                    drivers={drivers}
-                    onSubmit={handleCreatePrediction}
-                    isLoading={isLoading}
-                    lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
-                  />
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                <PredictionForm
+                  event={selectedEvent}
+                  drivers={drivers}
+                  onSubmit={handleCreatePrediction}
+                  isLoading={isLoading}
+                  lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
+                />
+              )}
+            </div>
+          )}
 
-            {editingPrediction && (
-              <PredictionForm
-                event={editingPrediction.event}
-                drivers={drivers}
-                onSubmit={handleUpdatePrediction}
-                initialPrediction={{
-                  firstPlaceId: editingPrediction.firstPlaceId || undefined,
-                  secondPlaceId: editingPrediction.secondPlaceId || undefined,
-                  thirdPlaceId: editingPrediction.thirdPlaceId || undefined,
-                  rankings: (editingPrediction.rankings as string[]) || undefined
-                }}
-                isLoading={isLoading}
-                isModifying={true}
-              />
-            )}
-          </div>
+          {editingPrediction && (
+            <PredictionForm
+              event={editingPrediction.event}
+              drivers={drivers}
+              onSubmit={handleUpdatePrediction}
+              initialPrediction={{
+                firstPlaceId: editingPrediction.firstPlaceId || undefined,
+                secondPlaceId: editingPrediction.secondPlaceId || undefined,
+                thirdPlaceId: editingPrediction.thirdPlaceId || undefined,
+                rankings: (editingPrediction.rankings as string[]) || undefined
+              }}
+              isLoading={isLoading}
+              isModifying={true}
+            />
+          )}
         </div>
         </div>
       </div>

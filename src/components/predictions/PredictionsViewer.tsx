@@ -267,89 +267,79 @@ export default function PredictionsViewer({
   }, [filtered])
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <div className="p-4 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Filtra per stato e visualizza i dettagli per gara.
-              </p>
-            </div>
+    <Card padding="none" className="overflow-hidden">
+      <div className="p-4 sm:p-6 border-b border-border">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Filtra per stato e visualizza i dettagli per gara.</p>
+          </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
-              {(hasPersonal && hasAll) && (
-                <div className="flex rounded-lg border border-border overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setScope('personal')}
-                    className={`px-4 py-2 text-sm font-semibold ${
-                      scope === 'personal'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    I miei
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScope('all')}
-                    className={`px-4 py-2 text-sm font-semibold border-l border-border ${
-                      scope === 'all'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-card text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Tutti
-                  </button>
-                </div>
-              )}
-
-              <div className="w-full sm:w-64">
-                <Select
-                  label="Stato gara"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+            {(hasPersonal && hasAll) && (
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setScope('personal')}
+                  className={`px-4 py-2 text-sm font-semibold ${
+                    scope === 'personal'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-card text-muted-foreground hover:text-foreground'
+                  }`}
                 >
-                  <option value="all">Tutte</option>
-                  <option value="future">Future</option>
-                  <option value="in_progress">In corso</option>
-                  <option value="closed">Chiuse</option>
-                  <option value="completed">Completate</option>
-                </Select>
+                  I miei
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScope('all')}
+                  className={`px-4 py-2 text-sm font-semibold border-l border-border ${
+                    scope === 'all'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-card text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Tutti
+                </button>
               </div>
+            )}
+
+            <div className="w-full sm:w-64">
+              <Select
+                label="Stato gara"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              >
+                <option value="all">Tutte</option>
+                <option value="future">Future</option>
+                <option value="in_progress">In corso</option>
+                <option value="closed">Chiuse</option>
+                <option value="completed">Completate</option>
+              </Select>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {isLoading ? (
-        <Card>
-          <div className="p-6">
-            <div className="space-y-3">
-              <div className="h-4 w-48 bg-muted rounded" />
-              <div className="h-24 bg-muted rounded" />
-              <div className="h-24 bg-muted rounded" />
-            </div>
+        <div className="p-6">
+          <div className="space-y-3">
+            <div className="h-4 w-48 bg-muted rounded" />
+            <div className="h-24 bg-muted rounded" />
+            <div className="h-24 bg-muted rounded" />
           </div>
-        </Card>
+        </div>
       ) : groupedByEvent.length === 0 ? (
-        <Card>
-          <div className="p-10 text-center">
-            <div className="text-sm font-medium text-foreground">Nessun pronostico</div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              Nessun risultato per i filtri selezionati.
-            </div>
-          </div>
-        </Card>
+        <div className="p-10 text-center">
+          <div className="text-sm font-medium text-foreground">Nessun pronostico</div>
+          <div className="mt-1 text-sm text-muted-foreground">Nessun risultato per i filtri selezionati.</div>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div className="divide-y divide-border">
           {groupedByEvent.map(({ event, predictions }) => {
             const circuit = deriveCircuitFromName(event.name)
             return (
-              <Card key={event.id}>
-                <div className="p-4 sm:p-6 space-y-4">
+              <div key={event.id} className="px-4 sm:px-6 py-5 sm:py-6">
+                <div className="space-y-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -362,19 +352,17 @@ export default function PredictionsViewer({
                         <span>{formatDateTime(event.date)}</span>
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'}
-                    </div>
+                    <div className="text-sm text-muted-foreground">{event.type === 'RACE' ? 'Gran Premio' : 'Sprint'}</div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="divide-y divide-border">
                     {predictions.map((prediction) => {
                       const isPersonalMode = scope === 'personal'
                       const showEdit = isPersonalMode && canModify(prediction.event) && !!onEdit
                       const showDelete = isPersonalMode && canModify(prediction.event) && !!onDelete
 
                       return (
-                        <div key={prediction.id} className="space-y-3">
+                        <div key={prediction.id} className="py-4">
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               {scope === 'all' ? (
@@ -420,17 +408,19 @@ export default function PredictionsViewer({
                             )}
                           </div>
 
-                          <PredictionTable prediction={prediction} driversById={driversById} />
+                          <div className="mt-3">
+                            <PredictionTable prediction={prediction} driversById={driversById} />
+                          </div>
                         </div>
                       )
                     })}
                   </div>
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>
       )}
-    </div>
+    </Card>
   )
 }
