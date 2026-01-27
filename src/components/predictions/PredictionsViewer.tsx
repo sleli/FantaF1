@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Driver, EventStatus, EventType, ScoringType } from '@prisma/client'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -231,6 +231,13 @@ export default function PredictionsViewer({
   const initialScope: ViewerScope = defaultScope === 'all' && hasAll ? 'all' : 'personal'
   const [scope, setScope] = useState<ViewerScope>(initialScope)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+
+  // Sincronizza scope quando cambiano i dati (fix: allPredictions è vuoto al mount iniziale)
+  useEffect(() => {
+    if (defaultScope === 'all' && allPredictions.length > 0) {
+      setScope('all')
+    }
+  }, [defaultScope, allPredictions.length])
 
   const driversById = useMemo(() => {
     const map = new Map<string, Driver>()
