@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Driver, Event } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PredictionForm from '@/components/predictions/PredictionForm'
 import PredictionsViewer from '@/components/predictions/PredictionsViewer'
 import PublicLayout from '@/components/layout/PublicLayout'
 
-export default function PredictionsPage() {
+function PredictionsContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const eventIdParam = searchParams.get('event')
   
   const [events, setEvents] = useState<Event[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
@@ -70,6 +72,30 @@ export default function PredictionsPage() {
       setIsLoading(false)
     }
   }
+
+  // Gestione query param per selezione automatica evento
+  useEffect(() => {
+    if (eventIdParam && events.length > 0 && !isLoading) {
+      const targetEvent = events.find(e => e.id === eventIdParam)
+      
+      if (targetEvent) {
+        const existingPrediction = predictions.find(p => p.eventId === targetEvent.id)
+        
+        if (existingPrediction) {
+          setEditingPrediction(existingPrediction)
+          // Rimuovi il parametro dalla URL per evitare ri-aperture indesiderate
+          // router.replace('/predictions', { scroll: false })
+        } else {
+          // Verifica se l'evento è ancora aperto
+          const isOpen = targetEvent.status === 'UPCOMING' && new Date() < new Date(targetEvent.closingDate)
+          if (isOpen) {
+            setSelectedEvent(targetEvent)
+            setActiveTab('new')
+          }
+        }
+      }
+    }
+  }, [eventIdParam, events, predictions, isLoading])
 
   const handleCreatePrediction = async (predictionData: {
     firstPlaceId: string
@@ -327,5 +353,17 @@ export default function PredictionsPage() {
         </div>
       </div>
     </PublicLayout>
+  )
+}
+
+export default function PredictionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-f1-red"></div>
+      </div>
+    }>
+      <PredictionsContent />
+    </Suspense>
   )
 }
