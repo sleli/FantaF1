@@ -8,7 +8,6 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import UpcomingEvents from '@/components/events/UpcomingEvents';
 import EventForm from '@/components/admin/EventForm';
 import { usePullToRefresh } from '@/hooks/useSwipe';
-import Card from '@/components/ui/Card';
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -47,13 +46,6 @@ export default function Home() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-f1-red via-red-600 to-red-800 flex items-center justify-center p-4">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}></div>
-        </div>
-
         <div className="relative bg-white/95 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-2xl max-w-lg w-full border border-white/20 text-center">
           {/* Logo */}
           <div className="mb-6">
@@ -93,9 +85,9 @@ export default function Home() {
   return (
     <PublicLayout>
       
-      <main ref={pullToRefreshRef} className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 transition-transform duration-300">
-        <Card className="mb-8">
-          <div className="p-6">
+      <main ref={pullToRefreshRef} className="page-container transition-transform duration-300">
+        <div className="page-desktop-card">
+        <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-4">Dashboard FantaF1</h2>
           <p className="text-muted-foreground mb-6">
             Benvenuto nella tua dashboard! Qui potrai gestire i tuoi pronostici per le gare di Formula 1.
@@ -122,8 +114,7 @@ export default function Home() {
               <p className="text-muted-foreground">Controlla i prossimi eventi in programma</p>
             </div>
           </div>
-          </div>
-        </Card>
+        </div>
 
         {/* Upcoming Events Section */}
         <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
@@ -139,6 +130,7 @@ export default function Home() {
             }}
           />
         )}
+        </div>
       </main>
     </PublicLayout>
   );

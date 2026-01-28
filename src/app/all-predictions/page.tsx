@@ -124,7 +124,8 @@ export default function AllPredictionsPage() {
 
   return (
     <PublicLayout>
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="page-container">
+        <div className="page-desktop-card">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-4">
             Pronostici di Tutti i Giocatori
@@ -164,6 +165,7 @@ export default function AllPredictionsPage() {
           isLoading={isLoading}
           defaultScope="all"
         />
+        </div>
       </div>
     </PublicLayout>
   )

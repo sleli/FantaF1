@@ -131,7 +131,8 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
   const isCurrentUser = (userId: string) => userId === currentUserId
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="page-container">
+      <div className="page-desktop-card">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
@@ -144,7 +145,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
       </div>
 
       {/* Tabs */}
-      <div className="bg-card text-card-foreground rounded-lg shadow-sm border border-border mb-8">
+      <div className="bg-card text-card-foreground rounded-lg shadow-sm border border-border mb-8 md:bg-transparent md:border-0 md:shadow-none">
         <div className="border-b border-border">
           <nav className="flex px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             <button
@@ -349,6 +350,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   )
