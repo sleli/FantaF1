@@ -1,9 +1,9 @@
 'use client';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import AuthStatus from '@/components/auth/AuthStatus';
 import PublicLayout from '@/components/layout/PublicLayout';
 import UpcomingEvents from '@/components/events/UpcomingEvents';
 import EventForm from '@/components/admin/EventForm';
@@ -11,7 +11,7 @@ import { usePullToRefresh } from '@/hooks/useSwipe';
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const isAuthenticated = status === 'authenticated';
+  const router = useRouter();
   const isAdmin = session?.user?.role === 'ADMIN';
 
   // State for event editing (admin only)
@@ -29,6 +29,24 @@ export default function Home() {
     enabled: true
   });
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-f1-red"></div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return null;
+  }
+
   // Event editing handlers (admin only)
   const handleEditEvent = (event: any) => {
     if (isAdmin) {
@@ -42,45 +60,6 @@ export default function Home() {
     setEditingEvent(null);
     setRefreshTrigger(prev => prev + 1); // Trigger refresh of UpcomingEvents
   };
-  
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-f1-red via-red-600 to-red-800 flex items-center justify-center p-4">
-        <div className="relative bg-white/95 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-2xl max-w-lg w-full border border-white/20 text-center">
-          {/* Logo */}
-          <div className="mb-6">
-            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-f1-red to-red-700 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl font-bold">F1</span>
-            </div>
-          </div>
-
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">FantaF1</h1>
-          <p className="text-gray-600 text-xl mb-2">Benvenuto nella piattaforma</p>
-          <p className="text-f1-red text-lg font-semibold mb-8">Fantasy Formula 1</p>
-
-          <div className="mb-8">
-            <AuthStatus />
-          </div>
-
-          {/* Features Preview */}
-          <div className="grid grid-cols-1 gap-4 text-left">
-            <div className="flex items-center gap-3 text-gray-600">
-              <div className="w-3 h-3 bg-f1-red rounded-full"></div>
-              <span>🏎️ Pronostici sui podi delle gare</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <div className="w-3 h-3 bg-f1-red rounded-full"></div>
-              <span>🏆 Classifica in tempo reale</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <div className="w-3 h-3 bg-f1-red rounded-full"></div>
-              <span>👥 Sfide con i tuoi amici</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <PublicLayout>

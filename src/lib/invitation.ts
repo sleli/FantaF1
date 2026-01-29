@@ -13,12 +13,14 @@ interface CreateInvitedUserParams {
   email: string
   name: string
   seasonId: string
+  baseUrl?: string
 }
 
 export async function createInvitedUser({
   email,
   name,
-  seasonId
+  seasonId,
+  baseUrl
 }: CreateInvitedUserParams) {
   const normalizedEmail = email.toLowerCase().trim()
 
@@ -57,7 +59,8 @@ export async function createInvitedUser({
   await sendInvitationEmail({
     to: normalizedEmail,
     name,
-    token
+    token,
+    baseUrl
   })
 
   return user
@@ -160,7 +163,7 @@ export async function markInvitationAccepted(userId: string) {
   })
 }
 
-export async function resendInvitation(userId: string) {
+export async function resendInvitation(userId: string, baseUrl?: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -197,7 +200,8 @@ export async function resendInvitation(userId: string) {
   await sendInvitationEmail({
     to: user.email,
     name: user.name || '',
-    token
+    token,
+    baseUrl
   })
 
   return { success: true }

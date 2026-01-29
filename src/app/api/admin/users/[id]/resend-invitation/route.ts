@@ -8,7 +8,7 @@ async function postHandler(
 ) {
   try {
     const { id } = await params
-    await resendInvitation(id)
+    await resendInvitation(id, req.nextUrl.origin)
     return apiResponse({ message: 'Invito reinviato con successo' })
   } catch (error) {
     console.error('Error resending invitation:', error)

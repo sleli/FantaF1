@@ -20,6 +20,7 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req });
   const isAuth = !!token;
   const isAuthPage = req.nextUrl.pathname.startsWith('/login');
+  const isRootPage = req.nextUrl.pathname === '/';
   const isAdminPage = req.nextUrl.pathname.startsWith('/admin');
   const isApiRoute = req.nextUrl.pathname.startsWith('/api');
   const isProfilePage = req.nextUrl.pathname.startsWith('/profile');
@@ -37,7 +38,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Protect routes that require authentication
-  if ((isAdminPage || isProfilePage) && !isAuth) {
+  if ((isAdminPage || isProfilePage || isRootPage) && !isAuth) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 

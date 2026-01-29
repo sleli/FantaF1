@@ -19,15 +19,17 @@ interface SendInvitationEmailParams {
   to: string
   name: string
   token: string
+  baseUrl?: string
 }
 
 export async function sendInvitationEmail({
   to,
   name,
-  token
+  token,
+  baseUrl
 }: SendInvitationEmailParams): Promise<void> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  const invitationUrl = `${baseUrl}/invitation?token=${token}`
+  const url = baseUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  const invitationUrl = `${url}/invitation?token=${token}`
 
   const html = `
     <!DOCTYPE html>

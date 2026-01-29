@@ -30,7 +30,7 @@ export default function UpcomingEvents({
   onEditEvent,
   refreshTrigger,
 }: UpcomingEventsProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,14 +38,20 @@ export default function UpcomingEvents({
   const isAdmin = session?.user?.role === 'ADMIN';
 
   useEffect(() => {
-    fetchUpcomingEvents();
-  }, []);
+    if (status === 'authenticated') {
+      fetchUpcomingEvents();
+    } else if (status === 'unauthenticated') {
+      setIsLoading(false);
+      setError(null);
+      setUpcomingEvents([]);
+    }
+  }, [status]);
 
   useEffect(() => {
-    if (refreshTrigger !== undefined) {
+    if (refreshTrigger !== undefined && status === 'authenticated') {
       fetchUpcomingEvents();
     }
-  }, [refreshTrigger]);
+  }, [refreshTrigger, status]);
 
   const fetchUpcomingEvents = async () => {
     try {
@@ -54,12 +60,28 @@ export default function UpcomingEvents({
 
       const response = await fetch('/api/events?upcoming=true');
 
+      if (response.status === 204) {
+        setUpcomingEvents([]);
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error('Errore nel caricamento degli eventi');
+        let message = 'Errore nel caricamento degli eventi';
+        try {
+          const errorData = await response.json();
+          message = errorData?.error || message;
+        } catch {
+          if (response.status === 401) {
+            message = 'Accedi per vedere gli eventi';
+          }
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
-      const upcoming = data.events.filter((e: Event) => e.status === 'UPCOMING');
+      const upcoming = (data.events || []).filter(
+        (e: Event) => e.status === 'UPCOMING'
+      );
       setUpcomingEvents(upcoming);
     } catch (error) {
       console.error('Error fetching upcoming events:', error);
@@ -102,6 +124,28 @@ export default function UpcomingEvents({
           <SkeletonEventCard />
           <SkeletonEventCard />
         </div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+        <Card>
+          <div className="p-8 text-center">
+            <div className="text-4xl mb-4">🔒</div>
+            <p className="text-lg font-medium text-foreground mb-2">
+              Accedi per vedere i prossimi eventi
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Effettua il login per consultare il calendario e fare pronostici.
+            </p>
+            <Link href="/login">
+              <Button>Accedi</Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }

@@ -88,7 +88,8 @@ async function postHandler(req: NextRequest) {
     const user = await createInvitedUser({
       email,
       name,
-      seasonId: activeSeason.id
+      seasonId: activeSeason.id,
+      baseUrl: req.nextUrl.origin
     });
 
     return apiResponse({ user, message: 'Utente creato e invito inviato' }, 201);
