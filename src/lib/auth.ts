@@ -60,7 +60,13 @@ export const authOptions: NextAuthOptions = {
           select: { id: true, invitationStatus: true }
         });
 
-        if (existingUser && existingUser.invitationStatus === 'PENDING') {
+        // 1. BLOCCA l'accesso se l'utente non esiste nel database (Sistema Invite-Only)
+        if (!existingUser) {
+          return false; // O lanciare un errore personalizzato se NextAuth lo supporta bene nella UI
+        }
+
+        // 2. Se l'utente è PENDING, accetta l'invito
+        if (existingUser.invitationStatus === 'PENDING') {
           await prisma.user.update({
             where: { id: existingUser.id },
             data: {
