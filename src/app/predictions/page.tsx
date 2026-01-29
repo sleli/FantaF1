@@ -8,13 +8,14 @@ import { PredictionWithDetails } from '@/lib/types'
 import PredictionForm from '@/components/predictions/PredictionForm'
 import PredictionsViewer from '@/components/predictions/PredictionsViewer'
 import PublicLayout from '@/components/layout/PublicLayout'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 function PredictionsContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
   const eventIdParam = searchParams.get('event')
-  
+
   const [events, setEvents] = useState<Event[]>([])
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [predictions, setPredictions] = useState<PredictionWithDetails[]>([])
@@ -22,6 +23,10 @@ function PredictionsContent() {
   const [editingPrediction, setEditingPrediction] = useState<PredictionWithDetails | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'new' | 'existing'>('existing')
+  const [seasonStatus, setSeasonStatus] = useState<{
+    hasActiveSeason: boolean
+    isEnabled: boolean
+  } | null>(null)
 
   // Redirect se non autenticato
   useEffect(() => {
@@ -40,13 +45,19 @@ function PredictionsContent() {
   const loadInitialData = async () => {
     try {
       setIsLoading(true)
-      
-      // Carica eventi, piloti e pronostici esistenti in parallelo
-      const [eventsRes, driversRes, predictionsRes] = await Promise.all([
+
+      // Carica stato stagione, eventi, piloti e pronostici in parallelo
+      const [seasonStatusRes, eventsRes, driversRes, predictionsRes] = await Promise.all([
+        fetch('/api/user/season-status'),
         fetch('/api/events'),
         fetch('/api/drivers'),
         fetch('/api/predictions')
       ])
+
+      if (seasonStatusRes.ok) {
+        const statusData = await seasonStatusRes.json()
+        setSeasonStatus(statusData)
+      }
 
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json()
@@ -213,6 +224,34 @@ function PredictionsContent() {
 
   if (status === 'unauthenticated') {
     return null
+  }
+
+  // Mostra messaggio se utente non abilitato per la stagione
+  if (seasonStatus && !seasonStatus.isEnabled) {
+    return (
+      <PublicLayout>
+        <div className="page-container">
+          <div className="page-desktop-card">
+            <div className="text-center py-12">
+              <ExclamationTriangleIcon className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                Accesso limitato
+              </h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                Non sei abilitato a partecipare alla stagione corrente.
+                Contatta un amministratore per richiedere l'abilitazione.
+              </p>
+              <a
+                href="/all-predictions"
+                className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                Visualizza tutti i pronostici
+              </a>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    )
   }
 
   return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { UserRole } from '@prisma/client';
+import { isUserEnabledForSeason } from '@/lib/user-season';
 
 /**
  * Utility to check if user is authenticated for API routes
@@ -18,17 +19,22 @@ export async function isAdmin(req: NextRequest) {
   return token?.role === 'ADMIN';
 }
 
+interface WithAuthAPIOptions {
+  requiredRole?: UserRole;
+  requireSeasonEnabled?: boolean;
+}
+
 /**
  * Middleware wrapper for API routes that require authentication
  */
 export function withAuthAPI(
   handler: (req: NextRequest, ...args: any[]) => Promise<NextResponse> | NextResponse,
-  options?: { requiredRole?: UserRole }
+  options?: WithAuthAPIOptions
 ) {
   return async function (req: NextRequest, ...args: any[]) {
     const token = await getToken({ req });
     const isAuth = !!token;
-    
+
     if (!isAuth) {
       return new NextResponse(
         JSON.stringify({ error: 'Non autenticato' }),
@@ -41,6 +47,16 @@ export function withAuthAPI(
         JSON.stringify({ error: 'Accesso negato' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (options?.requireSeasonEnabled && token?.id) {
+      const isEnabled = await isUserEnabledForSeason(token.id as string);
+      if (!isEnabled) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Non sei abilitato per questa stagione' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     return handler(req, ...args);

@@ -8,18 +8,22 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole     @default(PLAYER)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  accounts      Account[]
-  predictions   Prediction[]
-  sessions      Session[]
+  id               String           @id @default(cuid())
+  name             String?
+  email            String?          @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  role             UserRole         @default(PLAYER)
+  invitationToken  String?          @unique
+  invitedAt        DateTime?
+  invitationStatus InvitationStatus @default(NONE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  accounts         Account[]
+  predictions      Prediction[]
+  sessions         Session[]
+  userSeasons      UserSeason[]
 
   @@map("users")
 }
@@ -134,20 +138,37 @@ model Prediction {
 }
 
 model Season {
-  id          String      @id @default(cuid())
-  name        String      @unique
-  year        Int?        // Anno per le chiamate API F1 (es. 2026)
+  id          String       @id @default(cuid())
+  name        String       @unique
+  year        Int?         // Anno per le chiamate API F1 (es. 2026)
   startDate   DateTime
   endDate     DateTime
-  isActive    Boolean     @default(false)
-  driverCount Int         @default(20)
-  scoringType ScoringType @default(LEGACY_TOP3)
+  isActive    Boolean      @default(false)
+  driverCount Int          @default(20)
+  scoringType ScoringType  @default(LEGACY_TOP3)
   events      Event[]
   drivers     Driver[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  userSeasons UserSeason[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@map("seasons")
+}
+
+model UserSeason {
+  id        String   @id @default(cuid())
+  userId    String
+  seasonId  String
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
+  @@index([seasonId, isEnabled])
+  @@map("user_seasons")
 }
 
 enum UserRole {
@@ -169,4 +190,10 @@ enum EventStatus {
   UPCOMING
   CLOSED
   COMPLETED
+}
+
+enum InvitationStatus {
+  NONE      // Registrato normalmente (Google OAuth)
+  PENDING   // Invito inviato, in attesa
+  ACCEPTED  // Registrazione completata via invito
 }

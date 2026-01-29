@@ -6,6 +6,7 @@ import { CreatePredictionData } from '@/lib/types'
 import { ScoringType } from '@prisma/client'
 import { getActiveSeason, getRequiredActiveSeason } from '@/lib/season'
 import { validatePrediction } from '@/lib/scoring'
+import { isUserEnabledForSeason } from '@/lib/user-season'
 
 // GET /api/predictions - Ottieni pronostici dell'utente corrente per la stagione attiva
 export async function GET(request: NextRequest) {
@@ -83,9 +84,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autenticato' }, { status: 401 })
+    }
+
+    // Verifica abilitazione stagione
+    const isEnabled = await isUserEnabledForSeason(session.user.id)
+    if (!isEnabled) {
+      return NextResponse.json(
+        { error: 'Non sei abilitato per questa stagione' },
+        { status: 403 }
+      )
     }
 
     const body: CreatePredictionData = await request.json()

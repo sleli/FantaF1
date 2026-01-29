@@ -12,6 +12,7 @@ export const authOptions: NextAuthOptions = {
     Google({
       clientId: process.env.GOOGLE_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -51,6 +52,26 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // Quando un utente invitato accede con Google OAuth, aggiorna invitationStatus
+      if (account?.provider === 'google' && user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, invitationStatus: true }
+        });
+
+        if (existingUser && existingUser.invitationStatus === 'PENDING') {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              invitationToken: null,
+              invitationStatus: 'ACCEPTED'
+            }
+          });
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       // Add role to JWT token when user signs in
       if (user) {

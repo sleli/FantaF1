@@ -3,19 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { UserGroupIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, ArrowPathIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import UserList from '@/components/admin/UserList';
 import UserForm from '@/components/admin/UserForm';
+import UserCreateForm from '@/components/admin/UserCreateForm';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
 type UserRole = 'PLAYER' | 'ADMIN';
+type InvitationStatus = 'NONE' | 'PENDING' | 'ACCEPTED';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  invitationStatus?: InvitationStatus;
+  invitedAt?: string;
+  isEnabledForSeason?: boolean;
   createdAt: string;
   _count: {
     predictions: number;
@@ -25,9 +30,11 @@ interface User {
 export default function UsersAdminPage() {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<User[]>([]);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Redirect se non admin
@@ -61,8 +68,9 @@ export default function UsersAdminPage() {
       
       const data = await response.json();
       console.log('Users fetched successfully:', { count: data.users?.length });
-      
+
       setUsers(data.users || []);
+      setActiveSeasonId(data.activeSeasonId);
       
     } catch (err) {
       console.error('Fetch users error:', err);
@@ -185,20 +193,29 @@ export default function UsersAdminPage() {
               </div>
             </div>
             
-            <Button
-              onClick={handleRefresh}
-              variant="secondary"
-              isLoading={refreshing}
-              leftIcon={<ArrowPathIcon className="h-4 w-4" />}
-            >
-              Aggiorna
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setIsCreateFormOpen(true)}
+                leftIcon={<UserPlusIcon className="h-4 w-4" />}
+              >
+                Nuovo Utente
+              </Button>
+              <Button
+                onClick={handleRefresh}
+                variant="secondary"
+                isLoading={refreshing}
+                leftIcon={<ArrowPathIcon className="h-4 w-4" />}
+              >
+                Aggiorna
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <UserList
           users={users}
+          activeSeasonId={activeSeasonId}
           onEdit={handleEditUser}
           onDelete={handleDeleteUser}
           onRefresh={handleRefresh}
@@ -212,6 +229,16 @@ export default function UsersAdminPage() {
             onCancel={handleCancelEdit}
           />
         )}
+
+        {/* Form di creazione */}
+        <UserCreateForm
+          isOpen={isCreateFormOpen}
+          onClose={() => setIsCreateFormOpen(false)}
+          onSuccess={() => {
+            fetchUsers();
+            alert('Utente creato e invito inviato con successo!');
+          }}
+        />
       </div>
     </div>
   );
