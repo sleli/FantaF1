@@ -10,7 +10,7 @@ export const getActiveSeason = unstable_cache(
   },
   ['active-season'],
   {
-    revalidate: 3600, // 1 hour default
+    revalidate: process.env.NODE_ENV === 'development' ? 1 : 3600, // 1 second in dev, 1 hour in prod
     tags: ['active-season'],
   }
 );

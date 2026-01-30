@@ -29,7 +29,6 @@ export default function SeasonsPage() {
     startDate: '',
     endDate: '',
     scoringType: 'LEGACY_TOP3' as ScoringType,
-    driverCount: 20,
     isActive: false,
     copyDriversFromSeasonId: '',
     // F1 Import fields
@@ -98,7 +97,6 @@ export default function SeasonsPage() {
         startDate: '',
         endDate: '',
         scoringType: 'LEGACY_TOP3',
-        driverCount: 20,
         isActive: false,
         copyDriversFromSeasonId: '',
         year: new Date().getFullYear(),
@@ -149,7 +147,6 @@ export default function SeasonsPage() {
         startDate: new Date(season.startDate).toISOString().split('T')[0],
         endDate: new Date(season.endDate).toISOString().split('T')[0],
         scoringType: season.scoringType,
-        driverCount: season.driverCount,
         isActive: season.isActive,
         copyDriversFromSeasonId: '',
         year: season.year ?? new Date().getFullYear(),
@@ -275,15 +272,6 @@ export default function SeasonsPage() {
                         value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
                         placeholder="es. 2025"
-                    />
-                    <Input 
-                        label="Numero Piloti"
-                        type="number" 
-                        required
-                        min={1}
-                        max={30}
-                        value={formData.driverCount}
-                        onChange={e => setFormData({...formData, driverCount: parseInt(e.target.value)})}
                     />
                     <Input 
                         label="Data Inizio"
@@ -536,9 +524,6 @@ export default function SeasonsPage() {
                       <div className="flex flex-col gap-1">
                         <span className="font-medium text-foreground">
                             {season.scoringType === 'FULL_GRID_DIFF' ? 'Differenza Griglia' : 'Legacy Top 3'}
-                        </span>
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground w-fit">
-                            {season.driverCount} piloti
                         </span>
                       </div>
                     </td>

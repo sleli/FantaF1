@@ -178,10 +178,17 @@ export function calculatePoints(
  */
 export function validatePrediction(
   prediction: PredictionResult, 
-  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3,
+  expectedCount?: number
 ): boolean {
   if (scoringType === ScoringType.FULL_GRID_DIFF) {
     if (!prediction.rankings || !Array.isArray(prediction.rankings)) return false;
+    
+    // Validate count if provided
+    if (expectedCount !== undefined && prediction.rankings.length !== expectedCount) {
+        return false;
+    }
+
     // Check for duplicates
     const unique = new Set(prediction.rankings);
     return unique.size === prediction.rankings.length;

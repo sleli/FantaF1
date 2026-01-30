@@ -40,7 +40,6 @@ async function patchHandler(req: NextRequest, { params }: { params: Promise<{ id
     if (name) updateData.name = name;
     if (startDate) updateData.startDate = new Date(startDate);
     if (endDate) updateData.endDate = new Date(endDate);
-    if (driverCount) updateData.driverCount = parseInt(driverCount);
     if (scoringType) updateData.scoringType = scoringType as ScoringType;
 
     // Handle drivers update

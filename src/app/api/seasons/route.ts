@@ -32,7 +32,6 @@ async function postHandler(req: NextRequest) {
       name,
       startDate,
       endDate,
-      driverCount,
       scoringType,
       copyDriversFromSeasonId,
       // New F1 import fields
@@ -97,7 +96,6 @@ async function postHandler(req: NextRequest) {
           year: parsedYear,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
-          driverCount: driverCount ? parseInt(driverCount) : 20,
           scoringType: scoringType as ScoringType || 'LEGACY_TOP3',
           isActive: false
         }

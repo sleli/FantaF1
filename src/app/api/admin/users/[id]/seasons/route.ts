@@ -43,6 +43,7 @@ async function postHandler(
       return apiResponse({ error: 'Utente non trovato' }, 404)
     }
     if (!season) {
+      console.error(`Season not found. Received seasonId: ${seasonId}`)
       return apiResponse({ error: 'Stagione non trovata' }, 404)
     }
 

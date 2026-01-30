@@ -151,7 +151,6 @@ export default function PredictionForm({
   isModifying = false,
 }: PredictionFormProps) {
   const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
-  const driverCount = event.season?.driverCount || 20;
 
   // View Mode State determined by Season Settings
   const viewMode = scoringType === ScoringType.FULL_GRID_DIFF ? 'GRID' : 'TOP3';

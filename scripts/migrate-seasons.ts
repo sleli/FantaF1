@@ -14,7 +14,6 @@ async function main() {
           name: '2023-2024',
           startDate: new Date('2023-01-01'),
           endDate: new Date('2023-12-31'),
-          driverCount: 20,
           scoringType: ScoringType.LEGACY_TOP3,
           isActive: false
         }
@@ -39,7 +38,6 @@ async function main() {
           name: '2024-2025',
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-12-31'),
-          driverCount: 20,
           scoringType: ScoringType.FULL_GRID_DIFF,
           isActive: true
         }

@@ -144,7 +144,6 @@ model Season {
   startDate   DateTime
   endDate     DateTime
   isActive    Boolean      @default(false)
-  driverCount Int          @default(20)
   scoringType ScoringType  @default(LEGACY_TOP3)
   events      Event[]
   drivers     Driver[]

@@ -55,8 +55,7 @@ export async function GET(request: NextRequest) {
           include: {
             season: {
               select: {
-                scoringType: true,
-                driverCount: true
+                scoringType: true
               }
             }
           }
@@ -138,7 +137,14 @@ export async function POST(request: NextRequest) {
     }
 
     const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
-    const driverCount = event.season?.driverCount || 20;
+
+    // Fetch active drivers count for validation
+    const activeDriversCount = await prisma.driver.count({
+        where: {
+            seasonId: activeSeason.id,
+            active: true
+        }
+    });
 
     let predictionData: any = {
         userId: session.user.id,

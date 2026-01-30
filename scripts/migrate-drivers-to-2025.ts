@@ -16,7 +16,6 @@ async function main() {
         name: '2025',
         startDate: new Date('2025-01-01'),
         endDate: new Date('2025-12-31'),
-        driverCount: 20,
         scoringType: ScoringType.FULL_GRID_DIFF, // Defaulting to the new system as it seems to be the target
         isActive: true
       }

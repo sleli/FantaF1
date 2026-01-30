@@ -25,7 +25,6 @@ async function main() {
       name: '2026',
       startDate: new Date('2026-01-01'),
       endDate: new Date('2026-12-31'),
-      driverCount: season2025.driverCount,
       scoringType: season2025.scoringType,
       isActive: true
     }

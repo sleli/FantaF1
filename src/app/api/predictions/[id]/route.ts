@@ -111,9 +111,16 @@ export async function PUT(
         }
         
         // Relaxed validation: Allow partial rankings
-        // if (rankings.length !== (existingPrediction.event.season?.driverCount || 20)) {
-        //      return NextResponse.json({ error: `Must predict exactly ${existingPrediction.event.season?.driverCount} drivers` }, { status: 400 })
-        // }
+        const activeDriversCount = await prisma.driver.count({
+            where: {
+                seasonId: existingPrediction.event.seasonId!,
+                active: true
+            }
+        });
+
+        if (rankings.length !== activeDriversCount) {
+             return NextResponse.json({ error: `Must predict exactly ${activeDriversCount} drivers` }, { status: 400 })
+        }
 
         const unique = new Set(rankings);
         if (unique.size !== rankings.length) {
