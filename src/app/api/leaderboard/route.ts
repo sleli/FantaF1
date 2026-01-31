@@ -3,9 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateLeaderboard, sortPredictions } from '@/lib/scoring'
-import { ScoringType } from '@prisma/client'
 import { getActiveSeason } from '@/lib/season'
-import { getEnabledUsersForSeason } from '@/lib/user-season'
 
 // GET /api/leaderboard - Ottieni classifica generale
 export async function GET(request: NextRequest) {
@@ -30,10 +28,6 @@ export async function GET(request: NextRequest) {
 
     const scoringType = activeSeason.scoringType;
 
-    // Ottieni utenti abilitati per la stagione
-    const enabledUsers = await getEnabledUsersForSeason(activeSeason.id)
-    const enabledUserIds = new Set(enabledUsers.map((u) => u.id))
-
     if (eventId) {
       // Classifica per evento specifico
       const event = await prisma.event.findUnique({
@@ -57,13 +51,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Evento non trovato' }, { status: 404 })
       }
 
-      // Filtra solo utenti abilitati
-      const enabledPredictions = event.predictions.filter((p) =>
-        enabledUserIds.has(p.user.id)
-      )
-
       // Sort predictions based on scoring type
-      const sortedPredictions = sortPredictions(enabledPredictions, scoringType);
+      // Nota: Ora includiamo TUTTI i pronostici per questo evento, non solo quelli degli utenti abilitati.
+      const sortedPredictions = sortPredictions(event.predictions, scoringType);
 
       const eventLeaderboard = sortedPredictions.map(prediction => ({
         user: prediction.user,
@@ -95,7 +85,7 @@ export async function GET(request: NextRequest) {
       const whereClause: any = {
           points: { not: null },
           event: { seasonId: activeSeason.id },
-          userId: { in: Array.from(enabledUserIds) } // Solo utenti abilitati
+          // Rimosso filtro userId: { in: ... } per includere chiunque abbia punti
       };
 
       const predictions = await prisma.prediction.findMany({
