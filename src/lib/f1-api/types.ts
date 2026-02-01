@@ -13,6 +13,8 @@ export interface OpenF1Meeting {
   date_start: string;
   gmt_offset: string;
   year: number;
+  country_flag: string;
+  circuit_image: string;
 }
 
 export interface OpenF1Session {
@@ -74,6 +76,8 @@ export interface ImportableEvent {
   meetingKey: number;
   circuitName: string;
   countryName: string;
+  countryFlag: string;
+  circuitImage: string;
 }
 
 export interface ImportableDriver {

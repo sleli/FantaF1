@@ -340,7 +340,12 @@ function PredictionsContent() {
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-semibold text-foreground">{event.name}</h4>
+                            <h4 className="font-semibold text-foreground flex items-center gap-2">
+                              {(event as any).countryFlag && (
+                                <img src={(event as any).countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm" />
+                              )}
+                              {event.name}
+                            </h4>
                             <p className="text-sm text-muted-foreground mt-1">
                               {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
                             </p>

@@ -66,7 +66,9 @@ export class F1ImportService {
           sessionKey: raceSession.session_key,
           meetingKey: meeting.meeting_key,
           circuitName: meeting.circuit_short_name,
-          countryName: meeting.country_name
+          countryName: meeting.country_name,
+          countryFlag: meeting.country_flag,
+          circuitImage: meeting.circuit_image
         });
       }
 
@@ -80,7 +82,9 @@ export class F1ImportService {
           sessionKey: sprintSession.session_key,
           meetingKey: meeting.meeting_key,
           circuitName: meeting.circuit_short_name,
-          countryName: meeting.country_name
+          countryName: meeting.country_name,
+          countryFlag: meeting.country_flag,
+          circuitImage: meeting.circuit_image
         });
       }
     }

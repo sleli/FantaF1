@@ -343,6 +343,9 @@ export default function PredictionsViewer({
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        {event.countryFlag && (
+                          <img src={event.countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm" />
+                        )}
                         <h3 className="text-lg font-semibold text-foreground truncate">{event.name}</h3>
                         <StatusBadge event={event} />
                       </div>

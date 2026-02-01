@@ -16,6 +16,9 @@ interface Event {
   date: string;
   closingDate: string;
   status: string;
+  countryFlag?: string | null;
+  circuitImage?: string | null;
+  circuitName?: string | null;
   _count: {
     predictions: number;
   };
@@ -184,9 +187,17 @@ export default function UpcomingEvents({
               <Card
                 key={event.id}
                 variant="interactive"
-                className="overflow-hidden"
+                className="overflow-hidden relative"
               >
-                <div className="p-4 md:p-6">
+                {/* Circuit image - desktop only */}
+                {event.circuitImage && (
+                  <img
+                    src={event.circuitImage}
+                    alt=""
+                    className="hidden md:block absolute right-4 top-4 w-28 h-28 object-contain opacity-10 pointer-events-none"
+                  />
+                )}
+                <div className="p-4 md:p-6 relative z-10">
                   {/* Header */}
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                     <div className="flex-1 min-w-0">
@@ -198,7 +209,10 @@ export default function UpcomingEvents({
                           <Badge variant="closing">Chiusura imminente</Badge>
                         )}
                       </div>
-                      <h3 className="text-lg font-bold text-foreground">
+                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                        {event.countryFlag && (
+                          <img src={event.countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm inline-block" />
+                        )}
                         {event.name}
                       </h3>
                     </div>

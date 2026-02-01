@@ -13,6 +13,9 @@ interface Event {
   date: string;
   closingDate: string;
   status: string;
+  countryFlag?: string | null;
+  circuitImage?: string | null;
+  circuitName?: string | null;
   _count?: {
     predictions: number;
   };
@@ -161,10 +164,18 @@ export default function NextEventCard({
         ${currentStyle.pulse ? 'animate-pulse-urgent' : ''}
       `}
     >
-      {/* Racing stripe accent */}
-      <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
-        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-primary to-transparent transform rotate-45 translate-x-12 -translate-y-6" />
-      </div>
+      {/* Circuit image - desktop decorative background */}
+      {event.circuitImage ? (
+        <img
+          src={event.circuitImage}
+          alt=""
+          className="hidden md:block absolute right-4 top-4 w-32 h-32 object-contain opacity-10 pointer-events-none"
+        />
+      ) : (
+        <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
+          <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-primary to-transparent transform rotate-45 translate-x-12 -translate-y-6" />
+        </div>
+      )}
 
       <div className="relative z-10">
         {/* Header */}
@@ -180,7 +191,10 @@ export default function NextEventCard({
                 </Badge>
               )}
             </div>
-            <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight">
+            <h2 className="text-xl md:text-2xl font-black text-foreground tracking-tight flex items-center gap-2">
+              {event.countryFlag && (
+                <img src={event.countryFlag} alt="" className="w-7 h-5 object-cover rounded-sm inline-block" />
+              )}
               {event.name}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">

@@ -120,9 +120,15 @@ export default function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-f1-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-f1-red to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
-            {isLoading ? 'Accesso in corso...' : 'Accedi con Email'}
+            <div className="flex items-center justify-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span>{isLoading ? 'Accesso in corso...' : 'Accedi con Email'}</span>
+            </div>
           </button>
         </form>
 

@@ -154,6 +154,8 @@ async function postHandler(req: NextRequest) {
             meetingKey: e.meetingKey,
             circuitName: e.circuitName,
             countryName: e.countryName,
+            countryFlag: e.countryFlag,
+            circuitImage: e.circuitImage,
             status: 'UPCOMING',
             seasonId: newSeason.id
           }))
