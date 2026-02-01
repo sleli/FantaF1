@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { PropsWithChildren, useEffect } from 'react';
@@ -14,13 +14,13 @@ export default function AdminLayout({ children }: PropsWithChildren) {
   const isLoading = status === 'loading';
   const isAdmin = session?.user?.role === 'ADMIN';
 
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const handleSidebarToggle = useCallback(() => {
+    setIsSidebarOpen(prev => !prev);
+  }, []);
 
-  const handleSidebarClose = () => {
+  const handleSidebarClose = useCallback(() => {
     setIsSidebarOpen(false);
-  };
+  }, []);
 
   useEffect(() => {
     // If not loading and either not authenticated or not admin
