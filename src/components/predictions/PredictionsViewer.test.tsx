@@ -64,7 +64,7 @@ describe('PredictionsViewer', () => {
 
     render(
       <PredictionsViewer
-        personalPredictions={[prediction]}
+        predictions={[prediction]}
         drivers={drivers}
       />
     )
@@ -74,7 +74,7 @@ describe('PredictionsViewer', () => {
     expect(screen.getAllByText('25')[0]).toBeInTheDocument()
   })
 
-  it('mostra il bottone Modifica solo per pronostici personali modificabili', () => {
+  it('mostra il bottone Modifica solo per pronostici modificabili', () => {
     const prediction = {
       id: 'p2',
       eventId: 'e2',
@@ -95,7 +95,7 @@ describe('PredictionsViewer', () => {
 
     render(
       <PredictionsViewer
-        personalPredictions={[prediction]}
+        predictions={[prediction]}
         drivers={drivers}
         onEdit={jest.fn()}
       />
@@ -104,8 +104,8 @@ describe('PredictionsViewer', () => {
     expect(screen.getByRole('button', { name: 'Modifica' })).toBeInTheDocument()
   })
 
-  it('mostra il toggle I miei/Tutti quando entrambe le liste sono disponibili', () => {
-    const personalPrediction = {
+  it('mostra il nome utente quando showUserName è true', () => {
+    const prediction = {
       id: 'p2',
       eventId: 'e2',
       userId: 'u1',
@@ -123,23 +123,14 @@ describe('PredictionsViewer', () => {
       user: { id: 'u1', name: 'Mario Rossi' },
     } as any
 
-    const allPrediction = {
-      ...personalPrediction,
-      id: 'p3',
-      user: { id: 'u2', name: 'Luigi Bianchi' },
-    } as any
-
     render(
       <PredictionsViewer
-        personalPredictions={[personalPrediction]}
-        allPredictions={[allPrediction]}
+        predictions={[prediction]}
         drivers={drivers}
-        defaultScope="all"
+        showUserName={true}
       />
     )
 
-    expect(screen.getByRole('button', { name: 'I miei' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Tutti' })).toBeInTheDocument()
+    expect(screen.getByText('Mario Rossi')).toBeInTheDocument()
   })
 })
-

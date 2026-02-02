@@ -126,7 +126,7 @@ export default function PredictionsDashboard() {
             }`}
           >
             <UserIcon className="w-4 h-4" />
-            La mia Schedina
+            I miei Pronostici
           </button>
 
           <button
@@ -138,7 +138,7 @@ export default function PredictionsDashboard() {
             }`}
           >
             <GlobeAltIcon className="w-4 h-4" />
-            Griglia Globale
+            Tutti i Pronostici
           </button>
         </div>
       </div>

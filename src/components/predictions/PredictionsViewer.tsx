@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Driver, EventStatus, EventType, ScoringType } from '@prisma/client'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
@@ -8,14 +8,11 @@ import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
 import { MAX_PENALTY } from '@/lib/scoring'
 
-type ViewerScope = 'personal' | 'all'
-
 export type PredictionsViewerProps = {
-  personalPredictions?: PredictionWithDetails[]
-  allPredictions?: PredictionWithDetails[]
+  predictions: PredictionWithDetails[]
   drivers: Driver[]
   isLoading?: boolean
-  defaultScope?: ViewerScope
+  showUserName?: boolean
   onEdit?: (prediction: PredictionWithDetails) => void
   onDelete?: (predictionId: string) => void
 }
@@ -217,37 +214,22 @@ function PredictionTable({
 }
 
 export default function PredictionsViewer({
-  personalPredictions = [],
-  allPredictions = [],
+  predictions,
   drivers,
   isLoading = false,
-  defaultScope = 'personal',
+  showUserName = false,
   onEdit,
   onDelete,
 }: PredictionsViewerProps) {
-  const hasPersonal = personalPredictions.length > 0
-  const hasAll = allPredictions.length > 0
-  const initialScope: ViewerScope = defaultScope === 'all' && hasAll ? 'all' : 'personal'
-  const [scope, setScope] = useState<ViewerScope>(initialScope)
-
-  // Sincronizza scope quando cambiano i dati (fix: allPredictions è vuoto al mount iniziale)
-  useEffect(() => {
-    if (defaultScope === 'all' && allPredictions.length > 0) {
-      setScope('all')
-    }
-  }, [defaultScope, allPredictions.length])
-
   const driversById = useMemo(() => {
     const map = new Map<string, Driver>()
     for (const d of drivers) map.set(d.id, d)
     return map
   }, [drivers])
 
-  const activePredictions = scope === 'all' ? allPredictions : personalPredictions
-
   const groupedByEvent = useMemo(() => {
     const groups = new Map<string, { event: any; predictions: PredictionWithDetails[] }>()
-    for (const p of activePredictions) {
+    for (const p of predictions) {
       const eventId = p.event.id
       const existing = groups.get(eventId)
       if (existing) {
@@ -257,45 +239,14 @@ export default function PredictionsViewer({
       }
     }
     return Array.from(groups.values()).sort((a, b) => new Date(b.event.date).getTime() - new Date(a.event.date).getTime())
-  }, [activePredictions])
+  }, [predictions])
 
   return (
     <Card padding="none" className="overflow-hidden">
       <div className="p-4 sm:p-6 border-b border-border">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Visualizza i dettagli per gara.</p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
-            {(hasPersonal && hasAll) && (
-              <div className="flex rounded-lg border border-border overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setScope('personal')}
-                  className={`px-4 py-2 text-sm font-semibold ${
-                    scope === 'personal'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  I miei
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setScope('all')}
-                  className={`px-4 py-2 text-sm font-semibold border-l border-border ${
-                    scope === 'all'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  Tutti
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Visualizza i dettagli per gara.</p>
         </div>
       </div>
 
@@ -314,7 +265,7 @@ export default function PredictionsViewer({
         </div>
       ) : (
         <div className="divide-y divide-border">
-          {groupedByEvent.map(({ event, predictions }) => {
+          {groupedByEvent.map(({ event, predictions: eventPredictions }) => {
             const circuit = deriveCircuitFromName(event.name)
             return (
               <div key={event.id} className="px-4 sm:px-6 py-5 sm:py-6">
@@ -338,16 +289,15 @@ export default function PredictionsViewer({
                   </div>
 
                   <div className="divide-y divide-border">
-                    {predictions.map((prediction) => {
-                      const isPersonalMode = scope === 'personal'
-                      const showEdit = isPersonalMode && canModify(prediction.event) && !!onEdit
-                      const showDelete = isPersonalMode && canModify(prediction.event) && !!onDelete
+                    {eventPredictions.map((prediction) => {
+                      const showEdit = canModify(prediction.event) && !!onEdit
+                      const showDelete = canModify(prediction.event) && !!onDelete
 
                       return (
                         <div key={prediction.id} className="py-4">
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
-                              {scope === 'all' ? (
+                              {showUserName ? (
                                 <div className="text-sm text-muted-foreground">
                                   <span className="font-semibold text-foreground">{(prediction as any).user?.name || 'Utente'}</span>
                                   {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' && (

@@ -6,7 +6,8 @@ import { Driver, Event } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PredictionForm from '@/components/predictions/PredictionForm'
 import PredictionsViewer from '@/components/predictions/PredictionsViewer'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import Button from '@/components/ui/Button'
+import { ExclamationTriangleIcon, ArrowLeftIcon, PlusIcon } from '@heroicons/react/24/outline'
 
 interface MyPredictionsViewProps {
   events: Event[]
@@ -29,8 +30,8 @@ export default function MyPredictionsView({
   const [predictions, setPredictions] = useState<PredictionWithDetails[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [editingPrediction, setEditingPrediction] = useState<PredictionWithDetails | null>(null)
+  const [showEventPicker, setShowEventPicker] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'new' | 'existing'>('existing')
 
   const processedEventRef = useRef(false)
 
@@ -75,7 +76,6 @@ export default function MyPredictionsView({
           const isOpen = targetEvent.status === 'UPCOMING' && new Date() < new Date(targetEvent.closingDate)
           if (isOpen) {
             setSelectedEvent(targetEvent)
-            setActiveTab('new')
           }
         }
       }
@@ -107,7 +107,6 @@ export default function MyPredictionsView({
         const newPrediction = await response.json()
         setPredictions(prev => [newPrediction, ...prev])
         setSelectedEvent(null)
-        setActiveTab('existing')
       } else {
         const error = await response.json()
         alert(error.error || 'Errore nella creazione del pronostico')
@@ -144,7 +143,6 @@ export default function MyPredictionsView({
           prev.map(p => p.id === updatedPrediction.id ? updatedPrediction : p)
         )
         setEditingPrediction(null)
-        setActiveTab('existing')
       } else {
         const error = await response.json()
         alert(error.error || 'Errore nella modifica del pronostico')
@@ -181,6 +179,12 @@ export default function MyPredictionsView({
     }
   }
 
+  const handleBackToList = () => {
+    setSelectedEvent(null)
+    setEditingPrediction(null)
+    setShowEventPicker(false)
+  }
+
   // Filter available events for new predictions
   const availableEvents = events.filter(event => {
     const hasExistingPrediction = predictions.some(p => p.eventId === event.id)
@@ -204,118 +208,27 @@ export default function MyPredictionsView({
     )
   }
 
-  return (
-    <div>
-      <div className="mb-6">
-        <div className="inline-flex rounded-xl bg-muted/40 p-1 border border-border">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('existing')
-              setSelectedEvent(null)
-              setEditingPrediction(null)
-            }}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === 'existing'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Pronostici Esistenti ({predictions.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('new')
-              setEditingPrediction(null)
-            }}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
-              activeTab === 'new'
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Nuovo Pronostico {availableEvents.length > 0 && `(${availableEvents.length})`}
-          </button>
-        </div>
-      </div>
+  // Mode: Form (creating or editing)
+  if (selectedEvent || editingPrediction) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={handleBackToList}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Torna alla lista
+        </button>
 
-      <div className="space-y-6">
-        {activeTab === 'existing' && !editingPrediction && (
-          <PredictionsViewer
-            personalPredictions={predictions}
+        {selectedEvent && (
+          <PredictionForm
+            event={selectedEvent}
             drivers={drivers}
+            onSubmit={handleCreatePrediction}
             isLoading={isLoading}
-            onEdit={(prediction) => {
-              setEditingPrediction(prediction)
-              setActiveTab('new')
-            }}
-            onDelete={handleDeletePrediction}
+            lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
           />
-        )}
-
-        {activeTab === 'new' && !editingPrediction && (
-          <div>
-            {availableEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 mx-auto mb-4">
-                  <svg className="w-full h-full text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">Nessun evento disponibile</h3>
-                <p className="text-muted-foreground">
-                  Non ci sono eventi aperti per nuovi pronostici al momento.
-                </p>
-              </div>
-            ) : !selectedEvent ? (
-              <div>
-                <h3 className="text-lg font-medium text-foreground mb-4">Seleziona un evento per il tuo pronostico:</h3>
-                <div className="grid gap-4">
-                  {availableEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      onClick={() => setSelectedEvent(event)}
-                      className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-semibold text-foreground flex items-center gap-2">
-                            {(event as any).countryFlag && (
-                              <img src={(event as any).countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm" />
-                            )}
-                            {event.name}
-                          </h4>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
-                          </p>
-                          <p className="text-sm text-primary mt-1">
-                            Chiusura: {new Date(event.closingDate).toLocaleDateString('it-IT', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                        <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <PredictionForm
-                event={selectedEvent}
-                drivers={drivers}
-                onSubmit={handleCreatePrediction}
-                isLoading={isLoading}
-                lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
-              />
-            )}
-          </div>
         )}
 
         {editingPrediction && (
@@ -334,6 +247,130 @@ export default function MyPredictionsView({
           />
         )}
       </div>
+    )
+  }
+
+  // Mode: Event picker (multiple available events)
+  if (showEventPicker) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={handleBackToList}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Torna alla lista
+        </button>
+
+        <h3 className="text-lg font-medium text-foreground mb-4">Seleziona un evento per il tuo pronostico:</h3>
+        <div className="grid gap-4">
+          {availableEvents.map((event) => (
+            <div
+              key={event.id}
+              onClick={() => {
+                setSelectedEvent(event)
+                setShowEventPicker(false)
+              }}
+              className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 cursor-pointer transition-colors"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold text-foreground flex items-center gap-2">
+                    {(event as any).countryFlag && (
+                      <img src={(event as any).countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm" />
+                    )}
+                    {event.name}
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'} - {new Date(event.date).toLocaleDateString('it-IT')}
+                  </p>
+                  <p className="text-sm text-primary mt-1">
+                    Chiusura: {new Date(event.closingDate).toLocaleDateString('it-IT', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Mode: Default list view with CTA
+  return (
+    <div className="space-y-6">
+      {/* New prediction CTA */}
+      {availableEvents.length === 1 && (
+        <div className="p-4 rounded-xl border border-primary/30 bg-primary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                {(availableEvents[0] as any).countryFlag && (
+                  <img src={(availableEvents[0] as any).countryFlag} alt="" className="w-5 h-3.5 object-cover rounded-sm" />
+                )}
+                {availableEvents[0].name}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Chiusura: {new Date(availableEvents[0].closingDate).toLocaleDateString('it-IT', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<PlusIcon className="w-4 h-4" />}
+              onClick={() => setSelectedEvent(availableEvents[0])}
+            >
+              Inserisci Pronostico
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {availableEvents.length > 1 && (
+        <div className="p-4 rounded-xl border border-primary/30 bg-primary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {availableEvents.length} eventi disponibili
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Inserisci un nuovo pronostico
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<PlusIcon className="w-4 h-4" />}
+              onClick={() => setShowEventPicker(true)}
+            >
+              Scegli Evento
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Predictions list */}
+      <PredictionsViewer
+        predictions={predictions}
+        drivers={drivers}
+        isLoading={isLoading}
+        onEdit={(prediction) => setEditingPrediction(prediction)}
+        onDelete={handleDeletePrediction}
+      />
     </div>
   )
 }
