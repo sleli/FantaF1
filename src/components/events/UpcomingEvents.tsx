@@ -178,7 +178,7 @@ export default function UpcomingEvents({
       <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
 
       {upcomingEvents.length > 0 ? (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {upcomingEvents.map((event) => {
             const eventDate = new Date(event.date);
             const timeRemaining = getTimeRemaining(event.closingDate);

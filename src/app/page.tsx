@@ -71,28 +71,6 @@ export default function Home() {
           <p className="text-muted-foreground mb-6">
             Benvenuto nella tua dashboard! Qui potrai gestire i tuoi pronostici per le gare di Formula 1.
           </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/predictions" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
-              <h3 className="text-lg font-semibold text-foreground mb-2">📊 I Miei Pronostici</h3>
-              <p className="text-muted-foreground">Gestisci i tuoi pronostici per le gare di Formula 1</p>
-            </Link>
-
-            <Link href="/all-predictions" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
-              <h3 className="text-lg font-semibold text-foreground mb-2">👥 Tutti i Pronostici</h3>
-              <p className="text-muted-foreground">Vedi i pronostici di tutti i giocatori</p>
-            </Link>
-
-            <Link href="/leaderboard" className="rounded-xl border border-border bg-card p-6 shadow-lg hover:border-primary/50 hover:shadow-glow hover:-translate-y-0.5 transition-all cursor-pointer">
-              <h3 className="text-lg font-semibold text-foreground mb-2">🏆 Classifica</h3>
-              <p className="text-muted-foreground">Vedi la classifica generale e i tuoi punti</p>
-            </Link>
-
-            <div className="rounded-xl border border-border bg-card p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-foreground mb-2">🏁 Prossima Gara</h3>
-              <p className="text-muted-foreground">Controlla i prossimi eventi in programma</p>
-            </div>
-          </div>
         </div>
 
         {/* Upcoming Events Section */}
