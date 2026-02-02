@@ -114,9 +114,18 @@ export class F1ImportService {
       }
     }
 
+    // Assign numbers ≥ 100 to drivers without permanentNumber
+    let nextFallbackNumber = 100;
+
     return ergastDrivers
       .map(driver => {
-        const driverNumber = parseInt(driver.permanentNumber) || 0;
+        let driverNumber = parseInt(driver.permanentNumber);
+
+        // Assign fallback number ≥ 100 for drivers without permanent number
+        if (!driverNumber || isNaN(driverNumber) || driverNumber <= 0) {
+          driverNumber = nextFallbackNumber++;
+        }
+
         const code = (driver.code || '').toUpperCase();
         const openf1Data = code ? openf1ByAcronym.get(code) : undefined;
 
@@ -127,8 +136,7 @@ export class F1ImportService {
           driverCode: code || openf1Data?.name_acronym || '',
           imageUrl: openf1Data?.headshot_url || null
         };
-      })
-      .filter(d => d.number > 0);
+      });
   }
 
   /**
@@ -142,15 +150,25 @@ export class F1ImportService {
 
       // Fallback: Just get driver names from Ergast without headshots
       const ergastDrivers = await this.ergast.getDrivers(year);
+      let nextFallbackNumber = 100;
+
       return ergastDrivers
-        .map(d => ({
-          name: `${d.givenName} ${d.familyName}`,
-          team: 'Unknown',
-          number: parseInt(d.permanentNumber) || 0,
-          driverCode: d.code || '',
-          imageUrl: null
-        }))
-        .filter(d => d.number > 0);
+        .map(d => {
+          let driverNumber = parseInt(d.permanentNumber);
+
+          // Assign fallback number ≥ 100 for drivers without permanent number
+          if (!driverNumber || isNaN(driverNumber) || driverNumber <= 0) {
+            driverNumber = nextFallbackNumber++;
+          }
+
+          return {
+            name: `${d.givenName} ${d.familyName}`,
+            team: 'Unknown',
+            number: driverNumber,
+            driverCode: d.code || '',
+            imageUrl: null
+          };
+        });
     }
   }
 

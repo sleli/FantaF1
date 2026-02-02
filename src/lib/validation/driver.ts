@@ -46,8 +46,6 @@ export function validateDriver(
   // Number validation
   if (!driver.number || driver.number <= 0) {
     errors.number = 'Il numero del pilota è obbligatorio e deve essere maggiore di 0'
-  } else if (driver.number > 99) {
-    errors.number = 'Il numero del pilota non può essere maggiore di 99'
   } else {
     // Check if number is already used by another driver
     const existingDriverWithNumber = existingDrivers.find(
