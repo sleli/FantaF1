@@ -5,7 +5,6 @@ import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   UserIcon, 
-  Cog6ToothIcon, 
   ArrowRightOnRectangleIcon, 
   CommandLineIcon,
   ChevronDownIcon 
@@ -91,13 +90,7 @@ export default function UserMenu({ user }: UserMenuProps) {
               Il mio Profilo
             </Link>
 
-            <button
-              onClick={() => console.log('Settings clicked')} // Placeholder
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-left"
-            >
-              <Cog6ToothIcon className="w-4 h-4" />
-              Impostazioni
-            </button>
+
           </div>
 
           {/* Footer */}
