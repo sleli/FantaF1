@@ -141,7 +141,7 @@ function SortableItem({
 
       {/* Divider - solid after podium, dashed for others */}
       {isLastPodiumItem ? (
-        <div className="h-px bg-primary/30 mx-2" />
+        <div className="border-b border-dashed border-primary/50 mx-2" />
       ) : (
         <div className="border-b border-dashed border-border/40 mx-2" />
       )}
@@ -189,7 +189,7 @@ function StaticItem({
       </div>
 
       {isLastPodiumItem ? (
-        <div className="h-px bg-primary/30 mx-2" />
+        <div className="border-b border-dashed border-primary/50 mx-2" />
       ) : (
         <div className="border-b border-dashed border-border/40 mx-2" />
       )}
