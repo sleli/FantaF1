@@ -164,12 +164,12 @@ export default function NextEventCard({
         ${currentStyle.pulse ? 'animate-pulse-urgent' : ''}
       `}
     >
-      {/* Circuit image - desktop decorative background */}
+      {/* Circuit image - decorative background */}
       {event.circuitImage ? (
         <img
           src={event.circuitImage}
           alt=""
-          className="hidden md:block absolute right-4 top-4 w-32 h-32 object-contain opacity-10 pointer-events-none"
+          className="absolute right-2 top-2 w-24 h-24 md:right-4 md:top-4 md:w-32 md:h-32 object-contain opacity-10 pointer-events-none"
         />
       ) : (
         <div className="absolute top-0 right-0 w-24 h-24 opacity-10">

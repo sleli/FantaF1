@@ -189,12 +189,12 @@ export default function UpcomingEvents({
                 variant="interactive"
                 className="overflow-hidden relative"
               >
-                {/* Circuit image - desktop only */}
+                {/* Circuit image */}
                 {event.circuitImage && (
                   <img
                     src={event.circuitImage}
                     alt=""
-                    className="hidden md:block absolute right-4 top-4 w-28 h-28 object-contain opacity-10 pointer-events-none"
+                    className="absolute right-2 top-2 w-20 h-20 md:right-4 md:top-4 md:w-28 md:h-28 object-contain opacity-10 pointer-events-none"
                   />
                 )}
                 <div className="p-4 md:p-6 relative z-10">
