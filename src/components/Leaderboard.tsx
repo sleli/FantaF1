@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrophyIcon, UserIcon, CalendarIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import { TrophyIcon, UserIcon, CalendarIcon, ChartBarIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 
 type LeaderboardUser = {
   position: number
@@ -40,6 +40,46 @@ type Event = {
   }
 }
 
+type Season = {
+  id: string
+  name: string
+  year: number | null
+  startDate: string
+  endDate: string
+  isActive: boolean
+  scoringType: string
+  _count: { events: number }
+}
+
+function getScoringDescription(scoringType: string): { label: string; description: string } {
+  switch (scoringType) {
+    case 'FULL_GRID_DIFF':
+      return {
+        label: 'Differenza Griglia',
+        description: "Vince il punteggio minore. Pronostico dell'intera griglia di partenza. Il punteggio è la somma delle differenze tra posizione prevista e reale. Sprint vale metà punti."
+      }
+    case 'LEGACY_TOP3':
+    default:
+      return {
+        label: 'Top 3',
+        description: 'Vince il punteggio più alto. Pronostico dei primi 3 classificati con  punti per posizione esatta (25/15/10) e 5 per pilota giusto in posizione sbagliata. Sprint vale metà punti.'
+      }
+  }
+}
+
+function ScoringInfoBadge({ scoringType }: { scoringType: string }) {
+  const { label, description } = getScoringDescription(scoringType)
+  return (
+    <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+      <InformationCircleIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+      <div>
+        <span className="font-medium text-primary">{label}</span>
+        <p className="text-muted-foreground mt-0.5">{description}</p>
+      </div>
+    </div>
+  )
+}
+
 interface LeaderboardProps {
   currentUserId: string
 }
@@ -49,13 +89,17 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
   const [eventLeaderboard, setEventLeaderboard] = useState<EventLeaderboardEntry[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [completedEvents, setCompletedEvents] = useState<Event[]>([])
-  const [activeTab, setActiveTab] = useState<'general' | 'event'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'event' | 'previousSeasons'>('general')
   const [isLoading, setIsLoading] = useState(false)
   const [activeSeason, setActiveSeason] = useState<{ name: string; scoringType: string } | null>(null)
+  const [previousSeasons, setPreviousSeasons] = useState<Season[]>([])
+  const [selectedSeason, setSelectedSeason] = useState<Season | null>(null)
+  const [seasonLeaderboard, setSeasonLeaderboard] = useState<LeaderboardUser[]>([])
 
   useEffect(() => {
     loadGeneralLeaderboard()
     loadCompletedEvents()
+    loadPreviousSeasons()
   }, [])
 
   const loadGeneralLeaderboard = async () => {
@@ -97,6 +141,35 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
       }
     } catch (error) {
       console.error('Errore nel caricamento classifica evento:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadPreviousSeasons = async () => {
+    try {
+      const response = await fetch('/api/seasons')
+      if (response.ok) {
+        const data = await response.json()
+        const past = (data.seasons || []).filter((s: Season) => !s.isActive)
+        setPreviousSeasons(past)
+      }
+    } catch (error) {
+      console.error('Errore nel caricamento stagioni precedenti:', error)
+    }
+  }
+
+  const loadSeasonLeaderboard = async (season: Season) => {
+    try {
+      setIsLoading(true)
+      setSelectedSeason(season)
+      const response = await fetch(`/api/leaderboard?seasonId=${season.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSeasonLeaderboard(data.leaderboard || [])
+      }
+    } catch (error) {
+      console.error('Errore nel caricamento classifica stagione:', error)
     } finally {
       setIsLoading(false)
     }
@@ -172,6 +245,18 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
               <span className="hidden sm:inline">Classifica per Evento</span>
               <span className="sm:hidden">Per Evento</span>
             </button>
+            <button
+              onClick={() => setActiveTab('previousSeasons')}
+              className={`py-4 px-2 sm:px-1 ml-6 sm:ml-8 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap touch-button ${
+                activeTab === 'previousSeasons'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              <ClockIcon className="h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Stagioni Precedenti</span>
+              <span className="sm:hidden">Precedenti</span>
+            </button>
           </nav>
         </div>
 
@@ -179,6 +264,11 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
           {/* Classifica Generale */}
           {activeTab === 'general' && (
             <div>
+              {activeSeason && (
+                <div className="mb-4">
+                  <ScoringInfoBadge scoringType={activeSeason.scoringType} />
+                </div>
+              )}
               {isLoading ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -343,6 +433,120 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                             </div>
                           </div>
                         ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stagioni Precedenti */}
+          {activeTab === 'previousSeasons' && (
+            <div>
+              {!selectedSeason ? (
+                <div>
+                  <h3 className="text-lg font-medium text-foreground mb-4">
+                    Seleziona una stagione per vedere la classifica:
+                  </h3>
+                  {previousSeasons.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ClockIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">Nessuna stagione precedente</h3>
+                      <p className="text-muted-foreground">
+                        Le stagioni passate appariranno qui quando saranno completate
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {previousSeasons.map((season) => {
+                        const scoring = getScoringDescription(season.scoringType)
+                        return (
+                          <button
+                            key={season.id}
+                            onClick={() => loadSeasonLeaderboard(season)}
+                            className="p-4 border border-border rounded-lg hover:border-primary hover:bg-primary/10 transition-colors text-left"
+                          >
+                            <h4 className="font-semibold text-foreground">{season.name}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {scoring.label} • {season._count.events} eventi
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">{selectedSeason.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(selectedSeason.startDate).toLocaleDateString('it-IT')} – {new Date(selectedSeason.endDate).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedSeason(null)
+                        setSeasonLeaderboard([])
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      ← Torna alle stagioni
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <ScoringInfoBadge scoringType={selectedSeason.scoringType} />
+                  </div>
+
+                  {isLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : seasonLeaderboard.length === 0 ? (
+                    <div className="text-center py-12">
+                      <TrophyIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">Nessun dato disponibile</h3>
+                      <p className="text-muted-foreground">
+                        Nessun punteggio registrato per questa stagione
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {seasonLeaderboard.map((entry) => (
+                        <div
+                          key={entry.user.id}
+                          className={`p-4 rounded-lg border-2 transition-all ${getPositionColors(entry.position)} ${
+                            isCurrentUser(entry.user.id) ? 'ring-2 ring-primary/40' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex-shrink-0">
+                                {getPositionIcon(entry.position)}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                                  {entry.user.name || entry.user.email?.split('@')[0] || 'Utente Anonimo'}
+                                  {isCurrentUser(entry.user.id) && (
+                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20">Tu</span>
+                                  )}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {entry.eventCount} eventi • Media: {entry.averagePoints.toFixed(1)} punti
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-foreground">
+                                {entry.totalPoints}
+                              </div>
+                              <div className="text-sm text-muted-foreground">punti</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

@@ -16,17 +16,25 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const eventId = searchParams.get('eventId')
+    const seasonId = searchParams.get('seasonId')
+
     // Determine Season context
-    const activeSeason = await getActiveSeason();
-    
-    // STRICT ACTIVE SEASON CHECK
-    // If no active season is found, we must return an empty state or appropriate status code.
-    if (!activeSeason) {
-      // 204 No Content is appropriate for "Success, but no data to show"
+    let targetSeason;
+    if (seasonId) {
+      targetSeason = await prisma.season.findUnique({
+        where: { id: seasonId },
+        select: { id: true, name: true, year: true, startDate: true, endDate: true, isActive: true, scoringType: true }
+      });
+    } else {
+      targetSeason = await getActiveSeason();
+    }
+
+    // STRICT SEASON CHECK
+    if (!targetSeason) {
       return new NextResponse(null, { status: 204 });
     }
 
-    const scoringType = activeSeason.scoringType;
+    const scoringType = targetSeason.scoringType;
 
     if (eventId) {
       // Classifica per evento specifico
@@ -84,7 +92,7 @@ export async function GET(request: NextRequest) {
       // Classifica generale
       const whereClause: any = {
           points: { not: null },
-          event: { seasonId: activeSeason.id },
+          event: { seasonId: targetSeason.id },
           // Rimosso filtro userId: { in: ... } per includere chiunque abbia punti
       };
 
@@ -109,7 +117,7 @@ export async function GET(request: NextRequest) {
       }))
 
       return NextResponse.json({
-        season: activeSeason,
+        season: targetSeason,
         leaderboard: leaderboardWithPosition,
         totalPredictions: predictions.length,
         totalUsers: leaderboard.length
