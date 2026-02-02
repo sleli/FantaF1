@@ -6,13 +6,11 @@ import {
   HomeIcon,
   ChartBarIcon,
   TrophyIcon,
-  UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
   TrophyIcon as TrophyIconSolid,
-  UserGroupIcon as UserGroupIconSolid,
 } from '@heroicons/react/24/solid';
 
 export default function BottomNavigation() {
@@ -33,16 +31,10 @@ export default function BottomNavigation() {
       activeIcon: HomeIconSolid,
     },
     {
-      name: 'I Miei',
+      name: 'Pronostici',
       href: '/predictions',
       icon: ChartBarIcon,
       activeIcon: ChartBarIconSolid,
-    },
-    {
-      name: 'Tutti',
-      href: '/all-predictions',
-      icon: UserGroupIcon,
-      activeIcon: UserGroupIconSolid,
     },
     {
       name: 'Classifica',

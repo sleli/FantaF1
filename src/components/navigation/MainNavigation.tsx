@@ -19,8 +19,7 @@ export default function MainNavigation() {
 
   const navigationItems = [
     { name: 'Dashboard', href: '/' },
-    { name: 'I Miei Pronostici', href: '/predictions' },
-    { name: 'Tutti i Pronostici', href: '/all-predictions' },
+    { name: 'Pronostici', href: '/predictions' },
     { name: 'Classifica', href: '/leaderboard' },
   ];
 

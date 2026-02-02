@@ -277,7 +277,7 @@ export default function NextEventCard({
           </Link>
 
           {event._count?.predictions !== undefined && event._count.predictions > 0 && (
-            <Link href={`/all-predictions?event=${event.id}`}>
+            <Link href={`/predictions?tab=all&event=${event.id}`}>
               <Button variant="outline" size="lg">
                 {event._count.predictions} Pronostici
               </Button>
