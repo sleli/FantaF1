@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import PredictionsViewer from './PredictionsViewer'
 import { ScoringType } from '@prisma/client'
 
@@ -102,60 +102,6 @@ describe('PredictionsViewer', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Modifica' })).toBeInTheDocument()
-  })
-
-  it('applica il filtro stato', () => {
-    const completedPrediction = {
-      id: 'p1',
-      eventId: 'e1',
-      userId: 'u1',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      firstPlaceId: 'd1',
-      secondPlaceId: 'd2',
-      thirdPlaceId: 'd3',
-      rankings: null,
-      points: 25,
-      event: makeCompletedEvent(),
-      firstPlace: drivers[0],
-      secondPlace: drivers[1],
-      thirdPlace: drivers[2],
-      user: { id: 'u1', name: 'Mario Rossi' },
-    } as any
-
-    const futurePrediction = {
-      id: 'p2',
-      eventId: 'e2',
-      userId: 'u1',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      firstPlaceId: 'd1',
-      secondPlaceId: 'd2',
-      thirdPlaceId: 'd3',
-      rankings: null,
-      points: null,
-      event: makeUpcomingEvent(),
-      firstPlace: drivers[0],
-      secondPlace: drivers[1],
-      thirdPlace: drivers[2],
-      user: { id: 'u1', name: 'Mario Rossi' },
-    } as any
-
-    render(
-      <PredictionsViewer
-        personalPredictions={[completedPrediction, futurePrediction]}
-        drivers={drivers}
-      />
-    )
-
-    expect(screen.getByText("Gran Premio di Monaco 2025")).toBeInTheDocument()
-    expect(screen.getByText("Gran Premio d'Australia 2025")).toBeInTheDocument()
-
-    const selects = screen.getAllByRole('combobox')
-    fireEvent.change(selects[0], { target: { value: 'completed' } })
-
-    expect(screen.getByText("Gran Premio di Monaco 2025")).toBeInTheDocument()
-    expect(screen.queryByText("Gran Premio d'Australia 2025")).not.toBeInTheDocument()
   })
 
   it('mostra il toggle I miei/Tutti quando entrambe le liste sono disponibili', () => {

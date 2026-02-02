@@ -3,13 +3,12 @@ import { Driver, EventStatus, EventType, ScoringType } from '@prisma/client'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import Select from '@/components/ui/Select'
+
 import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
 import { MAX_PENALTY } from '@/lib/scoring'
 
 type ViewerScope = 'personal' | 'all'
-type StatusFilter = 'all' | 'future' | 'in_progress' | 'closed' | 'completed'
 
 export type PredictionsViewerProps = {
   personalPredictions?: PredictionWithDetails[]
@@ -230,7 +229,6 @@ export default function PredictionsViewer({
   const hasAll = allPredictions.length > 0
   const initialScope: ViewerScope = defaultScope === 'all' && hasAll ? 'all' : 'personal'
   const [scope, setScope] = useState<ViewerScope>(initialScope)
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   // Sincronizza scope quando cambiano i dati (fix: allPredictions è vuoto al mount iniziale)
   useEffect(() => {
@@ -247,14 +245,9 @@ export default function PredictionsViewer({
 
   const activePredictions = scope === 'all' ? allPredictions : personalPredictions
 
-  const filtered = useMemo(() => {
-    if (statusFilter === 'all') return activePredictions
-    return activePredictions.filter(p => getDerivedStatus(p.event) === statusFilter)
-  }, [activePredictions, statusFilter])
-
   const groupedByEvent = useMemo(() => {
     const groups = new Map<string, { event: any; predictions: PredictionWithDetails[] }>()
-    for (const p of filtered) {
+    for (const p of activePredictions) {
       const eventId = p.event.id
       const existing = groups.get(eventId)
       if (existing) {
@@ -264,7 +257,7 @@ export default function PredictionsViewer({
       }
     }
     return Array.from(groups.values()).sort((a, b) => new Date(b.event.date).getTime() - new Date(a.event.date).getTime())
-  }, [filtered])
+  }, [activePredictions])
 
   return (
     <Card padding="none" className="overflow-hidden">
@@ -272,7 +265,7 @@ export default function PredictionsViewer({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Filtra per stato e visualizza i dettagli per gara.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Visualizza i dettagli per gara.</p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
@@ -302,20 +295,6 @@ export default function PredictionsViewer({
                 </button>
               </div>
             )}
-
-            <div className="w-full sm:w-64">
-              <Select
-                label="Stato gara"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              >
-                <option value="all">Tutte</option>
-                <option value="future">Future</option>
-                <option value="in_progress">In corso</option>
-                <option value="closed">Chiuse</option>
-                <option value="completed">Completate</option>
-              </Select>
-            </div>
           </div>
         </div>
       </div>
@@ -331,7 +310,7 @@ export default function PredictionsViewer({
       ) : groupedByEvent.length === 0 ? (
         <div className="p-10 text-center">
           <div className="text-sm font-medium text-foreground">Nessun pronostico</div>
-          <div className="mt-1 text-sm text-muted-foreground">Nessun risultato per i filtri selezionati.</div>
+          <div className="mt-1 text-sm text-muted-foreground">Nessun pronostico disponibile.</div>
         </div>
       ) : (
         <div className="divide-y divide-border">
