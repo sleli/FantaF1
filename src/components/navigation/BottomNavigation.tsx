@@ -2,19 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   HomeIcon,
   ChartBarIcon,
   TrophyIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   ChartBarIcon as ChartBarIconSolid,
   TrophyIcon as TrophyIconSolid,
+  Cog6ToothIcon as Cog6ToothIconSolid,
 } from '@heroicons/react/24/solid';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const isActivePage = (href: string) => {
     if (href === '/') {
@@ -42,6 +47,16 @@ export default function BottomNavigation() {
       icon: TrophyIcon,
       activeIcon: TrophyIconSolid,
     },
+    ...(isAdmin
+      ? [
+          {
+            name: 'Admin',
+            href: '/admin',
+            icon: Cog6ToothIcon,
+            activeIcon: Cog6ToothIconSolid,
+          },
+        ]
+      : []),
   ];
 
   return (
