@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { Event, Driver } from '@prisma/client'
 import { PredictionWithDetails } from '@/lib/types'
 import PredictionsViewer from '@/components/predictions/PredictionsViewer'
+import EventPickerSheet from '@/components/predictions/EventPickerSheet'
+import Badge from '@/components/ui/Badge'
+import { ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 
 interface AllPredictionsViewProps {
   events: Event[]
@@ -22,6 +25,12 @@ export default function AllPredictionsView({
   const [allPredictions, setAllPredictions] = useState<PredictionWithDetails[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string>(initialEventId || 'all')
   const [isLoading, setIsLoading] = useState(false)
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+
+  const selectedEvent = useMemo(
+    () => events.find((e) => e.id === selectedEventId),
+    [events, selectedEventId]
+  )
 
   // Load predictions when event filter changes
   useEffect(() => {
@@ -57,25 +66,53 @@ export default function AllPredictionsView({
 
   return (
     <div>
-      {/* Event filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-        <label htmlFor="event-filter" className="text-sm font-medium text-foreground">
-          Filtra per evento:
-        </label>
-        <select
-          id="event-filter"
-          value={selectedEventId}
-          onChange={(e) => setSelectedEventId(e.target.value)}
-          className="flex-1 max-w-md px-3 py-2 border border-border bg-input text-foreground rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+      {/* Event filter trigger */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => setIsPickerOpen(true)}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors"
         >
-          <option value="all">Tutti gli eventi</option>
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.name} ({event.type === 'RACE' ? 'Gran Premio' : 'Sprint'})
-            </option>
-          ))}
-        </select>
+          {selectedEvent ? (
+            <>
+              {(selectedEvent as any).countryFlag && (
+                <img
+                  src={(selectedEvent as any).countryFlag}
+                  alt=""
+                  className="w-7 h-5 object-cover rounded-sm shadow-sm flex-shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-sm font-semibold text-foreground truncate block">
+                  {selectedEvent.name}
+                </span>
+              </div>
+              <Badge variant={selectedEvent.type === 'RACE' ? 'race' : 'sprint'} size="sm">
+                {selectedEvent.type === 'RACE' ? 'GP' : 'Sprint'}
+              </Badge>
+            </>
+          ) : (
+            <>
+              <div className="w-7 h-7 rounded-full bg-muted/50 flex items-center justify-center flex-shrink-0">
+                <GlobeAltIcon className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span className="flex-1 text-left text-sm font-semibold text-foreground">
+                Tutti gli eventi
+              </span>
+            </>
+          )}
+          <ChevronDownIcon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+        </button>
       </div>
+
+      {/* Event picker sheet */}
+      <EventPickerSheet
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        onSelect={setSelectedEventId}
+        events={events}
+        selectedEventId={selectedEventId}
+      />
 
       {/* Predictions list */}
       <PredictionsViewer
