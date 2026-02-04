@@ -1,12 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Driver, EventStatus, EventType, ScoringType } from '@prisma/client'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-
 import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
 import { MAX_PENALTY } from '@/lib/scoring'
+import { ChevronDownIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export type PredictionsViewerProps = {
   predictions: PredictionWithDetails[]
@@ -98,15 +98,6 @@ function PredictionTable({
   prediction: PredictionWithDetails
   driversById: Map<string, Driver>
 }) {
-  if ((prediction as any).isHidden) {
-    return (
-      <div className="rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center">
-        <div className="text-sm font-medium text-muted-foreground">Pronostico nascosto</div>
-        <div className="mt-1 text-xs text-muted-foreground">Visibile al termine dell’evento</div>
-      </div>
-    )
-  }
-
   const scoringType = getScoringType(prediction)
   const eventResult = getEventResults(prediction)
   const eventType = prediction.event.type as EventType
@@ -168,7 +159,7 @@ function PredictionTable({
   })
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
+    <div className="overflow-hidden rounded-lg border border-border mt-4">
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
@@ -213,6 +204,156 @@ function PredictionTable({
   )
 }
 
+function PredictionRow({
+  prediction,
+  driversById,
+  showUserName,
+  onEdit,
+  onDelete,
+}: {
+  prediction: PredictionWithDetails
+  driversById: Map<string, Driver>
+  showUserName: boolean
+  onEdit?: (prediction: PredictionWithDetails) => void
+  onDelete?: (predictionId: string) => void
+}) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const isHidden = (prediction as any).isHidden
+  const scoringType = getScoringType(prediction)
+
+  const showEdit = canModify(prediction.event) && !!onEdit
+  const showDelete = canModify(prediction.event) && !!onDelete
+
+  const top3DriverIds = useMemo(() => {
+    if (isHidden) return []
+    if (scoringType === ScoringType.FULL_GRID_DIFF) {
+      return (((prediction.rankings as any) as unknown[]) || []).slice(0, 3) as string[]
+    }
+    return [prediction.firstPlaceId, prediction.secondPlaceId, prediction.thirdPlaceId].filter(Boolean) as string[]
+  }, [prediction, isHidden, scoringType])
+
+  const top3Drivers = top3DriverIds.map(id => driversById.get(id)).filter(Boolean) as Driver[]
+
+  return (
+    <div className={`rounded-lg border transition-all duration-200 ${isExpanded ? 'border-primary/40 bg-muted/20' : 'border-border bg-card hover:border-primary/30'}`}>
+      <div 
+        className="p-4 cursor-pointer"
+        onClick={() => !isHidden && setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: User Info & Points */}
+          <div className="flex items-center gap-3 min-w-0">
+            {showUserName && (
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                  <UserIcon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {(prediction as any).user?.name || 'Utente'}
+                  </p>
+                  {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' && (
+                     <p className="text-xs text-muted-foreground">
+                       {formatPoints((prediction as any).points)} pt
+                     </p>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {!showUserName && (
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">Il tuo pronostico</span>
+                {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' ? (
+                  <span className="text-xs text-muted-foreground font-medium text-primary">
+                    {formatPoints((prediction as any).points)} punti
+                  </span>
+                ) : (
+                   <span className="text-xs text-muted-foreground">In attesa</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Preview & Toggle */}
+          <div className="flex items-center gap-4">
+            {/* Driver Preview (Desktop/Tablet) */}
+            <div className="hidden sm:flex items-center -space-x-2">
+              {isHidden ? (
+                <span className="text-xs text-muted-foreground italic">Nascosto</span>
+              ) : (
+                top3Drivers.map((driver, idx) => (
+                  <div key={driver.id} className="relative z-10 ring-2 ring-background rounded-full">
+                    <DriverAvatar imageUrl={driver.imageUrl} name={driver.name} size="xs" />
+                  </div>
+                ))
+              )}
+            </div>
+
+            <button 
+              className={`p-1 rounded-full hover:bg-muted transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              disabled={isHidden}
+            >
+              <ChevronDownIcon className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Driver Preview (if not expanded) */}
+        {!isExpanded && !isHidden && (
+          <div className="mt-3 flex sm:hidden items-center justify-between border-t border-border/50 pt-3">
+             <div className="flex items-center -space-x-2">
+                {top3Drivers.map((driver) => (
+                  <div key={driver.id} className="relative z-10 ring-2 ring-background rounded-full">
+                    <DriverAvatar imageUrl={driver.imageUrl} name={driver.name} size="xs" />
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Expanded Details */}
+      {isExpanded && !isHidden && (
+        <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
+          <PredictionTable prediction={prediction} driversById={driversById} />
+          
+          {(showEdit || showDelete) && (
+            <div className="mt-4 flex justify-end gap-2 pt-4 border-t border-border">
+              {showEdit && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit?.(prediction)
+                  }}
+                >
+                  Modifica
+                </Button>
+              )}
+              {showDelete && (
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete?.(prediction.id)
+                  }}
+                >
+                  Elimina
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function PredictionsViewer({
   predictions,
   drivers,
@@ -241,16 +382,9 @@ export default function PredictionsViewer({
     return Array.from(groups.values()).sort((a, b) => new Date(b.event.date).getTime() - new Date(a.event.date).getTime())
   }, [predictions])
 
-  return (
-    <Card padding="none" className="overflow-hidden">
-      <div className="p-4 sm:p-6 border-b border-border">
-        <div className="min-w-0">
-          <h2 className="text-xl font-bold text-foreground">Pronostici</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Visualizza i dettagli per gara.</p>
-        </div>
-      </div>
-
-      {isLoading ? (
+  if (isLoading) {
+    return (
+      <Card padding="none" className="overflow-hidden">
         <div className="p-6">
           <div className="space-y-3">
             <div className="h-4 w-48 bg-muted rounded" />
@@ -258,101 +392,64 @@ export default function PredictionsViewer({
             <div className="h-24 bg-muted rounded" />
           </div>
         </div>
-      ) : groupedByEvent.length === 0 ? (
+      </Card>
+    )
+  }
+
+  if (groupedByEvent.length === 0) {
+    return (
+      <Card padding="none" className="overflow-hidden">
         <div className="p-10 text-center">
           <div className="text-sm font-medium text-foreground">Nessun pronostico</div>
           <div className="mt-1 text-sm text-muted-foreground">Nessun pronostico disponibile.</div>
         </div>
-      ) : (
-        <div className="divide-y divide-border">
-          {groupedByEvent.map(({ event, predictions: eventPredictions }) => {
-            const circuit = deriveCircuitFromName(event.name)
-            return (
-              <div key={event.id} className="px-4 sm:px-6 py-5 sm:py-6">
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {event.countryFlag && (
-                          <img src={event.countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm" />
-                        )}
-                        <h3 className="text-lg font-semibold text-foreground truncate">{event.name}</h3>
-                        <StatusBadge event={event} />
-                      </div>
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground/80">{circuit}</span>
-                        <span className="mx-2">•</span>
-                        <span>{formatDateTime(event.date)}</span>
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">{event.type === 'RACE' ? 'Gran Premio' : 'Sprint'}</div>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {groupedByEvent.map(({ event, predictions: eventPredictions }) => {
+        const circuit = deriveCircuitFromName(event.name)
+        return (
+          <Card key={event.id} padding="none" className="overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {event.countryFlag && (
+                      <img src={event.countryFlag} alt="" className="w-6 h-4 object-cover rounded-sm shadow-sm" />
+                    )}
+                    <h3 className="text-lg font-bold text-foreground truncate">{event.name}</h3>
+                    <StatusBadge event={event} />
                   </div>
-
-                  <div className="divide-y divide-border">
-                    {eventPredictions.map((prediction) => {
-                      const showEdit = canModify(prediction.event) && !!onEdit
-                      const showDelete = canModify(prediction.event) && !!onDelete
-
-                      return (
-                        <div key={prediction.id} className="py-4">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0">
-                              {showUserName ? (
-                                <div className="text-sm text-muted-foreground">
-                                  <span className="font-semibold text-foreground">{(prediction as any).user?.name || 'Utente'}</span>
-                                  {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' && (
-                                    <span className="ml-2 tabular-nums">• {formatPoints((prediction as any).points)} pt</span>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-sm text-muted-foreground">
-                                  {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined'
-                                    ? <span className="tabular-nums">Punti: {formatPoints((prediction as any).points)} </span>
-                                    : <span>In attesa dei risultati</span>
-                                  }
-                                </div>
-                              )}
-                            </div>
-
-                            {(showEdit || showDelete) && (
-                              <div className="flex gap-2">
-                                {showEdit && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => onEdit?.(prediction)}
-                                  >
-                                    Modifica
-                                  </Button>
-                                )}
-                                {showDelete && (
-                                  <Button
-                                    type="button"
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={() => onDelete?.(prediction.id)}
-                                  >
-                                    Elimina
-                                  </Button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="mt-3">
-                            <PredictionTable prediction={prediction} driversById={driversById} />
-                          </div>
-                        </div>
-                      )
-                    })}
+                  <div className="mt-1 text-sm text-muted-foreground flex items-center gap-2">
+                    <span className="font-medium text-foreground/80">{circuit}</span>
+                    <span className="text-border">•</span>
+                    <span>{formatDateTime(event.date)}</span>
                   </div>
                 </div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground px-2 py-1 bg-background rounded border border-border">
+                  {event.type === 'RACE' ? 'Gran Premio' : 'Sprint'}
+                </div>
               </div>
-            )
-          })}
-        </div>
-      )}
-    </Card>
+            </div>
+
+            <div className="p-4 sm:p-6 space-y-3">
+              {eventPredictions.map((prediction) => (
+                <PredictionRow
+                  key={prediction.id}
+                  prediction={prediction}
+                  driversById={driversById}
+                  showUserName={showUserName}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          </Card>
+        )
+      })}
+    </div>
   )
 }
