@@ -100,9 +100,6 @@ export default function PredictionsDashboard() {
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-3xl font-bold text-foreground">Pronostici</h1>
-        <p className="mt-2 text-muted-foreground">
-          Gestisci i tuoi pronostici e confrontali con gli altri giocatori
-        </p>
       </div>
 
       {/* Tab Navigation - Animated Pill */}
