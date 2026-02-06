@@ -24,6 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Driver } from '@prisma/client';
 import DriverAvatar from '@/components/ui/DriverAvatar';
+import { useIsMobile } from '@/hooks/useDevice';
 
 // Position badge component for podium distinction
 function PositionBadge({ position }: { position: number }) {
@@ -51,6 +52,7 @@ function PositionBadge({ position }: { position: number }) {
 }
 
 // Sortable Item Component - Open Design (no card borders)
+// Desktop: entire row is draggable. Mobile: only the drag handle.
 function SortableItem({
   id,
   driver,
@@ -58,6 +60,7 @@ function SortableItem({
   isDragging,
   isOverlay,
   isLastPodiumItem,
+  isMobile,
 }: {
   id: string;
   driver: Driver;
@@ -65,6 +68,7 @@ function SortableItem({
   isDragging?: boolean;
   isOverlay?: boolean;
   isLastPodiumItem?: boolean;
+  isMobile: boolean;
 }) {
   const {
     attributes,
@@ -82,18 +86,25 @@ function SortableItem({
 
   const position = index + 1;
 
+  // Desktop: listeners on the whole row. Mobile: listeners only on the handle.
+  const rowDragProps = !isMobile ? { ...attributes, ...listeners } : {};
+  const handleDragProps = isMobile ? { ...attributes, ...listeners } : {};
+
   return (
     <div ref={setNodeRef} style={style}>
       <div
+        {...rowDragProps}
         className={`
           flex items-center gap-3 py-4 px-2
           transition-all duration-200
+          ${!isMobile ? 'cursor-grab active:cursor-grabbing select-none' : ''}
           ${
             isDragging || isOverlay
               ? 'bg-surface-2 rounded-xl shadow-[0_0_30px_rgba(225,6,0,0.15)] scale-[1.02] z-50 relative'
               : ''
           }
           ${isOver && !isDragging ? 'bg-surface-2/50' : ''}
+          ${!isDragging && !isOverlay && !isMobile ? 'hover:bg-surface-2/30' : ''}
         `}
       >
         {/* Position badge */}
@@ -118,25 +129,26 @@ function SortableItem({
           </div>
         </div>
 
-        {/* Drag handle */}
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={`Trascina ${driver.name}`}
-          className={`
-            inline-flex items-center justify-center flex-shrink-0
-            w-10 h-10 rounded-xl
-            text-muted-foreground
-            hover:text-foreground hover:bg-surface-3
-            focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-            transition-all duration-200
-            touch-none cursor-grab active:cursor-grabbing
-            ${isDragging || isOverlay ? 'text-primary' : ''}
-          `}
-        >
-          <Bars3Icon className="h-5 w-5" />
-        </button>
+        {/* Drag handle - visible only on mobile as the touch target */}
+        {isMobile && (
+          <button
+            type="button"
+            {...handleDragProps}
+            aria-label={`Trascina ${driver.name}`}
+            className={`
+              inline-flex items-center justify-center flex-shrink-0
+              w-10 h-10 rounded-xl
+              text-muted-foreground
+              hover:text-foreground hover:bg-surface-3
+              focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+              transition-all duration-200
+              touch-none cursor-grab active:cursor-grabbing
+              ${isDragging || isOverlay ? 'text-primary' : ''}
+            `}
+          >
+            <Bars3Icon className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Divider - solid after podium, dashed for others */}
@@ -183,7 +195,8 @@ function StaticItem({
           </div>
         </div>
 
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground">
+        {/* Drag handle icon - only on mobile */}
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground md:hidden">
           <Bars3Icon className="h-5 w-5" />
         </div>
       </div>
@@ -211,6 +224,7 @@ export default function SortableDriverList({
   disabled,
 }: SortableDriverListProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -310,6 +324,7 @@ export default function SortableDriverList({
                 index={index}
                 isDragging={activeId === id}
                 isLastPodiumItem={index === 2}
+                isMobile={isMobile}
               />
             );
           })}
@@ -340,7 +355,7 @@ export default function SortableDriverList({
                 </div>
               </div>
 
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-primary md:hidden">
                 <Bars3Icon className="h-5 w-5" />
               </div>
             </div>
