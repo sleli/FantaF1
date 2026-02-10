@@ -1,5 +1,5 @@
 
-import { calculateScore, calculateLeaderboard } from './scoring';
+import { calculateScore, calculateLeaderboard, calculateWorstPossibleScore, MISSING_DATA_PENALTY } from './scoring';
 import { EventType, ScoringType } from '@prisma/client';
 
 describe('Scoring System', () => {
@@ -131,6 +131,46 @@ describe('Scoring System', () => {
         // Penalty is usually 20 (max penalty).
         const score = calculateScore(prediction, result, eventType, scoringType);
         expect(score).toBe(20);
+    });
+  });
+
+  describe('Worst Possible Score', () => {
+    it('should calculate worst score for 20 drivers', () => {
+      expect(calculateWorstPossibleScore(20)).toBe(290);
+    });
+
+    it('should calculate worst score for 21 drivers', () => {
+      expect(calculateWorstPossibleScore(21)).toBe(320);
+    });
+
+    it('should return 0 for 1 driver', () => {
+      expect(calculateWorstPossibleScore(1)).toBe(0);
+    });
+  });
+
+  describe('Empty Prediction (no previous prediction)', () => {
+    const scoringType = ScoringType.FULL_GRID_DIFF;
+    const drivers20 = Array.from({ length: 20 }, (_, i) => `d${i + 1}`);
+
+    it('should assign worst possible score for empty prediction on RACE', () => {
+      const prediction = { rankings: [] };
+      const result = { results: drivers20 };
+      const score = calculateScore(prediction, result, 'RACE' as EventType, scoringType);
+      expect(score).toBe(290);
+    });
+
+    it('should assign half worst score for empty prediction on SPRINT', () => {
+      const prediction = { rankings: [] };
+      const result = { results: drivers20 };
+      const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
+      expect(score).toBe(145);
+    });
+
+    it('should return MISSING_DATA_PENALTY when results are empty', () => {
+      const prediction = { rankings: ['d1', 'd2'] };
+      const result = { results: [] };
+      const score = calculateScore(prediction, result, 'RACE' as EventType, scoringType);
+      expect(score).toBe(MISSING_DATA_PENALTY);
     });
   });
 

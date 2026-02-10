@@ -5,6 +5,19 @@ import { POINTS } from './types'
 export const MAX_PENALTY = 20;
 export const MISSING_DATA_PENALTY = 1000;
 
+/**
+ * Calcola il punteggio peggiore possibile per una griglia di N piloti.
+ * Formula: SUM_{a=1 to N} max(a - 1, N - a)
+ * Esempi: N=20 -> 290, N=21 -> 320
+ */
+export function calculateWorstPossibleScore(n: number): number {
+  let total = 0;
+  for (let a = 1; a <= n; a++) {
+    total += Math.max(a - 1, n - a);
+  }
+  return total;
+}
+
 // --- Types ---
 export type PredictionResult = {
   firstPlaceId?: string | null
@@ -117,8 +130,11 @@ function calculateAbsoluteDifferenceScoreHelper(
   predictionRankings: string[],
   resultRankings: string[]
 ): number {
-  if (!predictionRankings || !resultRankings || predictionRankings.length === 0 || resultRankings.length === 0) {
+  if (!resultRankings || resultRankings.length === 0) {
     return MISSING_DATA_PENALTY;
+  }
+  if (!predictionRankings || predictionRankings.length === 0) {
+    return calculateWorstPossibleScore(resultRankings.length);
   }
 
   let score = 0;

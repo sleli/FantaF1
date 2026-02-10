@@ -81,7 +81,13 @@ export async function POST(
                     }
                 });
             } else {
-                console.log(`No previous prediction for user ${user.name} (first event?)`);
+                console.log(`Creating empty prediction for user ${user.name} (no previous prediction)`);
+                await prisma.prediction.create({
+                    data: {
+                        userId: user.id,
+                        eventId: event.id,
+                    }
+                });
             }
         }
     }
