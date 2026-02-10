@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import PublicLayout from '@/components/layout/PublicLayout';
 import UpcomingEvents from '@/components/events/UpcomingEvents';
+import CompletedEvents from '@/components/events/CompletedEvents';
 import EventForm from '@/components/admin/EventForm';
 import { usePullToRefresh } from '@/hooks/useSwipe';
 
@@ -75,6 +76,9 @@ export default function Home() {
 
         {/* Upcoming Events Section */}
         <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+
+        {/* Completed Events Section */}
+        <CompletedEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
 
         {/* Event Form Modal (Admin only) */}
         {isAdmin && showEventForm && (

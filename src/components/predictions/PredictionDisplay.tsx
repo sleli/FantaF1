@@ -3,43 +3,12 @@
 import { PredictionWithDetails } from '@/lib/types';
 import { Driver, ScoringType } from '@prisma/client';
 import DriverAvatar from '@/components/ui/DriverAvatar';
+import PositionBadge from '@/components/ui/PositionBadge';
 
 interface PredictionDisplayProps {
   prediction: PredictionWithDetails;
   drivers: Driver[];
   compact?: boolean;
-}
-
-// Position badge component for podium distinction
-function PositionBadge({
-  position,
-  size = 'default',
-}: {
-  position: number;
-  size?: 'default' | 'sm';
-}) {
-  const isPodium = position <= 3;
-  const sizeClasses = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm';
-
-  const badgeClasses = isPodium
-    ? position === 1
-      ? 'bg-accent-gold/20 text-accent-gold'
-      : position === 2
-      ? 'bg-accent-silver/20 text-accent-silver'
-      : 'bg-accent-bronze/20 text-accent-bronze'
-    : 'bg-surface-3 text-muted-foreground';
-
-  return (
-    <div
-      className={`
-        ${sizeClasses} rounded-full flex items-center justify-center
-        font-black tabular-nums flex-shrink-0
-        ${badgeClasses}
-      `}
-    >
-      {position}
-    </div>
-  );
 }
 
 // Open design driver row for full grid display
