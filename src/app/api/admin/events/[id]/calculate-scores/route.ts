@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateScore, validateEventResults } from '@/lib/scoring'
+import { getEnabledUsersForSeason } from '@/lib/user-season'
 import { ScoringType } from '@prisma/client'
 
 // POST /api/admin/events/[id]/calculate-scores - Calcola i punteggi per un evento
@@ -44,7 +45,7 @@ export async function POST(
 
     // --- AUTO-FILL LOGIC ---
     if (event.seasonId) {
-        const users = await prisma.user.findMany({ where: { role: 'PLAYER' } });
+        const users = await getEnabledUsersForSeason(event.seasonId);
         const existingPreds = await prisma.prediction.findMany({ 
             where: { eventId }, 
             select: { userId: true } 

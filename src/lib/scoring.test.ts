@@ -136,11 +136,15 @@ describe('Scoring System', () => {
 
   describe('Worst Possible Score', () => {
     it('should calculate worst score for 20 drivers', () => {
-      expect(calculateWorstPossibleScore(20)).toBe(290);
+      expect(calculateWorstPossibleScore(20)).toBe(200);
     });
 
     it('should calculate worst score for 21 drivers', () => {
-      expect(calculateWorstPossibleScore(21)).toBe(320);
+      expect(calculateWorstPossibleScore(21)).toBe(220);
+    });
+
+    it('should calculate worst score for 22 drivers', () => {
+      expect(calculateWorstPossibleScore(22)).toBe(242);
     });
 
     it('should return 0 for 1 driver', () => {
@@ -156,14 +160,14 @@ describe('Scoring System', () => {
       const prediction = { rankings: [] };
       const result = { results: drivers20 };
       const score = calculateScore(prediction, result, 'RACE' as EventType, scoringType);
-      expect(score).toBe(290);
+      expect(score).toBe(200);
     });
 
     it('should assign half worst score for empty prediction on SPRINT', () => {
       const prediction = { rankings: [] };
       const result = { results: drivers20 };
       const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
-      expect(score).toBe(145);
+      expect(score).toBe(100);
     });
 
     it('should return MISSING_DATA_PENALTY when results are empty', () => {

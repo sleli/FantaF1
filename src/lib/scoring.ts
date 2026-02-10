@@ -7,15 +7,12 @@ export const MISSING_DATA_PENALTY = 1000;
 
 /**
  * Calcola il punteggio peggiore possibile per una griglia di N piloti.
- * Formula: SUM_{a=1 to N} max(a - 1, N - a)
- * Esempi: N=20 -> 290, N=21 -> 320
+ * Formula: floor(N²/2) — equivale a N²/2 se N pari, (N²-1)/2 se N dispari.
+ * Rappresenta il punteggio massimo con pronostico invertito (permutazione completa griglia).
+ * Esempi: N=20 -> 200, N=21 -> 220, N=22 -> 242
  */
 export function calculateWorstPossibleScore(n: number): number {
-  let total = 0;
-  for (let a = 1; a <= n; a++) {
-    total += Math.max(a - 1, n - a);
-  }
-  return total;
+  return Math.floor(n * n / 2);
 }
 
 // --- Types ---
