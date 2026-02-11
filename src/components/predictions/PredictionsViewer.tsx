@@ -125,14 +125,19 @@ function PredictionTable({
             ? prediction.thirdPlace
             : undefined)
     let points: number | null = null
+    let actualPosition: number | null = null
 
     if (actualRankings && eventResult) {
+      const actualIndex = actualRankings.indexOf(driverId)
+      
+      if (actualIndex !== -1) {
+        actualPosition = actualIndex + 1
+      }
+
       if (eventResult.scoringType === ScoringType.FULL_GRID_DIFF) {
-        const actualIndex = actualRankings.indexOf(driverId)
         const penalty = actualIndex === -1 ? MAX_PENALTY : Math.abs(index - actualIndex)
         points = penalty * sprintMultiplier
       } else {
-        const actualIndex = actualRankings.indexOf(driverId)
         if (actualIndex === index) {
           points =
             index === 0
@@ -155,6 +160,7 @@ function PredictionTable({
       team: driver?.team || '—',
       imageUrl: driver?.imageUrl || null,
       points,
+      actualPosition,
     }
   })
 
@@ -186,7 +192,14 @@ function PredictionTable({
               <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{row.team}</td>
               {eventResult && (
                 <td className="px-3 py-2 tabular-nums text-right text-foreground">
-                  {row.points === null ? '—' : formatPoints(row.points)}
+                   <div className="flex items-center justify-end gap-2">
+                      {row.actualPosition && (
+                        <span className="text-xs text-muted-foreground">P{row.actualPosition}</span>
+                      )}
+                      <span>
+                        {row.points === null ? '—' : formatPoints(row.points)}
+                      </span>
+                   </div>
                 </td>
               )}
             </tr>
