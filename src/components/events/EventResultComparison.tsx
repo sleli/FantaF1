@@ -84,21 +84,9 @@ function FullGridComparison({
   });
 
   return (
-    <div className="rounded-xl border border-border bg-surface-1/50 overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 bg-surface-2 border-b border-border flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Risultato vs Pronostico
-        </h4>
-        {prediction?.points !== null && prediction?.points !== undefined && (
-          <span className="text-sm font-bold text-foreground tabular-nums">
-            {prediction.points} pt
-          </span>
-        )}
-      </div>
-
+    <div className="mt-4">
       {!hasPrediction && (
-        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20">
+        <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 rounded-t-lg">
           <span className="text-xs text-amber-400 font-medium">
             Nessun pronostico inserito
           </span>
@@ -106,86 +94,73 @@ function FullGridComparison({
       )}
 
       {/* Grid rows */}
-      <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted">
-        {resultGrid.map((driverId, idx) => {
-          const driver = getDriver(driverId);
-          const predictedPos = predictionMap.get(driverId);
-          const isMatch = predictedPos === idx;
-          const diff = predictedPos !== undefined ? Math.abs(predictedPos - idx) : null;
-          const isMissing = predictedPos === undefined;
+      <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted rounded-lg border border-border/50">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/30 text-xs uppercase text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium w-12">Pos</th>
+              <th className="px-3 py-2 text-left font-medium">Pilota</th>
+              <th className="px-3 py-2 text-center font-medium w-16">Pron.</th>
+              <th className="px-3 py-2 text-right font-medium w-16">Punti</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/40">
+            {resultGrid.map((driverId, idx) => {
+              const driver = getDriver(driverId);
+              const predictedPos = predictionMap.get(driverId);
+              const isMatch = predictedPos === idx;
+              const diff = predictedPos !== undefined ? Math.abs(predictedPos - idx) : null;
+              const isMissing = predictedPos === undefined;
 
-          let rowBg = '';
-          if (hasPrediction) {
-            if (isMatch) {
-              rowBg = 'bg-accent-green/5 border-l-2 border-accent-green';
-            } else if (isMissing) {
-              rowBg = 'bg-red-500/5 border-l-2 border-red-500/30';
-            } else if (diff !== null && diff <= 2) {
-              rowBg = 'bg-accent-amber/5 border-l-2 border-accent-amber';
-            } else {
-              rowBg = 'border-l-2 border-transparent';
-            }
-          } else {
-            rowBg = 'border-l-2 border-transparent';
-          }
-
-          return (
-            <div key={`${driverId}-${idx}`}>
-              <div className={`flex items-center gap-3 py-2.5 px-3 ${rowBg}`}>
-                <PositionBadge position={idx + 1} size="sm" />
-
-                {driver ? (
-                  <>
-                    <DriverAvatar imageUrl={driver.imageUrl} name={driver.name} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-foreground text-sm truncate">
-                        {driver.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {driver.team}
+              return (
+                <tr key={`${driverId}-${idx}`} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-3 py-2">
+                     <PositionBadge position={idx + 1} size="sm" />
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      {driver && <DriverAvatar imageUrl={driver.imageUrl} name={driver.name} size="xs" />}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate text-foreground">{driver?.name || 'Sconosciuto'}</div>
+                        <div className="text-xs text-muted-foreground truncate hidden sm:block">{driver?.team}</div>
                       </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-muted-foreground italic">
-                      Pilota non trovato
-                    </span>
-                  </div>
-                )}
-
-                {/* Comparison indicator */}
-                {hasPrediction && (
-                  <div className="flex-shrink-0 text-right min-w-[60px]">
-                    {isMatch ? (
-                      <CheckCircleIcon className="w-5 h-5 text-accent-green ml-auto" />
-                    ) : isMissing ? (
-                      <span className="text-xs font-bold text-red-400">+20</span>
-                    ) : (
-                      <div className="flex items-center gap-1 justify-end">
-                        <span className="text-xs text-muted-foreground">
-                          P{(predictedPos ?? 0) + 1}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {hasPrediction ? (
+                      predictedPos !== undefined ? (
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold ${
+                          isMatch 
+                            ? 'bg-accent-green/10 text-accent-green' 
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {predictedPos + 1}
                         </span>
-                        <span className="text-xs font-bold text-accent-amber">
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums font-medium">
+                    {hasPrediction ? (
+                      isMissing ? (
+                        <span className="text-red-500 text-xs">+20</span>
+                      ) : (
+                        <span className={`text-xs ${diff === 0 ? 'text-accent-green' : diff && diff <= 2 ? 'text-accent-amber' : 'text-foreground'}`}>
                           +{diff}
                         </span>
-                      </div>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              {idx < resultGrid.length - 1 && (
-                idx === 2 ? (
-                  <div className="h-px bg-primary/30 mx-3" />
-                ) : (
-                  <div className="border-b border-dashed border-border/40 mx-3" />
-                )
-              )}
-            </div>
-          );
-        })}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

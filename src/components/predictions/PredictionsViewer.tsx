@@ -169,9 +169,12 @@ function PredictionTable({
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
           <tr>
-            <th scope="col" className="px-3 py-2 text-left w-14">Pos</th>
+            <th scope="col" className="px-3 py-2 text-left w-14">Pron.</th>
             <th scope="col" className="px-3 py-2 text-left">Pilota</th>
             <th scope="col" className="px-3 py-2 text-left hidden sm:table-cell">Squadra</th>
+            {eventResult && (
+              <th scope="col" className="px-3 py-2 text-center w-16">Arrivo</th>
+            )}
             {eventResult && (
               <th scope="col" className="px-3 py-2 text-right w-20">Punti</th>
             )}
@@ -180,7 +183,7 @@ function PredictionTable({
         <tbody className="divide-y divide-border">
           {rows.map((row) => (
             <tr key={`${prediction.id}-${row.position}`} className="bg-card">
-              <td className="px-3 py-2 tabular-nums text-muted-foreground">{row.position}</td>
+              <td className="px-3 py-2 tabular-nums text-muted-foreground font-medium">{row.position}</td>
               <td className="px-3 py-2">
                 <div className="flex items-center gap-2">
                   {row.driver && (
@@ -191,22 +194,30 @@ function PredictionTable({
               </td>
               <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{row.team}</td>
               {eventResult && (
-                <td className="px-3 py-2 tabular-nums text-right text-foreground">
-                   <div className="flex items-center justify-end gap-2">
-                      {row.actualPosition && (
-                        <span className="text-xs text-muted-foreground">P{row.actualPosition}</span>
-                      )}
-                      <span>
-                        {row.points === null ? '—' : formatPoints(row.points)}
-                      </span>
-                   </div>
+                <td className="px-3 py-2 tabular-nums text-center text-foreground">
+                  {row.actualPosition ? (
+                    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium ${
+                      row.actualPosition === row.position 
+                        ? 'bg-green-500/10 text-green-500' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      P{row.actualPosition}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              )}
+              {eventResult && (
+                <td className="px-3 py-2 tabular-nums text-right text-foreground font-medium">
+                  {row.points === null ? '—' : formatPoints(row.points)}
                 </td>
               )}
             </tr>
           ))}
           {rows.length === 0 && (
             <tr className="bg-card">
-              <td colSpan={eventResult ? 4 : 3} className="px-3 py-4 text-center text-muted-foreground">
+              <td colSpan={eventResult ? 5 : 3} className="px-3 py-4 text-center text-muted-foreground">
                 Nessun pilota disponibile
               </td>
             </tr>

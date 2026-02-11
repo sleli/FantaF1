@@ -268,7 +268,7 @@ export default function CompletedEvents({
 
               {/* Expanded comparison */}
               {isExpanded && (
-                <div className="border-t border-border bg-surface-1/30 p-4 md:p-5 animate-in slide-in-from-top-2 duration-200">
+                <div className="px-4 pb-4 md:px-5 md:pb-5 animate-in slide-in-from-top-2 duration-200">
                   <EventResultComparison
                     event={event}
                     prediction={prediction}
