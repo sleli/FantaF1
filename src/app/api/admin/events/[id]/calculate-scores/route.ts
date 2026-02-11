@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateScore, validateEventResults } from '@/lib/scoring'
-import { getEnabledUsersForSeason } from '@/lib/user-season'
+import { autoFillMissingPredictions } from '@/lib/predictions'
 import { ScoringType } from '@prisma/client'
 
 // POST /api/admin/events/[id]/calculate-scores - Calcola i punteggi per un evento
@@ -43,53 +43,11 @@ export async function POST(
         return NextResponse.json({ error: 'Risultati evento mancanti o incompleti per il tipo di scoring' }, { status: 400 })
     }
 
-    // --- AUTO-FILL LOGIC ---
+    // Auto-fill pronostici mancanti
     if (event.seasonId) {
-        const users = await getEnabledUsersForSeason(event.seasonId);
-        const existingPreds = await prisma.prediction.findMany({ 
-            where: { eventId }, 
-            select: { userId: true } 
-        });
-        const hasPred = new Set(existingPreds.map(p => p.userId));
-        const missingUsers = users.filter(u => !hasPred.has(u.id));
-
-        console.log(`Auto-fill: Found ${missingUsers.length} users without prediction.`);
-
-        for (const user of missingUsers) {
-            // Find last prediction in season
-            const lastPred = await prisma.prediction.findFirst({
-                where: {
-                    userId: user.id,
-                    event: {
-                        seasonId: event.seasonId,
-                        date: { lt: event.date },
-                        // status: { in: ['COMPLETED', 'CLOSED'] } // Maybe not strictly needed if we rely on date
-                    }
-                },
-                orderBy: { event: { date: 'desc' } }
-            });
-
-            if (lastPred) {
-                console.log(`Auto-filling for user ${user.name} from event ${lastPred.eventId}`);
-                await prisma.prediction.create({
-                    data: {
-                        userId: user.id,
-                        eventId: event.id,
-                        firstPlaceId: lastPred.firstPlaceId,
-                        secondPlaceId: lastPred.secondPlaceId,
-                        thirdPlaceId: lastPred.thirdPlaceId,
-                        rankings: lastPred.rankings ?? undefined
-                    }
-                });
-            } else {
-                console.log(`Creating empty prediction for user ${user.name} (no previous prediction)`);
-                await prisma.prediction.create({
-                    data: {
-                        userId: user.id,
-                        eventId: event.id,
-                    }
-                });
-            }
+        const filled = await autoFillMissingPredictions(eventId, event.seasonId, event.date);
+        if (filled > 0) {
+            console.log(`Auto-fill: ${filled} pronostici creati per evento ${event.name}`);
         }
     }
 

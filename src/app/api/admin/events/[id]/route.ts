@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { eventValidation, eventStatusValidation, eventUpdateValidation } from '@/lib/validation/event';
-import { calculateScore, validateEventResults, validatePrediction } from '@/lib/scoring';
+import { calculateScore, validateEventResults } from '@/lib/scoring';
+import { autoFillMissingPredictions } from '@/lib/predictions';
 import { ScoringType } from '@prisma/client';
 
 // Helper function per calcolare automaticamente i punteggi di un evento
@@ -15,13 +16,6 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
       firstPlace: true,
       secondPlace: true,
       thirdPlace: true,
-      predictions: {
-        include: {
-          firstPlace: true,
-          secondPlace: true,
-          thirdPlace: true
-        }
-      }
     }
   });
 
@@ -36,6 +30,19 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
       throw new Error('Risultati evento mancanti o incompleti per il tipo di scoring');
   }
 
+  // Auto-fill pronostici mancanti prima del calcolo punteggi
+  if (event.seasonId) {
+    const filled = await autoFillMissingPredictions(event.id, event.seasonId, event.date);
+    if (filled > 0) {
+      console.log(`Auto-fill: ${filled} pronostici creati per evento ${event.name}`);
+    }
+  }
+
+  // Fetch predictions (inclusi quelli appena auto-compilati)
+  const predictions = await prisma.prediction.findMany({
+    where: { eventId }
+  });
+
   const eventResult = {
     firstPlaceId: event.firstPlaceId,
     secondPlaceId: event.secondPlaceId,
@@ -45,10 +52,7 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
 
   const scoreUpdates = [];
 
-  for (const prediction of event.predictions) {
-    // Usa validazione centralizzata
-    if (!validatePrediction(prediction, scoringType)) continue;
-
+  for (const prediction of predictions) {
     const predictionResult = {
       firstPlaceId: prediction.firstPlaceId,
       secondPlaceId: prediction.secondPlaceId,
@@ -57,14 +61,13 @@ async function calculateScoresForEvent(eventId: string): Promise<void> {
     };
 
     const points = calculateScore(predictionResult, eventResult, event.type, scoringType);
-    
     scoreUpdates.push({ id: prediction.id, points });
   }
 
   // Aggiorna tutti i punteggi in una transazione
   if (scoreUpdates.length > 0) {
     await prisma.$transaction(
-      scoreUpdates.map(update => 
+      scoreUpdates.map(update =>
         prisma.prediction.update({
           where: { id: update.id },
           data: { points: update.points }
