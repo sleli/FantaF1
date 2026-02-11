@@ -145,19 +145,51 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
   const fetchDrivers = async () => {
     try {
       const response = await fetch('/api/drivers');
+      let activeDrivers: Driver[] = [];
+      
       if (response.ok) {
         const data = await response.json();
-        const activeDrivers = data.drivers.filter((d: Driver) => d.active);
+        activeDrivers = data.drivers.filter((d: Driver) => d.active);
         setDrivers(activeDrivers);
         
         // Initialize results for full grid if empty
         if (scoringType === 'FULL_GRID_DIFF' && results.length === 0) {
-           // Default order: number order or name order? 
-           // Usually we want the user to order them. 
-           // If we have no results yet, maybe just list them in default order.
-           // However, if we are editing and have no results, we should populate.
-           // If we are creating/editing and have results, we use them.
            if (!event?.results || event.results.length === 0) {
+             try {
+               // Fetch last completed race to use its arrival order
+               const racesRes = await fetch('/api/events?status=COMPLETED&type=RACE');
+               if (racesRes.ok) {
+                 const racesData = await racesRes.json();
+                 const events = racesData.events || [];
+                 
+                 // Sort by date desc to get the last one
+                 const lastRace = events.sort((a: any, b: any) => 
+                   new Date(b.date).getTime() - new Date(a.date).getTime()
+                 )[0];
+
+                 if (lastRace && lastRace.results && Array.isArray(lastRace.results)) {
+                   const lastOrderIds = lastRace.results;
+                   const activeDriverIds = new Set(activeDrivers.map(d => d.id));
+                   
+                   // Construct new order:
+                   // 1. Drivers from last race (if still active)
+                   // 2. Any active drivers not in last race (e.g. substitutes)
+                   const newOrder = [
+                     ...lastOrderIds.filter((id: string) => activeDriverIds.has(id)),
+                     ...activeDrivers
+                        .filter(d => !lastOrderIds.includes(d.id))
+                        .map(d => d.id)
+                   ];
+                   
+                   setResults(newOrder);
+                   return;
+                 }
+               }
+             } catch (e) {
+               console.error('Error fetching last race results:', e);
+             }
+
+             // Fallback: default order
              setResults(activeDrivers.map((d: Driver) => d.id));
            }
         }
