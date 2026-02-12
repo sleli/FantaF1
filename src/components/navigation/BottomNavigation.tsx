@@ -67,7 +67,7 @@ export default function BottomNavigation() {
         shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.3)]
       "
     >
-      <nav className="flex justify-around items-center h-[72px] px-2 safe-area-bottom">
+      <nav className="flex justify-around items-center h-[72px] px-2 w-full">
         {navigationItems.map((item) => {
           const isActive = isActivePage(item.href);
           const Icon = isActive ? item.activeIcon : item.icon;
@@ -134,6 +134,8 @@ export default function BottomNavigation() {
           );
         })}
       </nav>
+      {/* Safe area spacer */}
+      <div className="safe-area-bottom w-full" />
     </div>
   );
 }
