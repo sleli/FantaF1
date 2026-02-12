@@ -121,8 +121,7 @@ export default function UpcomingEvents({
 
   if (isLoading) {
     return (
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+      <div className="mt-4">
         <div className="space-y-4">
           <SkeletonEventCard />
           <SkeletonEventCard />
@@ -133,8 +132,7 @@ export default function UpcomingEvents({
 
   if (status === 'unauthenticated') {
     return (
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+      <div className="mt-4">
         <Card>
           <div className="p-8 text-center">
             <div className="text-4xl mb-4">🔒</div>
@@ -155,8 +153,7 @@ export default function UpcomingEvents({
 
   if (error) {
     return (
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+      <div className="mt-4">
         <Card>
           <div className="p-6 text-center">
             <div className="text-4xl mb-4">⚠️</div>
@@ -174,8 +171,7 @@ export default function UpcomingEvents({
   }
 
   return (
-    <div className="mt-8">
-      <h2 className="text-xl font-bold text-foreground mb-4">Prossimi Eventi</h2>
+    <div className="mt-4">
 
       {upcomingEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

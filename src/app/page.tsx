@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import PublicLayout from '@/components/layout/PublicLayout';
 import UpcomingEvents from '@/components/events/UpcomingEvents';
 import CompletedEvents from '@/components/events/CompletedEvents';
+import DashboardTabBar from '@/components/events/DashboardTabBar';
 import EventForm from '@/components/admin/EventForm';
 import { usePullToRefresh } from '@/hooks/useSwipe';
 
@@ -14,6 +15,9 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const isAdmin = session?.user?.role === 'ADMIN';
+
+  // State for tab navigation
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
   // State for event editing (admin only)
   const [showEventForm, setShowEventForm] = useState(false);
@@ -67,18 +71,25 @@ export default function Home() {
       
       <main ref={pullToRefreshRef} className="page-container transition-transform duration-300">
         <div className="page-desktop-card">
-        <div className="mb-8">
+        <div className="mb-4">
           <h2 className="text-3xl font-bold text-foreground mb-4">Dashboard FantaF1</h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground">
             Benvenuto nella tua dashboard! Qui potrai gestire i tuoi pronostici per le gare di Formula 1.
           </p>
         </div>
 
+        {/* Tab Navigation */}
+        <DashboardTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+
         {/* Upcoming Events Section */}
-        <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+        <div className={activeTab === 'upcoming' ? '' : 'hidden'}>
+          <UpcomingEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+        </div>
 
         {/* Completed Events Section */}
-        <CompletedEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+        <div className={activeTab === 'past' ? '' : 'hidden'}>
+          <CompletedEvents onEditEvent={handleEditEvent} refreshTrigger={refreshTrigger} />
+        </div>
 
         {/* Event Form Modal (Admin only) */}
         {isAdmin && showEventForm && (

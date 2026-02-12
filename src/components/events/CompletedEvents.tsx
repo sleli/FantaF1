@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { SkeletonEventCard } from '@/components/ui/Skeleton';
-import { ChevronDownIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, CalendarIcon, FlagIcon } from '@heroicons/react/24/outline';
 import { Driver, ScoringType } from '@prisma/client';
 import EventResultComparison from './EventResultComparison';
 
@@ -132,8 +132,7 @@ export default function CompletedEvents({
 
   if (isLoading) {
     return (
-      <div className="mt-10">
-        <h2 className="text-xl font-bold text-foreground mb-4">Eventi Conclusi</h2>
+      <div className="mt-4">
         <div className="space-y-4">
           <SkeletonEventCard />
           <SkeletonEventCard />
@@ -142,14 +141,31 @@ export default function CompletedEvents({
     );
   }
 
-  if (status === 'unauthenticated' || completedEvents.length === 0) {
+  if (status === 'unauthenticated') {
     return null;
+  }
+
+  if (completedEvents.length === 0) {
+    return (
+      <div className="mt-4">
+        <Card>
+          <div className="p-8 text-center">
+            <div className="text-4xl mb-4">🏁</div>
+            <p className="text-lg font-medium text-foreground mb-2">
+              Nessun evento concluso
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Gli eventi completati appariranno qui con i risultati e i tuoi punteggi.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="mt-10">
-        <h2 className="text-xl font-bold text-foreground mb-4">Eventi Conclusi</h2>
+      <div className="mt-4">
         <Card>
           <div className="p-6 text-center">
             <div className="text-4xl mb-4">⚠️</div>
@@ -172,9 +188,7 @@ export default function CompletedEvents({
   const hasMore = completedEvents.length > INITIAL_LIMIT;
 
   return (
-    <div className="mt-10">
-      <h2 className="text-xl font-bold text-foreground mb-4">Eventi Conclusi</h2>
-
+    <div className="mt-4">
       <div className="space-y-4">
         {displayedEvents.map((event) => {
           const prediction = predictions.get(event.id) || null;
@@ -185,88 +199,125 @@ export default function CompletedEvents({
 
           return (
             <Card key={event.id} padding="none" className="overflow-hidden">
-              {/* Collapsed card */}
-              <div className="p-4 md:p-5">
-                {/* Badges row */}
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <Badge variant="completed" size="sm">Completato</Badge>
-                  <Badge
-                    variant={event.type === 'RACE' ? 'race' : 'sprint'}
-                    size="sm"
-                  >
-                    {event.type === 'RACE' ? 'Gara' : 'Sprint'}
-                  </Badge>
+              <div className="md:flex">
+                {/* Circuit image section */}
+                <div className="relative h-28 md:h-auto md:w-40 md:flex-shrink-0 bg-gradient-to-br from-surface-3 via-surface-2 to-surface-3 overflow-hidden">
+                  {event.circuitImage ? (
+                    <>
+                      <img
+                        src={event.circuitImage}
+                        alt={event.circuitName || ''}
+                        className="absolute inset-0 w-full h-full object-contain opacity-70 p-3 md:p-4"
+                      />
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/20" />
+                    </>
+                  ) : event.countryFlag ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <img
+                        src={event.countryFlag}
+                        alt=""
+                        className="w-16 h-12 md:w-14 md:h-10 object-cover rounded-sm opacity-40"
+                      />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <FlagIcon className="w-10 h-10 text-muted-foreground/30" />
+                    </div>
+                  )}
+                  {/* Circuit name label */}
+                  {event.circuitName && (
+                    <div className="absolute bottom-2 left-3 md:bottom-3 md:left-3">
+                      <span className="text-xs font-medium text-white/80 drop-shadow-md">
+                        {event.circuitName}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Event name + date */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                      {event.countryFlag && (
-                        <img
-                          src={event.countryFlag}
-                          alt=""
-                          className="w-6 h-4 object-cover rounded-sm inline-block flex-shrink-0"
-                        />
+                {/* Content section */}
+                <div className="flex-1 p-4 md:p-5">
+                  {/* Badges row */}
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge variant="completed" size="sm">Completato</Badge>
+                    <Badge
+                      variant={event.type === 'RACE' ? 'race' : 'sprint'}
+                      size="sm"
+                    >
+                      {event.type === 'RACE' ? 'Gara' : 'Sprint'}
+                    </Badge>
+                  </div>
+
+                  {/* Event name + date + score */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                        {event.countryFlag && (
+                          <img
+                            src={event.countryFlag}
+                            alt=""
+                            className="w-6 h-4 object-cover rounded-sm inline-block flex-shrink-0"
+                          />
+                        )}
+                        <span className="truncate">{event.name}</span>
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span>
+                          {eventDate.toLocaleDateString('it-IT', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* User score badge */}
+                    <div className="flex-shrink-0">
+                      {prediction?.points !== null && prediction?.points !== undefined ? (
+                        <Badge variant="info" size="lg">
+                          {prediction.points} pt
+                        </Badge>
+                      ) : (
+                        <Badge variant="neutral" size="sm">
+                          Nessun pronostico
+                        </Badge>
                       )}
-                      <span className="truncate">{event.name}</span>
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <CalendarIcon className="w-4 h-4" />
-                      <span>
-                        {eventDate.toLocaleDateString('it-IT', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
                     </div>
                   </div>
 
-                  {/* User score badge */}
-                  <div className="flex-shrink-0">
-                    {prediction?.points !== null && prediction?.points !== undefined ? (
-                      <Badge variant="info" size="lg">
-                        {prediction.points} pt
-                      </Badge>
-                    ) : (
-                      <Badge variant="neutral" size="sm">
-                        Nessun pronostico
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleExpand(event.id)}
-                    rightIcon={
-                      <ChevronDownIcon
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180' : ''
-                        }`}
-                      />
-                    }
-                  >
-                    Risultato
-                  </Button>
-
-                  {isAdmin && onEditEvent && (
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onEditEvent(event)}
+                      onClick={() => toggleExpand(event.id)}
+                      rightIcon={
+                        <ChevronDownIcon
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                        />
+                      }
                     >
-                      Gestisci
+                      Risultato
                     </Button>
-                  )}
+
+                    {isAdmin && onEditEvent && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEditEvent(event)}
+                      >
+                        Gestisci
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Expanded comparison */}
+              {/* Expanded comparison - full width below both columns */}
               {isExpanded && (
                 <div className="px-4 pb-4 md:px-5 md:pb-5 animate-in slide-in-from-top-2 duration-200">
                   <EventResultComparison
