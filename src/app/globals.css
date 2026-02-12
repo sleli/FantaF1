@@ -101,12 +101,14 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   background-image: none;
+  overscroll-behavior-y: none;
 }
 
 /* Light Mode Background Override */
