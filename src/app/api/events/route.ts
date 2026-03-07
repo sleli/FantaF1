@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
         circuitName: true,
         countryFlag: true,
         circuitImage: true,
+        meetingKey: true,
         season: {
             select: {
                 id: true,

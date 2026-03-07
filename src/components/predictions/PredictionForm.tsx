@@ -32,6 +32,7 @@ interface PredictionFormProps {
   };
   isLoading: boolean;
   isModifying?: boolean;
+  isAdmin?: boolean;
 }
 
 // Position card for LEGACY_TOP3 mode - Open Design
@@ -149,6 +150,7 @@ export default function PredictionForm({
   lastPrediction,
   isLoading,
   isModifying = false,
+  isAdmin = false,
 }: PredictionFormProps) {
   const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
 
@@ -169,6 +171,10 @@ export default function PredictionForm({
   // New State
   const [orderedDriverIds, setOrderedDriverIds] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
+
+  // Qualifying sort state (admin only)
+  const [qualifyingLoading, setQualifyingLoading] = useState(false);
+  const [qualifyingError, setQualifyingError] = useState<string | null>(null);
 
   // Driver picker sheet state
   const [pickerPosition, setPickerPosition] = useState<1 | 2 | 3 | null>(null);
@@ -492,6 +498,40 @@ export default function PredictionForm({
                 {orderedDriverIds.length} piloti
               </Badge>
             </div>
+            {isAdmin && (event as any).meetingKey && (
+              <div className="mb-3 px-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!isEventOpen || qualifyingLoading}
+                  isLoading={qualifyingLoading}
+                  onClick={async () => {
+                    setQualifyingLoading(true);
+                    setQualifyingError(null);
+                    try {
+                      const res = await fetch(`/api/admin/events/${event.id}/qualifying-order`);
+                      const data = await res.json();
+                      if (!res.ok) {
+                        setQualifyingError(data.error || 'Errore nel recupero dei risultati');
+                        return;
+                      }
+                      setOrderedDriverIds(data.orderedDriverIds);
+                      setTouched(true);
+                    } catch {
+                      setQualifyingError('Errore di connessione. Riprova più tardi.');
+                    } finally {
+                      setQualifyingLoading(false);
+                    }
+                  }}
+                >
+                  Ordina per Qualifica
+                </Button>
+                {qualifyingError && (
+                  <p className="text-xs text-destructive mt-1.5">{qualifyingError}</p>
+                )}
+              </div>
+            )}
             <SortableDriverList
               drivers={drivers}
               orderedDriverIds={orderedDriverIds}

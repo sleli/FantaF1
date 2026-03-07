@@ -25,7 +25,8 @@ export default function MyPredictionsView({
   seasonStatus,
   initialEventId,
 }: MyPredictionsViewProps) {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   const [predictions, setPredictions] = useState<PredictionWithDetails[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
@@ -228,6 +229,7 @@ export default function MyPredictionsView({
             onSubmit={handleCreatePrediction}
             isLoading={isLoading}
             lastPrediction={predictions.length > 0 ? { rankings: predictions[0].rankings as string[] } : undefined}
+            isAdmin={isAdmin}
           />
         )}
 
@@ -244,6 +246,7 @@ export default function MyPredictionsView({
             }}
             isLoading={isLoading}
             isModifying={true}
+            isAdmin={isAdmin}
           />
         )}
       </div>
