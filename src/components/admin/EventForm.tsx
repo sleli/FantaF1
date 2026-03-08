@@ -302,6 +302,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
   // Fetch results from OpenF1 API
   const handleFetchResults = async () => {
+    if (!event?.id) return;
     setFetchingResults(true);
     setFetchMessage(null);
     setFetchedResults([]);

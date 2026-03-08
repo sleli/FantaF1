@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 const drivers2025 = [
   // McLaren Formula 1 Team
   { name: "Oscar Piastri", team: "McLaren", number: 81, active: true },
-  { name: "Lando Norris", team: "McLaren", number: 4, active: true },
+  { name: "Lando Norris", team: "McLaren", number: 1, active: true },
   
   // Scuderia Ferrari HP
   { name: "Charles Leclerc", team: "Ferrari", number: 16, active: true },
