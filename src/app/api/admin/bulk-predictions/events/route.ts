@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const events = await prisma.event.findMany({
       where: {
         seasonId: activeSeason.id,
-        status: { in: ['UPCOMING', 'CLOSED'] }
+        status: { in: ['UPCOMING', 'CLOSED', 'COMPLETED'] }
       },
       include: {
         season: {

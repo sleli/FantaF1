@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { Driver, Event } from '@prisma/client';
 import BulkPredictionsGrid from '@/components/admin/BulkPredictionsGrid';
+import BulkGridPredictions from '@/components/admin/BulkGridPredictions';
 import EventSelector from '@/components/admin/EventSelector';
 import BulkOperations from '@/components/admin/BulkOperations';
 import UserSearch from '@/components/admin/UserSearch';
@@ -17,6 +18,7 @@ type EventWithCount = Event & {
   secondPlace?: Driver;
   thirdPlace?: Driver;
   _count: { predictions: number };
+  season?: { scoringType: string };
 };
 
 type UserWithPrediction = {
@@ -33,6 +35,7 @@ type UserWithPrediction = {
     firstPlace: Driver;
     secondPlace: Driver;
     thirdPlace: Driver;
+    rankings?: string[];
   } | null;
 };
 
@@ -367,38 +370,42 @@ export default function BulkPredictionsPage() {
           <Card>
             <div className="p-6">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <UserSearch
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                totalUsers={usersWithPredictions.length}
-                filteredUsers={filteredUsers.length}
-              />
-              
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Button
-                    onClick={handleBulkSave}
-                    disabled={!hasUnsavedChanges || isLoading}
-                    isLoading={isLoading}
-                  >
-                    Salva Tutto
-                  </Button>
+              {selectedEvent.season?.scoringType !== 'FULL_GRID_DIFF' && (
+                <UserSearch
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  totalUsers={usersWithPredictions.length}
+                  filteredUsers={filteredUsers.length}
+                />
+              )}
 
-                  {saveProgress && (
-                    <div className="absolute top-full left-0 right-0 mt-2">
-                      <div className="bg-muted rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(saveProgress.current / saveProgress.total) * 100}%` }}
-                        />
+              <div className="flex gap-2">
+                {selectedEvent.season?.scoringType !== 'FULL_GRID_DIFF' && (
+                  <div className="relative">
+                    <Button
+                      onClick={handleBulkSave}
+                      disabled={!hasUnsavedChanges || isLoading}
+                      isLoading={isLoading}
+                    >
+                      Salva Tutto
+                    </Button>
+
+                    {saveProgress && (
+                      <div className="absolute top-full left-0 right-0 mt-2">
+                        <div className="bg-muted rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(saveProgress.current / saveProgress.total) * 100}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 text-center">
+                          {Math.round((saveProgress.current / saveProgress.total) * 100)}%
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1 text-center">
-                        {Math.round((saveProgress.current / saveProgress.total) * 100)}%
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
+                    )}
+                  </div>
+                )}
+
                 <BulkOperations
                   selectedEvent={selectedEvent}
                   events={events}
@@ -412,14 +419,25 @@ export default function BulkPredictionsPage() {
 
           {/* Predictions Grid */}
           <div className="bg-card text-card-foreground border border-border shadow rounded-lg">
-            <BulkPredictionsGrid
-              users={filteredUsers}
-              drivers={drivers}
-              onPredictionChange={handlePredictionChange}
-              isLoading={isLoading}
-              hasUnsavedChanges={hasUnsavedChanges}
-              scoringType={(selectedEvent as any)?.season?.scoringType}
-            />
+            {selectedEvent.season?.scoringType === 'FULL_GRID_DIFF' ? (
+              <BulkGridPredictions
+                users={usersWithPredictions}
+                drivers={drivers}
+                eventId={selectedEvent.id}
+                isLoading={isLoading}
+                onSaveSuccess={() => loadPredictionsForEvent(selectedEvent.id)}
+                addNotification={addNotification}
+              />
+            ) : (
+              <BulkPredictionsGrid
+                users={filteredUsers}
+                drivers={drivers}
+                onPredictionChange={handlePredictionChange}
+                isLoading={isLoading}
+                hasUnsavedChanges={hasUnsavedChanges}
+                scoringType={(selectedEvent as any)?.season?.scoringType}
+              />
+            )}
           </div>
         </>
       )}

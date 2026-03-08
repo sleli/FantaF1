@@ -16,6 +16,13 @@ const bulkPredictionSchema = z.object({
   }))
 });
 
+// Validation schema for grid prediction updates (FULL_GRID_DIFF)
+const gridPredictionSchema = z.object({
+  eventId: z.string().cuid(),
+  userId: z.string().cuid(),
+  rankings: z.array(z.string().cuid()).min(1)
+});
+
 // Validation schema for copying predictions
 const copyPredictionsSchema = z.object({
   sourceEventId: z.string().cuid(),
@@ -130,6 +137,8 @@ export async function POST(request: NextRequest) {
 
     if (action === 'update') {
       return await handleBulkUpdate(body);
+    } else if (action === 'update-grid') {
+      return await handleGridUpdate(body);
     } else if (action === 'clear') {
       return await handleClearPredictions(body);
     } else if (action === 'copy') {
@@ -268,6 +277,75 @@ async function handleBulkUpdate(body: any) {
   });
 }
 
+async function handleGridUpdate(body: any) {
+  const validation = gridPredictionSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: 'Dati non validi', details: validation.error.errors },
+      { status: 400 }
+    );
+  }
+
+  const { eventId, userId, rankings } = validation.data;
+
+  // Check for duplicate driver IDs
+  if (new Set(rankings).size !== rankings.length) {
+    return NextResponse.json(
+      { error: 'Piloti duplicati nella griglia' },
+      { status: 400 }
+    );
+  }
+
+  const activeSeason = await getActiveSeason();
+  if (!activeSeason) {
+    return NextResponse.json({ error: 'No active season' }, { status: 400 });
+  }
+
+  // Verify event exists in active season
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, seasonId: activeSeason.id }
+  });
+
+  if (!event) {
+    return NextResponse.json(
+      { error: 'Evento non trovato nella stagione attiva' },
+      { status: 404 }
+    );
+  }
+
+  // Validate all drivers exist in active season
+  const drivers = await prisma.driver.findMany({
+    where: { id: { in: rankings }, seasonId: activeSeason.id }
+  });
+
+  if (drivers.length !== rankings.length) {
+    return NextResponse.json(
+      { error: 'Uno o più piloti non esistono nella stagione attiva' },
+      { status: 400 }
+    );
+  }
+
+  const prediction = await prisma.prediction.upsert({
+    where: {
+      userId_eventId: { userId, eventId }
+    },
+    update: {
+      rankings: rankings,
+      updatedAt: new Date()
+    },
+    create: {
+      userId,
+      eventId,
+      rankings: rankings
+    }
+  });
+
+  return NextResponse.json({
+    message: 'Griglia salvata con successo',
+    prediction
+  });
+}
+
 async function handleClearPredictions(body: any) {
   const { eventId } = body;
 
@@ -376,6 +454,7 @@ async function handleCopyPredictions(body: any) {
           firstPlaceId: sourcePrediction.firstPlaceId,
           secondPlaceId: sourcePrediction.secondPlaceId,
           thirdPlaceId: sourcePrediction.thirdPlaceId,
+          rankings: sourcePrediction.rankings ?? undefined,
           updatedAt: new Date()
         },
         create: {
@@ -383,7 +462,8 @@ async function handleCopyPredictions(body: any) {
           eventId: targetEventId,
           firstPlaceId: sourcePrediction.firstPlaceId,
           secondPlaceId: sourcePrediction.secondPlaceId,
-          thirdPlaceId: sourcePrediction.thirdPlaceId
+          thirdPlaceId: sourcePrediction.thirdPlaceId,
+          rankings: sourcePrediction.rankings ?? undefined
         }
       });
 
