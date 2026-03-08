@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
 import { f1ImportService, F1APIError } from '@/lib/f1-api';
+import { openF1Client } from '@/lib/f1-api/openf1';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -32,15 +33,55 @@ async function postHandler(req: NextRequest, context: RouteContext) {
     return apiResponse({ error: 'Evento non trovato' }, 404);
   }
 
-  if (!event.sessionKey) {
-    return apiResponse(
-      { error: 'Questo evento non ha un session_key. Impossibile recuperare i risultati da OpenF1.' },
-      400
-    );
+  let sessionKey = event.sessionKey;
+
+  if (!sessionKey) {
+    // Auto-detect sessionKey from OpenF1 based on event date and type
+    try {
+      const year = event.date.getFullYear();
+      const sessions = await openF1Client.getSessionsForYear(year);
+      const sessionName = event.type === 'RACE' ? 'Race' : 'Sprint';
+      const matchingSessions = sessions.filter(s => s.session_name === sessionName);
+
+      // Find session closest to event date within 24h tolerance
+      const eventTime = event.date.getTime();
+      const TOLERANCE_MS = 24 * 60 * 60 * 1000;
+      let bestSession = null;
+      let bestDiff = Infinity;
+
+      for (const s of matchingSessions) {
+        const diff = Math.abs(new Date(s.date_start).getTime() - eventTime);
+        if (diff < TOLERANCE_MS && diff < bestDiff) {
+          bestDiff = diff;
+          bestSession = s;
+        }
+      }
+
+      if (!bestSession) {
+        return apiResponse(
+          { error: 'Sessione non trovata su OpenF1. Verifica data e tipo dell\'evento.' },
+          404
+        );
+      }
+
+      sessionKey = bestSession.session_key;
+
+      // Save sessionKey for future use
+      await prisma.event.update({
+        where: { id: eventId },
+        data: { sessionKey }
+      });
+    } catch (error) {
+      console.error('Error auto-detecting sessionKey:', error);
+      if (error instanceof F1APIError) {
+        return apiResponse({ error: `Errore OpenF1: ${error.message}` }, error.statusCode || 500);
+      }
+      return apiResponse({ error: 'Impossibile trovare la sessione su OpenF1.' }, 500);
+    }
   }
 
   try {
-    const apiResults = await f1ImportService.getEventResults(event.sessionKey);
+    const apiResults = await f1ImportService.getEventResults(sessionKey);
 
     // Map driver numbers to internal driver IDs
     const seasonDrivers = event.season?.drivers || [];
@@ -64,7 +105,7 @@ async function postHandler(req: NextRequest, context: RouteContext) {
       totalResults: mappedResults.length,
       unmappedDrivers: unmappedCount,
       eventName: event.name,
-      sessionKey: event.sessionKey,
+      sessionKey,
       message: unmappedCount > 0
         ? `Attenzione: ${unmappedCount} piloti non trovati nella stagione. Verifica i numeri dei piloti.`
         : 'Risultati recuperati con successo. Usa PUT per salvare.'

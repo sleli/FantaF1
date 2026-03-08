@@ -302,8 +302,6 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
 
   // Fetch results from OpenF1 API
   const handleFetchResults = async () => {
-    if (!event?.sessionKey) return;
-
     setFetchingResults(true);
     setFetchMessage(null);
     setFetchedResults([]);
@@ -483,7 +481,7 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
           {activeTab === 'results' && (
             <div className="space-y-6">
               {/* Fetch from OpenF1 Button */}
-              {event?.sessionKey && (
+              {event && (
                 <div className="bg-secondary/50 border border-border rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
@@ -492,7 +490,9 @@ export default function EventForm({ event, onSave, onCancel }: EventFormProps) {
                         Recupera da OpenF1
                       </h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Session Key: {event.sessionKey}
+                        {event.sessionKey
+                          ? `Session Key: ${event.sessionKey}`
+                          : 'La session key verrà cercata automaticamente'}
                       </p>
                     </div>
                     <button
