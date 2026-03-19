@@ -38,6 +38,13 @@ async function handler(req: NextRequest, context: RouteContext) {
   try {
     const sessions = await openF1Client.getSessions(event.meetingKey);
 
+    if (!sessions || sessions.length === 0) {
+      return apiResponse(
+        { error: 'Le sessioni per questo evento non sono ancora disponibili.' },
+        404
+      );
+    }
+
     // Find the qualifying session based on event type
     let qualifyingSession;
     if (event.type === 'SPRINT') {
@@ -55,7 +62,25 @@ async function handler(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const results = await openF1Client.getFinalResults(qualifyingSession.session_key);
+    let results;
+    try {
+      results = await openF1Client.getFinalResults(qualifyingSession.session_key);
+    } catch (error) {
+      if (error instanceof F1APIError && error.statusCode === 404) {
+        return apiResponse(
+          { error: 'I risultati delle qualifiche non sono ancora disponibili. La sessione potrebbe non essere ancora stata disputata.' },
+          404
+        );
+      }
+      throw error;
+    }
+
+    if (!results || results.length === 0) {
+      return apiResponse(
+        { error: 'I risultati delle qualifiche non sono ancora disponibili. La sessione potrebbe non essere ancora stata disputata.' },
+        404
+      );
+    }
 
     // Map driver_number → driver.id
     const seasonDrivers = event.season?.drivers || [];
@@ -70,6 +95,13 @@ async function handler(req: NextRequest, context: RouteContext) {
         orderedDriverIds.push(driverId);
         mappedNumbers.add(result.driver_number);
       }
+    }
+
+    if (orderedDriverIds.length === 0) {
+      return apiResponse(
+        { error: 'Nessun pilota della stagione corrisponde ai risultati delle qualifiche. Verifica la configurazione dei piloti.' },
+        500
+      );
     }
 
     // Append active drivers not present in qualifying results
@@ -90,11 +122,15 @@ async function handler(req: NextRequest, context: RouteContext) {
       );
     }
 
+    const isNetworkError = error instanceof TypeError && error.message.includes('fetch');
     return apiResponse(
-      { error: 'Impossibile recuperare i risultati delle qualifiche. Riprova più tardi.' },
+      { error: isNetworkError
+        ? 'Errore di connessione al servizio OpenF1. Verifica la connessione e riprova.'
+        : 'Impossibile recuperare i risultati delle qualifiche. Riprova più tardi.'
+      },
       500
     );
   }
 }
 
-export const GET = withAuthAPI(handler, { requiredRole: 'ADMIN' });
+export const GET = withAuthAPI(handler);

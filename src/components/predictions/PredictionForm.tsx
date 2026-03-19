@@ -498,7 +498,7 @@ export default function PredictionForm({
                 {orderedDriverIds.length} piloti
               </Badge>
             </div>
-            {isAdmin && (event as any).meetingKey && (
+            {(event as any).meetingKey && (
               <div className="mb-3 px-1">
                 <Button
                   type="button"
@@ -510,7 +510,7 @@ export default function PredictionForm({
                     setQualifyingLoading(true);
                     setQualifyingError(null);
                     try {
-                      const res = await fetch(`/api/admin/events/${event.id}/qualifying-order`);
+                      const res = await fetch(`/api/events/${event.id}/qualifying-order`);
                       const data = await res.json();
                       if (!res.ok) {
                         setQualifyingError(data.error || 'Errore nel recupero dei risultati');
