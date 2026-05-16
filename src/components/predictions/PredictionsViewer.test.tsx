@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import PredictionsViewer from './PredictionsViewer'
 import { ScoringType } from '@prisma/client'
 
@@ -70,6 +70,11 @@ describe('PredictionsViewer', () => {
     )
 
     expect(screen.getByText('Completata')).toBeInTheDocument()
+
+    // Click to expand the prediction row (the table is hidden until expanded)
+    const expandButton = screen.getByRole('button')
+    fireEvent.click(expandButton)
+
     expect(screen.getByRole('columnheader', { name: 'Punti' })).toBeInTheDocument()
     expect(screen.getAllByText('25')[0]).toBeInTheDocument()
   })
@@ -100,6 +105,10 @@ describe('PredictionsViewer', () => {
         onEdit={jest.fn()}
       />
     )
+
+    // Click to expand the prediction row (the "Modifica" button is hidden until expanded)
+    const expandButton = screen.getByRole('button')
+    fireEvent.click(expandButton)
 
     expect(screen.getByRole('button', { name: 'Modifica' })).toBeInTheDocument()
   })
