@@ -5,6 +5,11 @@ import { POINTS } from './types'
 export const MAX_PENALTY = 20;
 export const MISSING_DATA_PENALTY = 1000;
 
+// Pesi posizionali per FULL_GRID_DIFF
+export const TOP10_WEIGHT = 0.8;
+export const LOW_GRID_WEIGHT = 1.2;
+export const TOP10_THRESHOLD = 10; // posizioni 0–9 in 0-indexed (top 10)
+
 /**
  * Calcola il punteggio peggiore possibile per una griglia di N piloti.
  * Formula: floor(N²/2) — equivale a N²/2 se N pari, (N²-1)/2 se N dispari.
@@ -136,12 +141,14 @@ function calculateAbsoluteDifferenceScoreHelper(
 
   let score = 0;
   resultRankings.forEach((driverId, actualIndex) => {
+    // Peso posizionale: primi 10 (0-9) peso ridotto, 11+ peso aumentato
+    const positionWeight = actualIndex < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT;
     const predictedIndex = predictionRankings.indexOf(driverId);
     if (predictedIndex !== -1) {
-      score += Math.abs(predictedIndex - actualIndex);
+      score += Math.abs(predictedIndex - actualIndex) * positionWeight;
     } else {
-      // Driver not predicted -> Max penalty
-      score += MAX_PENALTY;
+      // Driver not predicted -> Max penalty (pesata per posizione)
+      score += MAX_PENALTY * positionWeight;
     }
   });
 

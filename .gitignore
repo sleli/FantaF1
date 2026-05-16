@@ -34,3 +34,7 @@ tasks/
 .vercel
 .trae/
 next-env.d.ts
+
+.claude/
+.agents/
+.codex/

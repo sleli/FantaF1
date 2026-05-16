@@ -46,14 +46,14 @@ describe('Scoring System', () => {
     it('should calculate differences correctly', () => {
       // Pred: 1, 2, 3
       // Res:  1, 3, 2
-      // 1: 0-0 = 0
-      // 2: |1-2| = 1
-      // 3: |2-1| = 1
-      // Total: 2
+      // 1: |0-0| = 0
+      // 2: actual pos 2 (top 10), |1-2| = 1 × 0.8 = 0.8
+      // 3: actual pos 1 (top 10), |2-1| = 1 × 0.8 = 0.8
+      // Total: 1.6
       const prediction = { rankings: ['1', '2', '3'] };
       const result = { results: ['1', '3', '2'] };
       const score = calculateScore(prediction, result, eventType, scoringType);
-      expect(score).toBe(2);
+      expect(score).toBe(1.6);
     });
 
     it('should penalize missing drivers in prediction', () => {
@@ -61,22 +61,22 @@ describe('Scoring System', () => {
       // Res:  1, 2, 3
       // 1: 0
       // 2: 0
-      // 3: 20 (penalty)
+      // 3: actual pos 2 (top 10), 20 × 0.8 = 16
       const prediction = { rankings: ['1', '2'] };
       const result = { results: ['1', '2', '3'] };
       const score = calculateScore(prediction, result, eventType, scoringType);
-      expect(score).toBe(20);
+      expect(score).toBe(16);
     });
 
     it('should halve penalty for Sprint races', () => {
       // Pred: 1, 2, 3
       // Res:  1, 3, 2
-      // Base penalty: 2
-      // Sprint: 1
+      // Base penalty: 1.6
+      // Sprint: 0.8
       const prediction = { rankings: ['1', '2', '3'] };
       const result = { results: ['1', '3', '2'] };
       const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
-      expect(score).toBe(1);
+      expect(score).toBe(0.8);
     });
   });
 
@@ -100,12 +100,12 @@ describe('Scoring System', () => {
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
-        // d1 is pos 1 in result, pos 2 in pred -> diff 1
-        // d2 is pos 2 in result, pos 1 in pred -> diff 1
+        // d1: actual pos 0, pred pos 1 -> diff 1 × 0.8 = 0.8
+        // d2: actual pos 1, pred pos 0 -> diff 1 × 0.8 = 0.8
         // others 0
-        // total 2
+        // total 1.6
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(2);
+        expect(score).toBe(1.6);
     });
 
     it('should handle SPRINT with large grid (half penalty)', () => {
@@ -117,7 +117,7 @@ describe('Scoring System', () => {
         const result = { results: drivers };
         
         const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
-        expect(score).toBe(1); // 2 * 0.5
+        expect(score).toBe(0.8); // 1.6 * 0.5
     });
     
     it('should penalize DNF/missing drivers in prediction for full grid', () => {
@@ -127,10 +127,94 @@ describe('Scoring System', () => {
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
-        // d20 is missing from prediction. 
-        // Penalty is usually 20 (max penalty).
+        // d20 is missing from prediction.
+        // actual pos 19 -> weight 1.2, so penalty = 20 × 1.2 = 24
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(20);
+        expect(score).toBe(24);
+    });
+
+    it('should apply TOP10_WEIGHT (0.8) to drivers finishing 1-10', () => {
+        // Swap driver at position 6 (actual pos 5) with position 7 (actual pos 6)
+        // Both in top 10 → weight 0.8
+        const predRankings = [...drivers];
+        [predRankings[4], predRankings[5]] = [predRankings[5], predRankings[4]]; // swap d5, d6
+        
+        const prediction = { rankings: predRankings };
+        const result = { results: drivers };
+        
+        // d5: actual pos 4, pred pos 5 -> diff 1 × 0.8 = 0.8
+        // d6: actual pos 5, pred pos 4 -> diff 1 × 0.8 = 0.8
+        // Total: 1.6
+        const score = calculateScore(prediction, result, eventType, scoringType);
+        expect(score).toBe(1.6);
+    });
+
+    it('should apply LOW_GRID_WEIGHT (1.2) to drivers finishing 11+', () => {
+        // Swap driver at position 15 (actual pos 14) with position 16 (actual pos 15)
+        // Both 11+ → weight 1.2
+        const predRankings = [...drivers];
+        [predRankings[14], predRankings[15]] = [predRankings[15], predRankings[14]]; // swap d15, d16
+        
+        const prediction = { rankings: predRankings };
+        const result = { results: drivers };
+        
+        // d15: actual pos 14, pred pos 15 -> diff 1 × 1.2 = 1.2
+        // d16: actual pos 15, pred pos 14 -> diff 1 × 1.2 = 1.2
+        // Total: 2.4
+        const score = calculateScore(prediction, result, eventType, scoringType);
+        expect(score).toBe(2.4);
+    });
+
+    it('should penalize missing top-10 driver less than missing bottom driver', () => {
+        // When a driver is missing from prediction, all subsequent drivers shift.
+        // Missing d2 (actual pos 1, top 10): 16 (penalty) + 8×0.8 (d3-d10 shift) + 10×1.2 (d11-d20 shift) = 34.4
+        const predWithoutD2 = drivers.filter(id => id !== 'd2');
+        const prediction = { rankings: predWithoutD2 };
+        const result = { results: drivers };
+        const scoreTop10Missing = calculateScore(prediction, result, eventType, scoringType);
+        expect(scoreTop10Missing).toBeCloseTo(34.4, 10);
+
+        // Missing d15 (actual pos 14, 11+): 24 (penalty) + 5×1.2 (d16-d20 shift) = 30.0
+        const predWithoutD15 = drivers.filter(id => id !== 'd15');
+        const prediction2 = { rankings: predWithoutD15 };
+        const scoreBottomMissing = calculateScore(prediction2, result, eventType, scoringType);
+        expect(scoreBottomMissing).toBeCloseTo(30, 10);
+    });
+
+    it('should apply correct weight at the boundary (position 10 vs 11)', () => {
+        // Position 10 (0-indexed 9): top 10 → weight 0.8
+        // Position 11 (0-indexed 10): 11+ → weight 1.2
+        const predRankings = [...drivers];
+        // Swap d10 (pos 9, top 10) with d11 (pos 10, 11+)
+        [predRankings[9], predRankings[10]] = [predRankings[10], predRankings[9]];
+        
+        const prediction = { rankings: predRankings };
+        const result = { results: drivers };
+        
+        // d10: actual pos 9 (top 10), pred pos 10 -> diff 1 × 0.8 = 0.8
+        // d11: actual pos 10 (11+), pred pos 9 -> diff 1 × 1.2 = 1.2
+        // Total: 2.0
+        const score = calculateScore(prediction, result, eventType, scoringType);
+        expect(score).toBe(2.0);
+    });
+
+    it('should handle weighted sprint correctly', () => {
+        // Swap first two (top 10) → base 1.6, sprint: 0.8
+        const predRankings = [...drivers];
+        [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]];
+        const prediction = { rankings: predRankings };
+        const result = { results: drivers };
+        
+        const sprintScore = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
+        expect(sprintScore).toBe(0.8);
+
+        // Swap bottom two (11+) → base 2.4, sprint: 1.2
+        const predRankings2 = [...drivers];
+        [predRankings2[18], predRankings2[19]] = [predRankings2[19], predRankings2[18]];
+        const prediction2 = { rankings: predRankings2 };
+        
+        const sprintScore2 = calculateScore(prediction2, result, 'SPRINT' as EventType, scoringType);
+        expect(sprintScore2).toBe(1.2);
     });
   });
 

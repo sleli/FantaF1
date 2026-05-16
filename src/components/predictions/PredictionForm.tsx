@@ -617,7 +617,7 @@ export default function PredictionForm({
             <p className="text-accent-cyan text-sm">
               <strong>Sprint:</strong>{' '}
               {scoringType === ScoringType.FULL_GRID_DIFF
-                ? 'Le penalità saranno dimezzate (x 0.5)'
+                ? 'Penalità dimezzate (×0.5). Pesi: primi 10 ×0.8, 11°+ ×1.2'
                 : 'Punteggi dimezzati (12.5 - 7.5 - 5 punti)'}
             </p>
           </div>

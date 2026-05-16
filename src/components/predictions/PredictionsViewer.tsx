@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
-import { MAX_PENALTY } from '@/lib/scoring'
+import { MAX_PENALTY, TOP10_THRESHOLD, TOP10_WEIGHT, LOW_GRID_WEIGHT } from '@/lib/scoring'
 import { ChevronDownIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export type PredictionsViewerProps = {
@@ -135,8 +135,9 @@ function PredictionTable({
       }
 
       if (eventResult.scoringType === ScoringType.FULL_GRID_DIFF) {
-        const penalty = actualIndex === -1 ? MAX_PENALTY : Math.abs(index - actualIndex)
-        points = penalty * sprintMultiplier
+        const positionWeight = actualIndex !== -1 ? (actualIndex < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT) : 1.0;
+        const basePenalty = actualIndex === -1 ? MAX_PENALTY : Math.abs(index - actualIndex)
+        points = basePenalty * positionWeight * sprintMultiplier
       } else {
         if (actualIndex === index) {
           points =

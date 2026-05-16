@@ -56,7 +56,7 @@ function getScoringDescription(scoringType: string): { label: string; descriptio
     case 'FULL_GRID_DIFF':
       return {
         label: 'Differenza Griglia',
-        description: "Vince il punteggio minore. Pronostico dell'intera griglia di partenza. Il punteggio è la somma delle differenze tra posizione prevista e reale. Sprint vale metà punti."
+        description: "Vince il punteggio minore. Pronostico dell'intera griglia. Differenze pesate: ×0.8 per i primi 10, ×1.2 dall'11° in poi. Sprint vale metà punti."
       }
     case 'LEGACY_TOP3':
     default:

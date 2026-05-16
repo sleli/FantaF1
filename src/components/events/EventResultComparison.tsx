@@ -4,6 +4,7 @@ import { Driver, ScoringType } from '@prisma/client';
 import DriverAvatar from '@/components/ui/DriverAvatar';
 import PositionBadge from '@/components/ui/PositionBadge';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { MAX_PENALTY, TOP10_THRESHOLD, TOP10_WEIGHT, LOW_GRID_WEIGHT } from '@/lib/scoring';
 
 interface CompletedEvent {
   id: string;
@@ -111,6 +112,11 @@ function FullGridComparison({
               const isMatch = predictedPos === idx;
               const diff = predictedPos !== undefined ? Math.abs(predictedPos - idx) : null;
               const isMissing = predictedPos === undefined;
+              
+              // Peso posizionale: top 10 (idx 0-9) = 0.8, 11+ (idx 10+) = 1.2
+              const positionWeight = idx < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT;
+              const weightedDiff = diff !== null ? diff * positionWeight : null;
+              const weightedPenalty = MAX_PENALTY * positionWeight;
 
               return (
                 <tr key={`${driverId}-${idx}`} className="hover:bg-muted/20 transition-colors">
@@ -146,10 +152,16 @@ function FullGridComparison({
                   <td className="px-3 py-2 text-right tabular-nums font-medium">
                     {hasPrediction ? (
                       isMissing ? (
-                        <span className="text-red-500 text-xs">+20</span>
+                        <span className="text-red-500 text-xs">+{weightedPenalty % 1 === 0 ? weightedPenalty : weightedPenalty.toFixed(1)}</span>
                       ) : (
-                        <span className={`text-xs ${diff === 0 ? 'text-accent-green' : diff && diff <= 2 ? 'text-accent-amber' : 'text-foreground'}`}>
-                          +{diff}
+                        <span className={`text-xs ${
+                          diff === 0
+                            ? 'text-accent-green'
+                            : (weightedDiff !== null && weightedDiff <= 2)
+                              ? 'text-accent-amber'
+                              : 'text-foreground'
+                        }`}>
+                          +{diff === 0 ? '0' : (weightedDiff !== null && weightedDiff % 1 === 0 ? weightedDiff : weightedDiff?.toFixed(1))}
                         </span>
                       )
                     ) : (
