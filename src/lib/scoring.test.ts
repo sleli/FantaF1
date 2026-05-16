@@ -44,16 +44,16 @@ describe('Scoring System', () => {
     });
 
     it('should calculate differences correctly', () => {
-      // Pred: 1, 2, 3
+      // Pred: 2, 1, 3
       // Res:  1, 3, 2
-      // 1: |0-0| = 0
-      // 2: actual pos 2 (top 10), |1-2| = 1 × 0.8 = 0.8
-      // 3: actual pos 1 (top 10), |2-1| = 1 × 0.8 = 0.8
-      // Total: 1.6
-      const prediction = { rankings: ['1', '2', '3'] };
+      // 1: actual pos 0, pred pos 1 → |1-0| = 1 × 0.8 = 0.8
+      // 2: actual pos 2, pred pos 0 → |0-2| = 2 × 0.8 = 1.6
+      // 3: actual pos 1, pred pos 2 → |2-1| = 1 × 0.8 = 0.8
+      // Total: 3.2 (no podium bonus: pred[0]=2 ≠ res[0]=1)
+      const prediction = { rankings: ['2', '1', '3'] };
       const result = { results: ['1', '3', '2'] };
       const score = calculateScore(prediction, result, eventType, scoringType);
-      expect(score).toBe(1.6);
+      expect(score).toBe(3.2);
     });
 
     it('should penalize missing drivers in prediction', () => {
@@ -69,14 +69,105 @@ describe('Scoring System', () => {
     });
 
     it('should halve penalty for Sprint races', () => {
-      // Pred: 1, 2, 3
-      // Res:  1, 3, 2
-      // Base penalty: 1.6
-      // Sprint: 0.8
-      const prediction = { rankings: ['1', '2', '3'] };
-      const result = { results: ['1', '3', '2'] };
+      // Pred: 2, 1, 3, 4
+      // Res:  1, 3, 4, 2  (podium tutto sbagliato, no bonus)
+      // d1: actual 0, pred 1 → |1-0|=1×0.8=0.8
+      // d2: actual 3, pred 0 → |0-3|=3×0.8=2.4
+      // d3: actual 1, pred 2 → |2-1|=1×0.8=0.8
+      // d4: actual 2, pred 3 → |3-2|=1×0.8=0.8
+      // Base: 4.8, Sprint: 2.4, Podium: pred[0]=2≠1 → no bonus
+      const prediction = { rankings: ['2', '1', '3', '4'] };
+      const result = { results: ['1', '3', '4', '2'] };
       const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
-      expect(score).toBe(0.8);
+      expect(score).toBeCloseTo(2.4, 10);
+    });
+
+    it('should apply -50 bonus for perfect podium (all 3 exact)', () => {
+      // Podio perfetto, ma errori fuori dal podio (swap posizioni 5 e 6)
+      const drivers = ['1', '2', '3', '4', '5', '6', '7'];
+      const predRankings = ['1', '2', '3', '4', '6', '5', '7']; // swap 5-6
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff: 5 (actual pos 4) wrong, 6 (actual pos 5) wrong → both top 7 so top 10 weight 0.8
+      // diff each = 1 × 0.8 = 0.8, total base = 1.6
+      // Bonus podio perfetto: -50
+      // Final: max(0, 1.6 - 50) = 0
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(0);
+    });
+
+    it('should apply -30 bonus for exact 1st and 2nd (3rd wrong)', () => {
+      // 1° e 2° corretti, 3° sbagliato
+      const drivers = ['1', '2', '3', '4', '5'];
+      const predRankings = ['1', '2', '4', '3', '5']; // 3° sbagliato (pred 4, actual 3)
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff: d3 actual pos 2 (top10)→|3-2|=1×0.8=0.8, d4 actual pos 3 (top10)→|2-3|=1×0.8=0.8
+      // Base = 1.6
+      // Bonus 1° e 2°: -30
+      // Final: max(0, 1.6 - 30) = 0
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(0);
+    });
+
+    it('should apply -10 bonus for exact 1st only', () => {
+      // Solo 1° corretto
+      const drivers = ['1', '2', '3', '4', '5'];
+      const predRankings = ['1', '3', '2', '4', '5']; // 2° e 3° scambiati
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff: d2 actual pos 1→|2-1|=1×0.8=0.8, d3 actual pos 2→|1-2|=1×0.8=0.8
+      // Base = 1.6
+      // Bonus 1°: -10
+      // Final: max(0, 1.6 - 10) = 0
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(0);
+    });
+
+    it('should apply no bonus when podium is completely wrong', () => {
+      const drivers = ['1', '2', '3'];
+      const predRankings = ['3', '2', '1']; // tutto sbagliato al podio
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff: d1 actual pos 0→|2-0|=2×0.8=1.6, d2 actual pos 1→|1-1|=0, d3 actual pos 2→|0-2|=2×0.8=1.6
+      // Base = 3.2, bonus = 0
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(3.2);
+    });
+
+    it('should apply no bonus when rankings have fewer than 3 entries', () => {
+      const drivers = ['1', '2'];
+      const predRankings = ['1', '2'];
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff = 0 (perfect), bonus non applicabile (< 3 entries)
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(0);
+    });
+
+    it('should halve podium bonus for Sprint races', () => {
+      // Sprint: podio perfetto, errori fuori → bonus effettivo -25
+      const drivers = ['1', '2', '3', '4', '5', '6'];
+      const predRankings = ['1', '2', '3', '4', '6', '5']; // swap 5-6
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      // Base diff: 1.6
+      // Bonus podio perfetto: -50
+      // Pre-sprint: 1.6 - 50 = -48.4
+      // Sprint moltiplicatore: -48.4 * 0.5 = -24.2
+      // Floor 0: 0
+      const score = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
+      expect(score).toBe(0);
+    });
+
+    it('should not go below 0 with large bonus on small base score', () => {
+      // Podio perfetto, nessun errore → score = max(0, 0 - 50) = 0
+      const drivers = ['1', '2', '3', '4', '5'];
+      const predRankings = ['1', '2', '3', '4', '5'];
+      const prediction = { rankings: predRankings };
+      const result = { results: drivers };
+      const score = calculateScore(prediction, result, eventType, scoringType);
+      expect(score).toBe(0);
     });
   });
 
@@ -122,84 +213,105 @@ describe('Scoring System', () => {
     
     it('should penalize DNF/missing drivers in prediction for full grid', () => {
         // User forgot to include the last driver (d20)
-        const predRankings = drivers.slice(0, 19); 
+        const predRankings = drivers.slice(0, 19);
+        // Swap d1/d2 to break podium bonus (minimal change)
+        [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]];
         
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
-        // d20 is missing from prediction.
-        // actual pos 19 -> weight 1.2, so penalty = 20 × 1.2 = 24
+        // d1: actual 0, pred 1 → |1-0|×0.8 = 0.8
+        // d2: actual 1, pred 0 → |0-1|×0.8 = 0.8
+        // d20 is missing: actual pos 19 (11+) → 20 × 1.2 = 24
+        // Total: 25.6, no podium bonus
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(24);
+        expect(score).toBeCloseTo(25.6, 10);
     });
 
     it('should apply TOP10_WEIGHT (0.8) to drivers finishing 1-10', () => {
         // Swap driver at position 6 (actual pos 5) with position 7 (actual pos 6)
         // Both in top 10 → weight 0.8
+        // Also swap d1/d2 to break podium bonus
         const predRankings = [...drivers];
         [predRankings[4], predRankings[5]] = [predRankings[5], predRankings[4]]; // swap d5, d6
+        [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]]; // swap d1, d2
         
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
+        // d1: actual pos 0, pred pos 1 -> diff 1 × 0.8 = 0.8
+        // d2: actual pos 1, pred pos 0 -> diff 1 × 0.8 = 0.8
         // d5: actual pos 4, pred pos 5 -> diff 1 × 0.8 = 0.8
         // d6: actual pos 5, pred pos 4 -> diff 1 × 0.8 = 0.8
-        // Total: 1.6
+        // Total: 3.2, no podium bonus
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(1.6);
+        expect(score).toBe(3.2);
     });
 
     it('should apply LOW_GRID_WEIGHT (1.2) to drivers finishing 11+', () => {
         // Swap driver at position 15 (actual pos 14) with position 16 (actual pos 15)
         // Both 11+ → weight 1.2
+        // Also swap d1/d2 to break podium bonus
         const predRankings = [...drivers];
         [predRankings[14], predRankings[15]] = [predRankings[15], predRankings[14]]; // swap d15, d16
+        [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]]; // swap d1, d2
         
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
+        // d1: actual pos 0, pred pos 1 -> diff 1 × 0.8 = 0.8
+        // d2: actual pos 1, pred pos 0 -> diff 1 × 0.8 = 0.8
         // d15: actual pos 14, pred pos 15 -> diff 1 × 1.2 = 1.2
         // d16: actual pos 15, pred pos 14 -> diff 1 × 1.2 = 1.2
-        // Total: 2.4
+        // Total: 4.0, no podium bonus
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(2.4);
+        expect(score).toBe(4.0);
     });
 
     it('should penalize missing top-10 driver less than missing bottom driver', () => {
         // When a driver is missing from prediction, all subsequent drivers shift.
-        // Missing d2 (actual pos 1, top 10): 16 (penalty) + 8×0.8 (d3-d10 shift) + 10×1.2 (d11-d20 shift) = 34.4
+        // Missing d2 (actual pos 1, top 10): base 34.4, swap d1/d3 → 36.0
         const predWithoutD2 = drivers.filter(id => id !== 'd2');
+        // Swap d1/d3 to break podium bonus (d2 is missing, can't swap d1/d2)
+        [predWithoutD2[0], predWithoutD2[1]] = [predWithoutD2[1], predWithoutD2[0]];
         const prediction = { rankings: predWithoutD2 };
         const result = { results: drivers };
         const scoreTop10Missing = calculateScore(prediction, result, eventType, scoringType);
-        expect(scoreTop10Missing).toBeCloseTo(34.4, 10);
+        expect(scoreTop10Missing).toBeCloseTo(36.0, 10);
 
-        // Missing d15 (actual pos 14, 11+): 24 (penalty) + 5×1.2 (d16-d20 shift) = 30.0
+        // Missing d15 (actual pos 14, 11+): base 30, swap d1/d2 → 31.6
         const predWithoutD15 = drivers.filter(id => id !== 'd15');
+        // Swap d1/d2 to break podium bonus
+        [predWithoutD15[0], predWithoutD15[1]] = [predWithoutD15[1], predWithoutD15[0]];
         const prediction2 = { rankings: predWithoutD15 };
         const scoreBottomMissing = calculateScore(prediction2, result, eventType, scoringType);
-        expect(scoreBottomMissing).toBeCloseTo(30, 10);
+        expect(scoreBottomMissing).toBeCloseTo(31.6, 10);
     });
 
     it('should apply correct weight at the boundary (position 10 vs 11)', () => {
         // Position 10 (0-indexed 9): top 10 → weight 0.8
         // Position 11 (0-indexed 10): 11+ → weight 1.2
+        // Also swap d1/d2 to break podium bonus
         const predRankings = [...drivers];
         // Swap d10 (pos 9, top 10) with d11 (pos 10, 11+)
         [predRankings[9], predRankings[10]] = [predRankings[10], predRankings[9]];
+        [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]]; // swap d1, d2
         
         const prediction = { rankings: predRankings };
         const result = { results: drivers };
         
+        // d1: actual pos 0, pred pos 1 -> diff 1 × 0.8 = 0.8
+        // d2: actual pos 1, pred pos 0 -> diff 1 × 0.8 = 0.8
         // d10: actual pos 9 (top 10), pred pos 10 -> diff 1 × 0.8 = 0.8
         // d11: actual pos 10 (11+), pred pos 9 -> diff 1 × 1.2 = 1.2
-        // Total: 2.0
+        // Total: 3.6, no podium bonus
         const score = calculateScore(prediction, result, eventType, scoringType);
-        expect(score).toBe(2.0);
+        expect(score).toBeCloseTo(3.6, 10);
     });
 
     it('should handle weighted sprint correctly', () => {
         // Swap first two (top 10) → base 1.6, sprint: 0.8
+        // Podium broken (d2,d1 → no bonus), so unchanged
         const predRankings = [...drivers];
         [predRankings[0], predRankings[1]] = [predRankings[1], predRankings[0]];
         const prediction = { rankings: predRankings };
@@ -208,13 +320,15 @@ describe('Scoring System', () => {
         const sprintScore = calculateScore(prediction, result, 'SPRINT' as EventType, scoringType);
         expect(sprintScore).toBe(0.8);
 
-        // Swap bottom two (11+) → base 2.4, sprint: 1.2
+        // Swap bottom two (11+) AND swap d1/d2 to break podium bonus
+        // base 2.4 + d1/d2 swap (1.6) = 4.0, sprint: 2.0
         const predRankings2 = [...drivers];
         [predRankings2[18], predRankings2[19]] = [predRankings2[19], predRankings2[18]];
+        [predRankings2[0], predRankings2[1]] = [predRankings2[1], predRankings2[0]];
         const prediction2 = { rankings: predRankings2 };
         
         const sprintScore2 = calculateScore(prediction2, result, 'SPRINT' as EventType, scoringType);
-        expect(sprintScore2).toBe(1.2);
+        expect(sprintScore2).toBe(2.0);
     });
   });
 

@@ -10,6 +10,11 @@ export const TOP10_WEIGHT = 0.8;
 export const LOW_GRID_WEIGHT = 1.2;
 export const TOP10_THRESHOLD = 10; // posizioni 0–9 in 0-indexed (top 10)
 
+// Bonus podio esatto per FULL_GRID_DIFF (valori negativi riducono lo score)
+export const PODIUM_BONUS_EXACT_1 = -10;   // solo 1° indovinato
+export const PODIUM_BONUS_EXACT_2 = -30;   // 1° e 2° indovinati
+export const PODIUM_BONUS_EXACT_3 = -50;   // 1°, 2° e 3° indovinati
+
 /**
  * Calcola il punteggio peggiore possibile per una griglia di N piloti.
  * Formula: floor(N²/2) — equivale a N²/2 se N pari, (N²-1)/2 se N dispari.
@@ -97,12 +102,17 @@ export class FullGridDiffStrategy implements ScoringStrategy {
     // Delegate core calculation to helper for reusability
     let score = calculateAbsoluteDifferenceScoreHelper(predRankings, resRankings);
 
+    // Applica bonus podio esatto (riduce lo score)
+    const podiumBonus = calculatePodiumBonusHelper(predRankings, resRankings, eventType);
+    score += podiumBonus;
+
     // Sprint penalty reduction (since lower score is better, half points = half penalty)
     if (eventType === 'SPRINT') {
       score = score * 0.5;
     }
 
-    return score;
+    // Lo score non può scendere sotto 0
+    return Math.max(0, score);
   }
 }
 
@@ -127,6 +137,40 @@ export class ScoringCalculator {
 }
 
 // --- Helper Functions ---
+
+/**
+ * Calcola il bonus podio esatto per FULL_GRID_DIFF.
+ * Restituisce un valore negativo (bonus) se il podio è indovinato.
+ * I bonus non sono cumulativi: si applica solo il tier più alto raggiunto.
+ */
+function calculatePodiumBonusHelper(
+  predRankings: string[],
+  resRankings: string[],
+  eventType: EventType
+): number {
+  // Servono almeno 3 elementi in entrambi gli array per verificare il podio
+  if (predRankings.length < 3 || resRankings.length < 3) {
+    return 0;
+  }
+
+  const firstExact = predRankings[0] === resRankings[0];
+  const secondExact = predRankings[1] === resRankings[1];
+  const thirdExact = predRankings[2] === resRankings[2];
+
+  let bonus = 0;
+
+  if (firstExact && secondExact && thirdExact) {
+    bonus = PODIUM_BONUS_EXACT_3;
+  } else if (firstExact && secondExact) {
+    bonus = PODIUM_BONUS_EXACT_2;
+  } else if (firstExact) {
+    bonus = PODIUM_BONUS_EXACT_1;
+  }
+
+  // Per le Sprint il bonus viene applicato prima del dimezzamento,
+  // quindi qui restituiamo il bonus pieno (sarà dimezzato insieme al resto)
+  return bonus;
+}
 
 function calculateAbsoluteDifferenceScoreHelper(
   predictionRankings: string[],
