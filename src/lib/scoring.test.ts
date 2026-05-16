@@ -1,5 +1,5 @@
 
-import { calculateScore, calculateLeaderboard, calculateWorstPossibleScore, MISSING_DATA_PENALTY } from './scoring';
+import { calculateScore, calculateLeaderboard, calculateWorstPossibleScore, MISSING_DATA_PENALTY, applyCatchupMultiplier, getCatchupGapMap, CATCHUP_GAP_THRESHOLD, CATCHUP_MULTIPLIER } from './scoring';
 import { EventType, ScoringType } from '@prisma/client';
 
 describe('Scoring System', () => {
@@ -415,6 +415,149 @@ describe('Scoring System', () => {
         
         expect(leaderboard[1].user.id).toBe('u2');
         expect(leaderboard[1].totalPoints).toBe(30);
+    });
+  });
+
+  describe('Catchup Multiplier', () => {
+    describe('applyCatchupMultiplier', () => {
+      it('should apply 0.8x when gap equals threshold', () => {
+        const result = applyCatchupMultiplier(100, CATCHUP_GAP_THRESHOLD);
+        expect(result.finalScore).toBe(100 * CATCHUP_MULTIPLIER);
+        expect(result.multiplier).toBe(CATCHUP_MULTIPLIER);
+      });
+
+      it('should apply 0.8x when gap exceeds threshold', () => {
+        const result = applyCatchupMultiplier(100, 100);
+        expect(result.finalScore).toBe(100 * CATCHUP_MULTIPLIER);
+        expect(result.multiplier).toBe(CATCHUP_MULTIPLIER);
+      });
+
+      it('should NOT apply multiplier when gap is below threshold', () => {
+        const result = applyCatchupMultiplier(100, CATCHUP_GAP_THRESHOLD - 1);
+        expect(result.finalScore).toBe(100);
+        expect(result.multiplier).toBe(1.0);
+      });
+
+      it('should NOT apply multiplier when gap is 0 (leader)', () => {
+        const result = applyCatchupMultiplier(50, 0);
+        expect(result.finalScore).toBe(50);
+        expect(result.multiplier).toBe(1.0);
+      });
+
+      it('should multiply by 0.8 for any score value', () => {
+        const result = applyCatchupMultiplier(42.5, 60);
+        expect(result.finalScore).toBeCloseTo(34, 10);
+        expect(result.multiplier).toBe(0.8);
+      });
+    });
+
+    describe('getCatchupGapMap', () => {
+      it('should return empty map for empty predictions', async () => {
+        const gapMap = await getCatchupGapMap([], ScoringType.FULL_GRID_DIFF);
+        expect(gapMap.size).toBe(0);
+      });
+
+      it('should return gap 0 for leader', async () => {
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 10 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 30 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        expect(gapMap.get('u1')).toBe(0);
+        expect(gapMap.get('u2')).toBe(20);
+      });
+
+      it('should compute gaps correctly for multiple users', async () => {
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 5 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 15 },
+          { user: { id: 'u3', name: 'C', email: 'c@t.com' }, points: 70 },
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 10 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 20 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        // u1: 5+10 = 15 (leader)
+        // u2: 15+20 = 35 (gap 20)
+        // u3: 70 (gap 55)
+        expect(gapMap.get('u1')).toBe(0);
+        expect(gapMap.get('u2')).toBe(20);
+        expect(gapMap.get('u3')).toBe(55);
+      });
+
+      it('should handle tied leaders (both get gap 0)', async () => {
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 10 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 10 },
+          { user: { id: 'u3', name: 'C', email: 'c@t.com' }, points: 30 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        // u1 and u2 tied at 10 (both leader)
+        expect(gapMap.get('u1')).toBe(0);
+        expect(gapMap.get('u2')).toBe(0);
+        expect(gapMap.get('u3')).toBe(20);
+      });
+
+      it('should handle single user (gap 0)', async () => {
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 42 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        expect(gapMap.get('u1')).toBe(0);
+      });
+    });
+
+    describe('Catchup integration scenario', () => {
+      it('user with gap >= 50 should get multiplier, leader should not', async () => {
+        // Simulated leaderboard before event
+        const pastPredictions = [
+          { user: { id: 'leader', name: 'L', email: 'l@t.com' }, points: 30 },
+          { user: { id: 'chaser', name: 'C', email: 'c@t.com' }, points: 90 },
+        ];
+        const gapMap = await getCatchupGapMap(pastPredictions, ScoringType.FULL_GRID_DIFF);
+
+        const leaderGap = gapMap.get('leader') ?? 0;
+        const chaserGap = gapMap.get('chaser') ?? 0;
+
+        // Leader gets no multiplier
+        const leaderResult = applyCatchupMultiplier(20, leaderGap);
+        expect(leaderResult.finalScore).toBe(20);
+        expect(leaderResult.multiplier).toBe(1.0);
+
+        // Chaser (gap 60) gets 0.8x
+        const chaserResult = applyCatchupMultiplier(25, chaserGap);
+        expect(chaserResult.finalScore).toBe(20); // 25 * 0.8 = 20
+        expect(chaserResult.multiplier).toBe(0.8);
+      });
+
+      it('user with gap exactly at threshold should get multiplier', async () => {
+        // Gap = exactly 50
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 10 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 60 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        const u2Gap = gapMap.get('u2') ?? 0;
+        expect(u2Gap).toBe(50);
+
+        const result = applyCatchupMultiplier(30, u2Gap);
+        expect(result.multiplier).toBe(0.8);
+        expect(result.finalScore).toBe(24);
+      });
+
+      it('user with gap at threshold-1 should NOT get multiplier', async () => {
+        // Gap = 49
+        const predictions = [
+          { user: { id: 'u1', name: 'A', email: 'a@t.com' }, points: 10 },
+          { user: { id: 'u2', name: 'B', email: 'b@t.com' }, points: 59 },
+        ];
+        const gapMap = await getCatchupGapMap(predictions, ScoringType.FULL_GRID_DIFF);
+        const u2Gap = gapMap.get('u2') ?? 0;
+        expect(u2Gap).toBe(49);
+
+        const result = applyCatchupMultiplier(30, u2Gap);
+        expect(result.multiplier).toBe(1.0);
+        expect(result.finalScore).toBe(30);
+      });
     });
   });
 });

@@ -23,6 +23,7 @@ interface Prediction {
   id: string;
   eventId: string;
   points: number | null;
+  multiplier?: number | null;
   firstPlaceId?: string | null;
   secondPlaceId?: string | null;
   thirdPlaceId?: string | null;
@@ -341,9 +342,16 @@ function LegacyTop3Comparison({
       {/* Total score */}
       {prediction?.points !== null && prediction?.points !== undefined && (
         <div className="flex items-center justify-between px-4 py-3 bg-surface-2 rounded-xl border border-border">
-          <span className="text-sm font-semibold text-muted-foreground">
-            Punteggio totale
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-muted-foreground">
+              Punteggio totale
+            </span>
+            {(prediction.multiplier ?? 1) < 1 && (
+              <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded font-medium">
+                x{prediction.multiplier?.toFixed(1)} catch-up
+              </span>
+            )}
+          </div>
           <span className="text-lg font-bold text-foreground tabular-nums">
             {prediction.points} pt
           </span>

@@ -278,8 +278,11 @@ function PredictionRow({
                     {(prediction as any).user?.name || 'Utente'}
                   </p>
                   {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' && (
-                     <p className="text-xs text-muted-foreground">
+                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                        {formatPoints((prediction as any).points)} pt
+                       {((prediction as any).multiplier ?? 1) < 1 && (
+                         <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1 py-0.5 rounded font-medium leading-none">x{((prediction as any).multiplier).toFixed(1)}</span>
+                       )}
                      </p>
                   )}
                 </div>
@@ -290,8 +293,11 @@ function PredictionRow({
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-foreground">Il tuo pronostico</span>
                 {(prediction as any).points !== null && typeof (prediction as any).points !== 'undefined' ? (
-                  <span className="text-xs text-muted-foreground font-medium text-primary">
+                  <span className="text-xs text-muted-foreground font-medium text-primary flex items-center gap-1.5">
                     {formatPoints((prediction as any).points)} punti
+                    {((prediction as any).multiplier ?? 1) < 1 && (
+                      <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1 py-0.5 rounded font-medium leading-none">x{((prediction as any).multiplier).toFixed(1)}</span>
+                    )}
                   </span>
                 ) : (
                    <span className="text-xs text-muted-foreground">In attesa</span>

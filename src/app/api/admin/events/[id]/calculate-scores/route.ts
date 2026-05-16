@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateScore, validateEventResults } from '@/lib/scoring'
+import { calculateScore, validateEventResults, getCatchupGapMap, applyCatchupMultiplier, CATCHUP_MULTIPLIER } from '@/lib/scoring'
 import { autoFillMissingPredictions } from '@/lib/predictions'
 import { ScoringType } from '@prisma/client'
 
@@ -55,8 +55,27 @@ export async function POST(
     // Fetch predictions again to include auto-filled ones
     const predictions = await prisma.prediction.findMany({
         where: { eventId },
-        include: { user: true } // Need user for logging/debug if needed
+        include: { user: true }
     });
+
+    // Calcola gap dal leader per catch-up (solo FULL_GRID_DIFF)
+    let gapMap = new Map<string, number>();
+    if (scoringType === ScoringType.FULL_GRID_DIFF && event.seasonId) {
+      const pastPredictions = await prisma.prediction.findMany({
+        where: {
+          event: {
+            seasonId: event.seasonId,
+            date: { lt: event.date },
+            status: 'COMPLETED'
+          },
+          points: { not: null }
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } }
+        }
+      });
+      gapMap = await getCatchupGapMap(pastPredictions, scoringType);
+    }
 
     // Risultato dell'evento
     const eventResult = {
@@ -67,12 +86,9 @@ export async function POST(
     }
 
     // Calcola i punteggi per tutti i pronostici
-    const scoreUpdates: Array<{ id: string; points: number }> = []
+    const scoreUpdates: Array<{ id: string; points: number; multiplier: number }> = []
 
     for (const prediction of predictions) {
-      // Skip check for top3 if we are in FULL_GRID mode, 
-      // but calculateScore handles fallback.
-      
       const predictionResult = {
         firstPlaceId: prediction.firstPlaceId,
         secondPlaceId: prediction.secondPlaceId,
@@ -80,8 +96,18 @@ export async function POST(
         rankings: prediction.rankings
       }
 
-      const points = calculateScore(predictionResult, eventResult, event.type, scoringType)
-      scoreUpdates.push({ id: prediction.id, points })
+      let points = calculateScore(predictionResult, eventResult, event.type, scoringType)
+      let multiplier = 1.0
+
+      // Applica catch-up multiplier per FULL_GRID_DIFF
+      if (scoringType === ScoringType.FULL_GRID_DIFF) {
+        const gap = gapMap.get(prediction.userId) ?? 0;
+        const result = applyCatchupMultiplier(points, gap);
+        points = result.finalScore;
+        multiplier = result.multiplier;
+      }
+
+      scoreUpdates.push({ id: prediction.id, points, multiplier })
     }
 
     // Aggiorna tutti i punteggi in una transazione
@@ -89,12 +115,13 @@ export async function POST(
       scoreUpdates.map(update => 
         prisma.prediction.update({
           where: { id: update.id },
-          data: { points: update.points }
+          data: { points: update.points, multiplier: update.multiplier }
         })
       )
     )
 
-    console.log(`Punteggi calcolati per ${scoreUpdates.length} pronostici dell'evento ${event.name}`)
+    const catchupCount = scoreUpdates.filter(u => u.multiplier < 1.0).length;
+    console.log(`Punteggi calcolati per ${scoreUpdates.length} pronostici dell'evento ${event.name}${catchupCount > 0 ? ` (${catchupCount} con catch-up x${CATCHUP_MULTIPLIER})` : ''}`)
 
     // Restituisci un riepilogo
     const summary = {
@@ -102,6 +129,7 @@ export async function POST(
       eventType: event.type,
       scoringType,
       totalPredictions: scoreUpdates.length,
+      catchupCount,
       averagePoints: scoreUpdates.length > 0 
         ? scoreUpdates.reduce((sum, s) => sum + s.points, 0) / scoreUpdates.length
         : 0,

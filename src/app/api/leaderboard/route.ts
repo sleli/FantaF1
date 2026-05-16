@@ -71,10 +71,12 @@ export async function GET(request: NextRequest) {
           secondPlace: prediction.secondPlace,
           thirdPlace: prediction.thirdPlace,
           points: prediction.points,
+          multiplier: prediction.multiplier,
           createdAt: prediction.createdAt,
           updatedAt: prediction.updatedAt
         },
-        points: prediction.points
+        points: prediction.points,
+        multiplier: prediction.multiplier
       }))
 
       return NextResponse.json({

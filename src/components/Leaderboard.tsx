@@ -25,8 +25,10 @@ type EventLeaderboardEntry = {
     secondPlace: { name: string; number: number; team: string } | null
     thirdPlace: { name: string; number: number; team: string } | null
     points: number | null
+    multiplier?: number | null
   } | null
   points: number | null
+  multiplier?: number | null
 }
 
 type Event = {
@@ -425,8 +427,15 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-xl font-bold text-foreground">
-                                  {entry.points || 0}
+                                <div className="flex items-center gap-1.5 justify-end">
+                                  {(entry.multiplier ?? 1) < 1 && (
+                                    <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded font-medium leading-none">
+                                      x{entry.multiplier?.toFixed(1)}
+                                    </span>
+                                  )}
+                                  <div className="text-xl font-bold text-foreground">
+                                    {entry.points || 0}
+                                  </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground">punti</div>
                               </div>

@@ -34,6 +34,7 @@ interface Prediction {
   id: string;
   eventId: string;
   points: number | null;
+  multiplier?: number | null;
   firstPlaceId?: string | null;
   secondPlaceId?: string | null;
   thirdPlaceId?: string | null;
@@ -276,9 +277,16 @@ export default function CompletedEvents({
                     {/* User score badge */}
                     <div className="flex-shrink-0">
                       {prediction?.points !== null && prediction?.points !== undefined ? (
-                        <Badge variant="info" size="lg">
-                          {prediction.points} pt
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          {(prediction.multiplier ?? 1) < 1 && (
+                            <span className="text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded font-medium leading-none">
+                              x{prediction.multiplier?.toFixed(1)} catch-up
+                            </span>
+                          )}
+                          <Badge variant="info" size="lg">
+                            {prediction.points} pt
+                          </Badge>
+                        </div>
                       ) : (
                         <Badge variant="neutral" size="sm">
                           Nessun pronostico

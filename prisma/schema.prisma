@@ -129,6 +129,7 @@ model Prediction {
   thirdPlaceId  String?
   rankings      Json?
   points        Float?
+  multiplier    Float?   @default(1.0)
   event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   firstPlace    Driver?  @relation("FirstPlace", fields: [firstPlaceId], references: [id])
   secondPlace   Driver?  @relation("SecondPlace", fields: [secondPlaceId], references: [id])

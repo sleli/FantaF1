@@ -15,6 +15,10 @@ export const PODIUM_BONUS_EXACT_1 = -10;   // solo 1° indovinato
 export const PODIUM_BONUS_EXACT_2 = -30;   // 1° e 2° indovinati
 export const PODIUM_BONUS_EXACT_3 = -50;   // 1°, 2° e 3° indovinati
 
+// Catch-up multiplier per FULL_GRID_DIFF
+export const CATCHUP_GAP_THRESHOLD = 50;  // distacco minimo dal leader per attivare il moltiplicatore
+export const CATCHUP_MULTIPLIER = 0.8;     // moltiplicatore applicato allo score (lower is better -> riduce lo score)
+
 /**
  * Calcola il punteggio peggiore possibile per una griglia di N piloti.
  * Formula: floor(N²/2) — equivale a N²/2 se N pari, (N²-1)/2 se N dispari.
@@ -332,6 +336,50 @@ export function calculateLeaderboard(
       return b.totalPoints - a.totalPoints;
     }
   });
+}
+
+/**
+ * Applica il moltiplicatore catch-up se il distacco dal leader >= soglia.
+ * Restituisce lo score finale e il moltiplicatore usato.
+ * Solo per FULL_GRID_DIFF: lo score viene ridotto (lower is better).
+ */
+export function applyCatchupMultiplier(
+  score: number,
+  gapFromLeader: number
+): { finalScore: number; multiplier: number } {
+  if (gapFromLeader >= CATCHUP_GAP_THRESHOLD) {
+    return { finalScore: score * CATCHUP_MULTIPLIER, multiplier: CATCHUP_MULTIPLIER };
+  }
+  return { finalScore: score, multiplier: 1.0 };
+}
+
+/**
+ * Calcola il gap dal leader per ogni userId basandosi sugli eventi COMPLETED
+ * precedenti a beforeEventDate. Restituisce una Map<userId, gap>.
+ * Il gap è 0 per il leader e per chi non ha pronostici passati.
+ */
+export async function getCatchupGapMap(
+  predictions: Array<{
+    user: LeaderboardUser;
+    points: number | null;
+  }>,
+  scoringType: ScoringType
+): Promise<Map<string, number>> {
+  const gapMap = new Map<string, number>();
+
+  if (predictions.length === 0) return gapMap;
+
+  const leaderboard = calculateLeaderboard(predictions, scoringType);
+  if (leaderboard.length === 0) return gapMap;
+
+  const leaderTotal = leaderboard[0].totalPoints;
+
+  for (const entry of leaderboard) {
+    const gap = entry.totalPoints - leaderTotal;
+    gapMap.set(entry.user.id, gap);
+  }
+
+  return gapMap;
 }
 
 export function canMakePrediction(event: { closingDate: Date; status: string }): boolean {
