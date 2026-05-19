@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
       include: {
         season: {
           select: {
-            scoringType: true
+            scoringType: true,
+            scoringConfig: true
           }
         },
         firstPlace: true,

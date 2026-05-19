@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
             thirdPlaceId: true,
             season: {
               select: {
-                scoringType: true
+                scoringType: true,
+                scoringConfig: true
               }
             }
           }

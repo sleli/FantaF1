@@ -148,6 +148,7 @@ model Season {
   endDate     DateTime
   isActive    Boolean      @default(false)
   scoringType ScoringType  @default(LEGACY_TOP3)
+  scoringConfig Json?
   events      Event[]
   drivers     Driver[]
   userSeasons UserSeason[]

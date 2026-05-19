@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateScore, validateEventResults, getCatchupGapMap, applyCatchupMultiplier, CATCHUP_MULTIPLIER } from '@/lib/scoring'
+import { calculateScore, validateEventResults, getCatchupGapMap, applyCatchupMultiplier, resolveFullGridScoringConfig } from '@/lib/scoring'
 import { autoFillMissingPredictions } from '@/lib/predictions'
 import { ScoringType } from '@prisma/client'
 
@@ -37,6 +37,8 @@ export async function POST(
     }
 
     const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
+    const scoringConfig = event.season?.scoringConfig;
+    const fullGridScoringConfig = resolveFullGridScoringConfig(scoringConfig);
 
     // Validation
     if (!validateEventResults(event, scoringType)) {
@@ -96,13 +98,13 @@ export async function POST(
         rankings: prediction.rankings
       }
 
-      let points = calculateScore(predictionResult, eventResult, event.type, scoringType)
+      let points = calculateScore(predictionResult, eventResult, event.type, scoringType, scoringConfig)
       let multiplier = 1.0
 
       // Applica catch-up multiplier per FULL_GRID_DIFF
       if (scoringType === ScoringType.FULL_GRID_DIFF) {
         const gap = gapMap.get(prediction.userId) ?? 0;
-        const result = applyCatchupMultiplier(points, gap);
+        const result = applyCatchupMultiplier(points, gap, scoringConfig);
         points = result.finalScore;
         multiplier = result.multiplier;
       }
@@ -121,13 +123,14 @@ export async function POST(
     )
 
     const catchupCount = scoreUpdates.filter(u => u.multiplier < 1.0).length;
-    console.log(`Punteggi calcolati per ${scoreUpdates.length} pronostici dell'evento ${event.name}${catchupCount > 0 ? ` (${catchupCount} con catch-up x${CATCHUP_MULTIPLIER})` : ''}`)
+    console.log(`Punteggi calcolati per ${scoreUpdates.length} pronostici dell'evento ${event.name}${catchupCount > 0 ? ` (${catchupCount} con catch-up x${fullGridScoringConfig.catchup.multiplier})` : ''}`)
 
     // Restituisci un riepilogo
     const summary = {
       eventName: event.name,
       eventType: event.type,
       scoringType,
+      scoringConfig: scoringType === ScoringType.FULL_GRID_DIFF ? fullGridScoringConfig : null,
       totalPredictions: scoreUpdates.length,
       catchupCount,
       averagePoints: scoreUpdates.length > 0 

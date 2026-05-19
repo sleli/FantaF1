@@ -9,11 +9,13 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import DriverAvatar from '@/components/ui/DriverAvatar';
 import { ChevronDownIcon, CheckIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { resolveFullGridScoringConfig } from '@/lib/scoring';
 
 interface ExtendedEvent extends Event {
   season?: {
     scoringType: ScoringType;
     driverCount: number;
+    scoringConfig?: unknown;
   };
 }
 
@@ -153,6 +155,7 @@ export default function PredictionForm({
   isAdmin = false,
 }: PredictionFormProps) {
   const scoringType = event.season?.scoringType || ScoringType.LEGACY_TOP3;
+  const fullGridScoringConfig = resolveFullGridScoringConfig(event.season?.scoringConfig);
 
   // View Mode State determined by Season Settings
   const viewMode = scoringType === ScoringType.FULL_GRID_DIFF ? 'GRID' : 'TOP3';
@@ -617,7 +620,7 @@ export default function PredictionForm({
             <p className="text-accent-cyan text-sm">
               <strong>Sprint:</strong>{' '}
               {scoringType === ScoringType.FULL_GRID_DIFF
-                ? 'Penalità dimezzate (×0.5). Pesi: primi 10 ×0.8, 11°+ ×1.2'
+                ? `Penalità dimezzate (×0.5). Pesi: primi ${fullGridScoringConfig.topGridThreshold} ×${fullGridScoringConfig.topGridWeight}, ${fullGridScoringConfig.topGridThreshold + 1}°+ ×${fullGridScoringConfig.lowerGridWeight}`
                 : 'Punteggi dimezzati (12.5 - 7.5 - 5 punti)'}
             </p>
           </div>

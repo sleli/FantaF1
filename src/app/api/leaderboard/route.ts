@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (seasonId) {
       targetSeason = await prisma.season.findUnique({
         where: { id: seasonId },
-        select: { id: true, name: true, year: true, startDate: true, endDate: true, isActive: true, scoringType: true }
+        select: { id: true, name: true, year: true, startDate: true, endDate: true, isActive: true, scoringType: true, scoringConfig: true }
       });
     } else {
       targetSeason = await getActiveSeason();

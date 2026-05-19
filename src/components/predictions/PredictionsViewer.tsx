@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import DriverAvatar from '@/components/ui/DriverAvatar'
 import { POINTS, PredictionWithDetails } from '@/lib/types'
-import { MAX_PENALTY, TOP10_THRESHOLD, TOP10_WEIGHT, LOW_GRID_WEIGHT } from '@/lib/scoring'
+import { MAX_PENALTY, resolveFullGridScoringConfig } from '@/lib/scoring'
 import { ChevronDownIcon, UserIcon } from '@heroicons/react/24/outline'
 
 export type PredictionsViewerProps = {
@@ -67,6 +67,10 @@ function getScoringType(prediction: PredictionWithDetails) {
   return (prediction.event as any).season?.scoringType || ScoringType.LEGACY_TOP3
 }
 
+function getScoringConfig(prediction: PredictionWithDetails) {
+  return resolveFullGridScoringConfig((prediction.event as any).season?.scoringConfig)
+}
+
 function getEventResults(prediction: PredictionWithDetails) {
   const event = prediction.event as any
   const scoringType = getScoringType(prediction)
@@ -99,6 +103,7 @@ function PredictionTable({
   driversById: Map<string, Driver>
 }) {
   const scoringType = getScoringType(prediction)
+  const scoringConfig = getScoringConfig(prediction)
   const eventResult = getEventResults(prediction)
   const eventType = prediction.event.type as EventType
 
@@ -135,7 +140,9 @@ function PredictionTable({
       }
 
       if (eventResult.scoringType === ScoringType.FULL_GRID_DIFF) {
-        const positionWeight = actualIndex !== -1 ? (actualIndex < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT) : 1.0;
+        const positionWeight = actualIndex !== -1
+          ? (actualIndex < scoringConfig.topGridThreshold ? scoringConfig.topGridWeight : scoringConfig.lowerGridWeight)
+          : 1.0;
         const basePenalty = actualIndex === -1 ? MAX_PENALTY : Math.abs(index - actualIndex)
         points = basePenalty * positionWeight * sprintMultiplier
       } else {

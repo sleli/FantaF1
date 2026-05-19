@@ -5,19 +5,139 @@ import { POINTS } from './types'
 export const MAX_PENALTY = 20;
 export const MISSING_DATA_PENALTY = 1000;
 
+export type FullGridScoringConfig = {
+  topGridThreshold: number;
+  topGridWeight: number;
+  lowerGridWeight: number;
+  podiumBonusExact: {
+    first: number;
+    firstSecond: number;
+    topThree: number;
+  };
+  catchup: {
+    gapThreshold: number;
+    multiplier: number;
+  };
+};
+
+export type FullGridScoringConfigValidation = {
+  isValid: boolean;
+  config: FullGridScoringConfig;
+  errors: string[];
+};
+
+export const DEFAULT_FULL_GRID_SCORING_CONFIG: FullGridScoringConfig = {
+  topGridThreshold: 10,
+  topGridWeight: 0.8,
+  lowerGridWeight: 1.2,
+  podiumBonusExact: {
+    first: -10,
+    firstSecond: -30,
+    topThree: -50,
+  },
+  catchup: {
+    gapThreshold: 50,
+    multiplier: 0.8,
+  },
+};
+
 // Pesi posizionali per FULL_GRID_DIFF
-export const TOP10_WEIGHT = 0.8;
-export const LOW_GRID_WEIGHT = 1.2;
-export const TOP10_THRESHOLD = 10; // posizioni 0–9 in 0-indexed (top 10)
+export const TOP10_WEIGHT = DEFAULT_FULL_GRID_SCORING_CONFIG.topGridWeight;
+export const LOW_GRID_WEIGHT = DEFAULT_FULL_GRID_SCORING_CONFIG.lowerGridWeight;
+export const TOP10_THRESHOLD = DEFAULT_FULL_GRID_SCORING_CONFIG.topGridThreshold; // posizioni 0-9 in 0-indexed (top 10)
 
 // Bonus podio esatto per FULL_GRID_DIFF (valori negativi riducono lo score)
-export const PODIUM_BONUS_EXACT_1 = -10;   // solo 1° indovinato
-export const PODIUM_BONUS_EXACT_2 = -30;   // 1° e 2° indovinati
-export const PODIUM_BONUS_EXACT_3 = -50;   // 1°, 2° e 3° indovinati
+export const PODIUM_BONUS_EXACT_1 = DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.first;   // solo 1° indovinato
+export const PODIUM_BONUS_EXACT_2 = DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.firstSecond;   // 1° e 2° indovinati
+export const PODIUM_BONUS_EXACT_3 = DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.topThree;   // 1°, 2° e 3° indovinati
 
 // Catch-up multiplier per FULL_GRID_DIFF
-export const CATCHUP_GAP_THRESHOLD = 50;  // distacco minimo dal leader per attivare il moltiplicatore
-export const CATCHUP_MULTIPLIER = 0.8;     // moltiplicatore applicato allo score (lower is better -> riduce lo score)
+export const CATCHUP_GAP_THRESHOLD = DEFAULT_FULL_GRID_SCORING_CONFIG.catchup.gapThreshold;  // distacco minimo dal leader per attivare il moltiplicatore
+export const CATCHUP_MULTIPLIER = DEFAULT_FULL_GRID_SCORING_CONFIG.catchup.multiplier;     // moltiplicatore applicato allo score (lower is better -> riduce lo score)
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readFiniteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+export function resolveFullGridScoringConfig(scoringConfig?: unknown): FullGridScoringConfig {
+  const source = isRecord(scoringConfig) ? scoringConfig : {};
+  const podiumBonusExact = isRecord(source.podiumBonusExact) ? source.podiumBonusExact : {};
+  const catchup = isRecord(source.catchup) ? source.catchup : {};
+
+  return {
+    topGridThreshold: readFiniteNumber(source.topGridThreshold, DEFAULT_FULL_GRID_SCORING_CONFIG.topGridThreshold),
+    topGridWeight: readFiniteNumber(source.topGridWeight, DEFAULT_FULL_GRID_SCORING_CONFIG.topGridWeight),
+    lowerGridWeight: readFiniteNumber(source.lowerGridWeight, DEFAULT_FULL_GRID_SCORING_CONFIG.lowerGridWeight),
+    podiumBonusExact: {
+      first: readFiniteNumber(podiumBonusExact.first, DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.first),
+      firstSecond: readFiniteNumber(podiumBonusExact.firstSecond, DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.firstSecond),
+      topThree: readFiniteNumber(podiumBonusExact.topThree, DEFAULT_FULL_GRID_SCORING_CONFIG.podiumBonusExact.topThree),
+    },
+    catchup: {
+      gapThreshold: readFiniteNumber(catchup.gapThreshold, DEFAULT_FULL_GRID_SCORING_CONFIG.catchup.gapThreshold),
+      multiplier: readFiniteNumber(catchup.multiplier, DEFAULT_FULL_GRID_SCORING_CONFIG.catchup.multiplier),
+    },
+  };
+}
+
+export function validateFullGridScoringConfig(scoringConfig?: unknown): FullGridScoringConfigValidation {
+  const config = resolveFullGridScoringConfig(scoringConfig);
+  const errors: string[] = [];
+
+  if (!Number.isInteger(config.topGridThreshold) || config.topGridThreshold <= 0) {
+    errors.push('La soglia top grid deve essere un intero positivo');
+  }
+  if (config.topGridWeight <= 0) {
+    errors.push('Il peso dei primi classificati deve essere positivo');
+  }
+  if (config.lowerGridWeight <= 0) {
+    errors.push('Il peso del resto griglia deve essere positivo');
+  }
+  if (config.podiumBonusExact.first > 0) {
+    errors.push('Il bonus 1° esatto deve essere minore o uguale a 0');
+  }
+  if (config.podiumBonusExact.firstSecond > 0) {
+    errors.push('Il bonus 1°+2° esatti deve essere minore o uguale a 0');
+  }
+  if (config.podiumBonusExact.topThree > 0) {
+    errors.push('Il bonus podio esatto deve essere minore o uguale a 0');
+  }
+  if (config.catchup.gapThreshold <= 0) {
+    errors.push('La soglia catch-up deve essere positiva');
+  }
+  if (config.catchup.multiplier <= 0 || config.catchup.multiplier > 1) {
+    errors.push('Il moltiplicatore catch-up deve essere maggiore di 0 e minore o uguale a 1');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    config,
+    errors,
+  };
+}
+
+export type FullGridScoreRow = {
+  driverId: string;
+  actualIndex: number;
+  predictedIndex: number | null;
+  diff: number | null;
+  weight: number;
+  penalty: number;
+  missing: boolean;
+};
+
+export type FullGridScoreBreakdown = {
+  rows: FullGridScoreRow[];
+  baseScore: number;
+  podiumBonus: number;
+  scoreAfterBonus: number;
+  sprintMultiplier: number;
+  finalScore: number;
+};
 
 /**
  * Calcola il punteggio peggiore possibile per una griglia di N piloti.
@@ -60,7 +180,12 @@ export type LeaderboardEntry = {
 // --- Strategy Pattern Implementation ---
 
 export interface ScoringStrategy {
-  calculate(prediction: PredictionResult, result: EventResult, eventType: EventType): number;
+  calculate(
+    prediction: PredictionResult,
+    result: EventResult,
+    eventType: EventType,
+    scoringConfig?: unknown
+  ): number;
 }
 
 export class LegacyTop3Strategy implements ScoringStrategy {
@@ -99,24 +224,15 @@ export class LegacyTop3Strategy implements ScoringStrategy {
 }
 
 export class FullGridDiffStrategy implements ScoringStrategy {
-  calculate(prediction: PredictionResult, result: EventResult, eventType: EventType): number {
+  calculate(
+    prediction: PredictionResult,
+    result: EventResult,
+    eventType: EventType,
+    scoringConfig?: unknown
+  ): number {
     const predRankings = (prediction.rankings as string[]) || [];
     const resRankings = (result.results as string[]) || [];
-
-    // Delegate core calculation to helper for reusability
-    let score = calculateAbsoluteDifferenceScoreHelper(predRankings, resRankings);
-
-    // Applica bonus podio esatto (riduce lo score)
-    const podiumBonus = calculatePodiumBonusHelper(predRankings, resRankings, eventType);
-    score += podiumBonus;
-
-    // Sprint penalty reduction (since lower score is better, half points = half penalty)
-    if (eventType === 'SPRINT') {
-      score = score * 0.5;
-    }
-
-    // Lo score non può scendere sotto 0
-    return Math.max(0, score);
+    return calculateFullGridScoreBreakdown(predRankings, resRankings, eventType, scoringConfig).finalScore;
   }
 }
 
@@ -134,9 +250,10 @@ export class ScoringCalculator {
     prediction: PredictionResult, 
     result: EventResult, 
     eventType: EventType, 
-    scoringType: ScoringType
+    scoringType: ScoringType,
+    scoringConfig?: unknown
   ): number {
-    return this.getStrategy(scoringType).calculate(prediction, result, eventType);
+    return this.getStrategy(scoringType).calculate(prediction, result, eventType, scoringConfig);
   }
 }
 
@@ -150,7 +267,8 @@ export class ScoringCalculator {
 function calculatePodiumBonusHelper(
   predRankings: string[],
   resRankings: string[],
-  eventType: EventType
+  eventType: EventType,
+  scoringConfig: FullGridScoringConfig = DEFAULT_FULL_GRID_SCORING_CONFIG
 ): number {
   // Servono almeno 3 elementi in entrambi gli array per verificare il podio
   if (predRankings.length < 3 || resRankings.length < 3) {
@@ -164,11 +282,11 @@ function calculatePodiumBonusHelper(
   let bonus = 0;
 
   if (firstExact && secondExact && thirdExact) {
-    bonus = PODIUM_BONUS_EXACT_3;
+    bonus = scoringConfig.podiumBonusExact.topThree;
   } else if (firstExact && secondExact) {
-    bonus = PODIUM_BONUS_EXACT_2;
+    bonus = scoringConfig.podiumBonusExact.firstSecond;
   } else if (firstExact) {
-    bonus = PODIUM_BONUS_EXACT_1;
+    bonus = scoringConfig.podiumBonusExact.first;
   }
 
   // Per le Sprint il bonus viene applicato prima del dimezzamento,
@@ -178,7 +296,8 @@ function calculatePodiumBonusHelper(
 
 function calculateAbsoluteDifferenceScoreHelper(
   predictionRankings: string[],
-  resultRankings: string[]
+  resultRankings: string[],
+  scoringConfig: FullGridScoringConfig = DEFAULT_FULL_GRID_SCORING_CONFIG
 ): number {
   if (!resultRankings || resultRankings.length === 0) {
     return MISSING_DATA_PENALTY;
@@ -190,7 +309,9 @@ function calculateAbsoluteDifferenceScoreHelper(
   let score = 0;
   resultRankings.forEach((driverId, actualIndex) => {
     // Peso posizionale: primi 10 (0-9) peso ridotto, 11+ peso aumentato
-    const positionWeight = actualIndex < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT;
+    const positionWeight = actualIndex < scoringConfig.topGridThreshold
+      ? scoringConfig.topGridWeight
+      : scoringConfig.lowerGridWeight;
     const predictedIndex = predictionRankings.indexOf(driverId);
     if (predictedIndex !== -1) {
       score += Math.abs(predictedIndex - actualIndex) * positionWeight;
@@ -203,6 +324,48 @@ function calculateAbsoluteDifferenceScoreHelper(
   return score;
 }
 
+export function calculateFullGridScoreBreakdown(
+  predictionRankings: string[],
+  resultRankings: string[],
+  eventType: EventType,
+  scoringConfig?: unknown
+): FullGridScoreBreakdown {
+  const config = resolveFullGridScoringConfig(scoringConfig);
+  const baseScore = calculateAbsoluteDifferenceScoreHelper(predictionRankings, resultRankings, config);
+  const podiumBonus = calculatePodiumBonusHelper(predictionRankings, resultRankings, eventType, config);
+  const scoreAfterBonus = baseScore + podiumBonus;
+  const sprintMultiplier = eventType === 'SPRINT' ? 0.5 : 1;
+  const finalScore = Math.max(0, scoreAfterBonus * sprintMultiplier);
+
+  const rows = resultRankings.map((driverId, actualIndex) => {
+    const predictedIndex = predictionRankings.indexOf(driverId);
+    const weight = actualIndex < config.topGridThreshold
+      ? config.topGridWeight
+      : config.lowerGridWeight;
+    const diff = predictedIndex === -1 ? null : Math.abs(predictedIndex - actualIndex);
+    const penalty = predictedIndex === -1 ? MAX_PENALTY * weight : (diff ?? 0) * weight;
+
+    return {
+      driverId,
+      actualIndex,
+      predictedIndex: predictedIndex === -1 ? null : predictedIndex,
+      diff,
+      weight,
+      penalty,
+      missing: predictedIndex === -1,
+    };
+  });
+
+  return {
+    rows,
+    baseScore,
+    podiumBonus,
+    scoreAfterBonus,
+    sprintMultiplier,
+    finalScore,
+  };
+}
+
 // --- Exported Functions (Public API) ---
 
 /**
@@ -213,9 +376,10 @@ export function calculateScore(
   prediction: PredictionResult,
   result: EventResult,
   eventType: EventType,
-  scoringType: ScoringType = ScoringType.LEGACY_TOP3
+  scoringType: ScoringType = ScoringType.LEGACY_TOP3,
+  scoringConfig?: unknown
 ): number {
-  return ScoringCalculator.calculate(prediction, result, eventType, scoringType);
+  return ScoringCalculator.calculate(prediction, result, eventType, scoringType, scoringConfig);
 }
 
 /**
@@ -224,9 +388,14 @@ export function calculateScore(
  */
 export function calculateAbsoluteDifferenceScore(
   predictionRankings: string[],
-  resultRankings: string[]
+  resultRankings: string[],
+  scoringConfig?: unknown
 ): number {
-  return calculateAbsoluteDifferenceScoreHelper(predictionRankings, resultRankings);
+  return calculateAbsoluteDifferenceScoreHelper(
+    predictionRankings,
+    resultRankings,
+    resolveFullGridScoringConfig(scoringConfig)
+  );
 }
 
 /**
@@ -345,10 +514,12 @@ export function calculateLeaderboard(
  */
 export function applyCatchupMultiplier(
   score: number,
-  gapFromLeader: number
+  gapFromLeader: number,
+  scoringConfig?: unknown
 ): { finalScore: number; multiplier: number } {
-  if (gapFromLeader >= CATCHUP_GAP_THRESHOLD) {
-    return { finalScore: score * CATCHUP_MULTIPLIER, multiplier: CATCHUP_MULTIPLIER };
+  const config = resolveFullGridScoringConfig(scoringConfig);
+  if (gapFromLeader >= config.catchup.gapThreshold) {
+    return { finalScore: score * config.catchup.multiplier, multiplier: config.catchup.multiplier };
   }
   return { finalScore: score, multiplier: 1.0 };
 }

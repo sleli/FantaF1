@@ -3,6 +3,7 @@ import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
 import { ScoringType } from '@prisma/client';
 import { f1ImportService, F1APIError } from '@/lib/f1-api';
+import { validateFullGridScoringConfig } from '@/lib/scoring';
 
 // GET: List all seasons
 async function getHandler(req: NextRequest) {
@@ -33,6 +34,7 @@ async function postHandler(req: NextRequest) {
       startDate,
       endDate,
       scoringType,
+      scoringConfig,
       copyDriversFromSeasonId,
       // New F1 import fields
       year,
@@ -58,6 +60,12 @@ async function postHandler(req: NextRequest) {
     const parsedYear = year ? parseInt(year) : null;
     if ((importDriversFromF1 || importEventsFromF1) && (!parsedYear || parsedYear < 2023 || parsedYear > 2030)) {
       return apiResponse({ error: 'Anno non valido per import F1' }, 400);
+    }
+
+    const normalizedScoringType = (scoringType as ScoringType) || ScoringType.LEGACY_TOP3;
+    const scoringConfigValidation = validateFullGridScoringConfig(scoringConfig);
+    if (normalizedScoringType === ScoringType.FULL_GRID_DIFF && !scoringConfigValidation.isValid) {
+      return apiResponse({ error: scoringConfigValidation.errors.join(', ') }, 400);
     }
 
     // Fetch F1 data before transaction if needed
@@ -96,7 +104,10 @@ async function postHandler(req: NextRequest) {
           year: parsedYear,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
-          scoringType: scoringType as ScoringType || 'LEGACY_TOP3',
+          scoringType: normalizedScoringType,
+          scoringConfig: normalizedScoringType === ScoringType.FULL_GRID_DIFF
+            ? scoringConfigValidation.config
+            : undefined,
           isActive: false
         }
       });

@@ -39,6 +39,14 @@ export async function GET(request: NextRequest) {
     const events = await prisma.event.findMany({
       where,
       include: {
+        season: {
+          select: {
+            id: true,
+            name: true,
+            scoringType: true,
+            scoringConfig: true
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true,
@@ -153,6 +161,14 @@ export async function POST(request: NextRequest) {
         seasonId: activeSeason.id
       },
       include: {
+        season: {
+          select: {
+            id: true,
+            name: true,
+            scoringType: true,
+            scoringConfig: true
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true,

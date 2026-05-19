@@ -1,5 +1,5 @@
 
-import { calculateScore, calculateLeaderboard, calculateWorstPossibleScore, MISSING_DATA_PENALTY, applyCatchupMultiplier, getCatchupGapMap, CATCHUP_GAP_THRESHOLD, CATCHUP_MULTIPLIER } from './scoring';
+import { calculateScore, calculateLeaderboard, calculateWorstPossibleScore, MISSING_DATA_PENALTY, applyCatchupMultiplier, getCatchupGapMap, CATCHUP_GAP_THRESHOLD, CATCHUP_MULTIPLIER, DEFAULT_FULL_GRID_SCORING_CONFIG, FullGridScoringConfig, sortPredictions, validateFullGridScoringConfig } from './scoring';
 import { EventType, ScoringType } from '@prisma/client';
 
 describe('Scoring System', () => {
@@ -168,6 +168,67 @@ describe('Scoring System', () => {
       const result = { results: drivers };
       const score = calculateScore(prediction, result, eventType, scoringType);
       expect(score).toBe(0);
+    });
+
+    it('should accept season-level custom weights and threshold', () => {
+      const config: FullGridScoringConfig = {
+        ...DEFAULT_FULL_GRID_SCORING_CONFIG,
+        topGridThreshold: 1,
+        topGridWeight: 2,
+        lowerGridWeight: 3,
+        podiumBonusExact: {
+          first: 0,
+          firstSecond: 0,
+          topThree: 0,
+        },
+      };
+      const prediction = { rankings: ['2', '1', '3'] };
+      const result = { results: ['1', '2', '3'] };
+
+      const score = calculateScore(prediction, result, eventType, scoringType, config);
+
+      expect(score).toBe(5);
+    });
+
+    it('should allow disabling podium bonuses through season config', () => {
+      const config: FullGridScoringConfig = {
+        ...DEFAULT_FULL_GRID_SCORING_CONFIG,
+        podiumBonusExact: {
+          first: 0,
+          firstSecond: 0,
+          topThree: 0,
+        },
+      };
+      const prediction = { rankings: ['1', '2', '3', '4', '6', '5'] };
+      const result = { results: ['1', '2', '3', '4', '5', '6'] };
+
+      const score = calculateScore(prediction, result, eventType, scoringType, config);
+
+      expect(score).toBe(1.6);
+    });
+
+    it('should validate configurable full-grid values', () => {
+      const invalid = validateFullGridScoringConfig({
+        topGridThreshold: 0,
+        topGridWeight: 0,
+        lowerGridWeight: 1.2,
+        podiumBonusExact: {
+          first: 5,
+          firstSecond: -30,
+          topThree: -50,
+        },
+        catchup: {
+          gapThreshold: 50,
+          multiplier: 0.8,
+        },
+      });
+
+      expect(invalid.isValid).toBe(false);
+      expect(invalid.errors).toEqual(expect.arrayContaining([
+        'La soglia top grid deve essere un intero positivo',
+        'Il peso dei primi classificati deve essere positivo',
+        'Il bonus 1° esatto deve essere minore o uguale a 0',
+      ]));
     });
   });
 
@@ -416,6 +477,18 @@ describe('Scoring System', () => {
         expect(leaderboard[1].user.id).toBe('u2');
         expect(leaderboard[1].totalPoints).toBe(30);
     });
+
+    it('should sort a perfect FULL_GRID_DIFF event score before worse scores', () => {
+      const predictions = [
+        { points: 12 },
+        { points: 0 },
+        { points: null },
+      ];
+
+      const sorted = sortPredictions(predictions, ScoringType.FULL_GRID_DIFF);
+
+      expect(sorted.map(p => p.points)).toEqual([0, 12, null]);
+    });
   });
 
   describe('Catchup Multiplier', () => {
@@ -448,6 +521,25 @@ describe('Scoring System', () => {
         const result = applyCatchupMultiplier(42.5, 60);
         expect(result.finalScore).toBeCloseTo(34, 10);
         expect(result.multiplier).toBe(0.8);
+      });
+
+      it('should use custom catch-up threshold and multiplier from season config', () => {
+        const config: FullGridScoringConfig = {
+          ...DEFAULT_FULL_GRID_SCORING_CONFIG,
+          catchup: {
+            gapThreshold: 20,
+            multiplier: 0.5,
+          },
+        };
+
+        expect(applyCatchupMultiplier(100, 19, config)).toEqual({
+          finalScore: 100,
+          multiplier: 1.0,
+        });
+        expect(applyCatchupMultiplier(100, 20, config)).toEqual({
+          finalScore: 50,
+          multiplier: 0.5,
+        });
       });
     });
 

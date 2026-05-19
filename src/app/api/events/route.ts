@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
             select: {
                 id: true,
                 name: true,
-                scoringType: true
+                scoringType: true,
+                scoringConfig: true
             }
         },
         results: true,

@@ -20,12 +20,17 @@ async function main() {
   console.log('📅 Creating Season 2026...')
   const season2026 = await prisma.season.upsert({
     where: { name: '2026' },
-    update: { isActive: true },
+    update: {
+      isActive: true,
+      scoringType: season2025.scoringType,
+      scoringConfig: season2025.scoringConfig ?? undefined,
+    },
     create: {
       name: '2026',
       startDate: new Date('2026-01-01'),
       endDate: new Date('2026-12-31'),
       scoringType: season2025.scoringType,
+      scoringConfig: season2025.scoringConfig ?? undefined,
       isActive: true
     }
   })

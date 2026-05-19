@@ -24,7 +24,7 @@ interface CompletedEvent {
   secondPlace?: { id: string; name: string; team: string; number: number } | null;
   thirdPlace?: { id: string; name: string; team: string; number: number } | null;
   results?: string[] | null;
-  season?: { id: string; name: string; scoringType: string } | null;
+  season?: { id: string; name: string; scoringType: string; scoringConfig?: unknown } | null;
   _count: {
     predictions: number;
   };

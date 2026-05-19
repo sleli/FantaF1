@@ -4,7 +4,7 @@ import { Driver, ScoringType } from '@prisma/client';
 import DriverAvatar from '@/components/ui/DriverAvatar';
 import PositionBadge from '@/components/ui/PositionBadge';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { MAX_PENALTY, TOP10_THRESHOLD, TOP10_WEIGHT, LOW_GRID_WEIGHT } from '@/lib/scoring';
+import { calculateFullGridScoreBreakdown } from '@/lib/scoring';
 
 interface CompletedEvent {
   id: string;
@@ -16,7 +16,7 @@ interface CompletedEvent {
   secondPlace?: { id: string; name: string; team: string; number: number } | null;
   thirdPlace?: { id: string; name: string; team: string; number: number } | null;
   results?: string[] | null;
-  season?: { scoringType: string } | null;
+  season?: { scoringType: string; scoringConfig?: unknown } | null;
 }
 
 interface Prediction {
@@ -35,6 +35,10 @@ interface EventResultComparisonProps {
   prediction: Prediction | null;
   drivers: Driver[];
   scoringType: string;
+}
+
+function formatScore(value: number): string {
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
 }
 
 export default function EventResultComparison({
@@ -78,6 +82,12 @@ function FullGridComparison({
   const resultGrid = (event.results as string[]) || [];
   const predictionGrid = (prediction?.rankings as string[]) || [];
   const hasPrediction = predictionGrid.length > 0;
+  const breakdown = calculateFullGridScoreBreakdown(
+    predictionGrid,
+    resultGrid,
+    event.type,
+    event.season?.scoringConfig
+  );
 
   // Build a map of driverId → predicted position (0-indexed)
   const predictionMap = new Map<string, number>();
@@ -109,15 +119,13 @@ function FullGridComparison({
           <tbody className="divide-y divide-border/40">
             {resultGrid.map((driverId, idx) => {
               const driver = getDriver(driverId);
-              const predictedPos = predictionMap.get(driverId);
+              const rowBreakdown = breakdown.rows[idx];
+              const predictedPos = rowBreakdown?.predictedIndex ?? predictionMap.get(driverId);
               const isMatch = predictedPos === idx;
-              const diff = predictedPos !== undefined ? Math.abs(predictedPos - idx) : null;
-              const isMissing = predictedPos === undefined;
-              
-              // Peso posizionale: top 10 (idx 0-9) = 0.8, 11+ (idx 10+) = 1.2
-              const positionWeight = idx < TOP10_THRESHOLD ? TOP10_WEIGHT : LOW_GRID_WEIGHT;
-              const weightedDiff = diff !== null ? diff * positionWeight : null;
-              const weightedPenalty = MAX_PENALTY * positionWeight;
+              const diff = rowBreakdown?.diff ?? (predictedPos !== undefined ? Math.abs(predictedPos - idx) : null);
+              const isMissing = rowBreakdown?.missing ?? predictedPos === undefined;
+              const weightedDiff = rowBreakdown && !rowBreakdown.missing ? rowBreakdown.penalty : null;
+              const weightedPenalty = rowBreakdown?.penalty ?? 0;
 
               return (
                 <tr key={`${driverId}-${idx}`} className="hover:bg-muted/20 transition-colors">
@@ -134,8 +142,8 @@ function FullGridComparison({
                     </div>
                   </td>
                   <td className="px-3 py-2 text-center">
-                    {hasPrediction ? (
-                      predictedPos !== undefined ? (
+                      {hasPrediction ? (
+                        predictedPos !== undefined ? (
                         <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold ${
                           isMatch 
                             ? 'bg-accent-green/10 text-accent-green' 
@@ -151,20 +159,20 @@ function FullGridComparison({
                     )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums font-medium">
-                    {hasPrediction ? (
-                      isMissing ? (
-                        <span className="text-red-500 text-xs">+{weightedPenalty % 1 === 0 ? weightedPenalty : weightedPenalty.toFixed(1)}</span>
-                      ) : (
-                        <span className={`text-xs ${
-                          diff === 0
-                            ? 'text-accent-green'
-                            : (weightedDiff !== null && weightedDiff <= 2)
-                              ? 'text-accent-amber'
-                              : 'text-foreground'
-                        }`}>
-                          +{diff === 0 ? '0' : (weightedDiff !== null && weightedDiff % 1 === 0 ? weightedDiff : weightedDiff?.toFixed(1))}
-                        </span>
-                      )
+                      {hasPrediction ? (
+                        isMissing ? (
+                          <span className="text-red-500 text-xs">+{formatScore(weightedPenalty)}</span>
+                        ) : (
+                          <span className={`text-xs ${
+                            diff === 0
+                              ? 'text-accent-green'
+                              : (weightedDiff !== null && weightedDiff <= 2)
+                                ? 'text-accent-amber'
+                                : 'text-foreground'
+                          }`}>
+                            +{diff === 0 ? '0' : (weightedDiff !== null ? formatScore(weightedDiff) : '0')}
+                          </span>
+                        )
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
@@ -173,11 +181,45 @@ function FullGridComparison({
               );
             })}
           </tbody>
-        </table>
+          </table>
+        </div>
+        {hasPrediction && (
+          <div className="mt-3 rounded-lg border border-border/50 bg-muted/20 p-3 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Penalità base</span>
+              <span className="font-medium text-foreground tabular-nums">+{formatScore(breakdown.baseScore)}</span>
+            </div>
+            {breakdown.podiumBonus !== 0 && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Bonus podio</span>
+                <span className="font-medium text-accent-green tabular-nums">{formatScore(breakdown.podiumBonus)}</span>
+              </div>
+            )}
+            {breakdown.sprintMultiplier !== 1 && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Sprint</span>
+                <span className="font-medium text-foreground tabular-nums">x{breakdown.sprintMultiplier}</span>
+              </div>
+            )}
+            {(prediction?.multiplier ?? 1) < 1 && (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Catch-up</span>
+                <span className="font-medium text-amber-400 tabular-nums">
+                  x{prediction?.multiplier?.toFixed(1)}
+                </span>
+              </div>
+            )}
+            <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
+              <span className="font-semibold text-foreground">Totale</span>
+              <span className="font-bold text-foreground tabular-nums">
+                {formatScore(prediction?.points ?? breakdown.finalScore)} pt
+              </span>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 // --- LEGACY_TOP3 comparison ---
 

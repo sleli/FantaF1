@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { TrophyIcon, UserIcon, CalendarIcon, ChartBarIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { resolveFullGridScoringConfig } from '@/lib/scoring'
 
 type LeaderboardUser = {
   position: number
@@ -39,6 +40,7 @@ type Event = {
   date: string
   season?: {
       scoringType: string
+      scoringConfig?: unknown
   }
 }
 
@@ -50,15 +52,17 @@ type Season = {
   endDate: string
   isActive: boolean
   scoringType: string
+  scoringConfig?: unknown
   _count: { events: number }
 }
 
-function getScoringDescription(scoringType: string): { label: string; description: string } {
+function getScoringDescription(scoringType: string, scoringConfig?: unknown): { label: string; description: string } {
   switch (scoringType) {
     case 'FULL_GRID_DIFF':
+      const config = resolveFullGridScoringConfig(scoringConfig)
       return {
         label: 'Differenza Griglia',
-        description: "Vince il punteggio minore. Pronostico dell'intera griglia. Differenze pesate: ×0.8 per i primi 10, ×1.2 dall'11° in poi. Sprint vale metà punti."
+        description: `Vince il punteggio minore. Pronostico dell'intera griglia. Differenze pesate: ×${config.topGridWeight} per i primi ${config.topGridThreshold}, ×${config.lowerGridWeight} dal ${config.topGridThreshold + 1}° in poi. Sprint vale metà punti.`
       }
     case 'LEGACY_TOP3':
     default:
@@ -69,8 +73,8 @@ function getScoringDescription(scoringType: string): { label: string; descriptio
   }
 }
 
-function ScoringInfoBadge({ scoringType }: { scoringType: string }) {
-  const { label, description } = getScoringDescription(scoringType)
+function ScoringInfoBadge({ scoringType, scoringConfig }: { scoringType: string; scoringConfig?: unknown }) {
+  const { label, description } = getScoringDescription(scoringType, scoringConfig)
   return (
     <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
       <InformationCircleIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -93,7 +97,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
   const [completedEvents, setCompletedEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<'general' | 'event' | 'previousSeasons'>('general')
   const [isLoading, setIsLoading] = useState(false)
-  const [activeSeason, setActiveSeason] = useState<{ name: string; scoringType: string } | null>(null)
+  const [activeSeason, setActiveSeason] = useState<{ name: string; scoringType: string; scoringConfig?: unknown } | null>(null)
   const [previousSeasons, setPreviousSeasons] = useState<Season[]>([])
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(null)
   const [seasonLeaderboard, setSeasonLeaderboard] = useState<LeaderboardUser[]>([])
@@ -268,7 +272,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
             <div>
               {activeSeason && (
                 <div className="mb-4">
-                  <ScoringInfoBadge scoringType={activeSeason.scoringType} />
+                  <ScoringInfoBadge scoringType={activeSeason.scoringType} scoringConfig={activeSeason.scoringConfig} />
                 </div>
               )}
               {isLoading ? (
@@ -388,7 +392,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                             if (scoringType === 'FULL_GRID_DIFF') {
                                 // For FULL_GRID_DIFF, null points should be last (max penalty)
                                 // But backend usually returns points for calculated events.
-                                return (a.points || 9999) - (b.points || 9999)
+                                return (a.points ?? 9999) - (b.points ?? 9999)
                             }
                             return (b.points || 0) - (a.points || 0)
                         })
@@ -434,7 +438,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                                     </span>
                                   )}
                                   <div className="text-xl font-bold text-foreground">
-                                    {entry.points || 0}
+                                    {entry.points ?? 0}
                                   </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground">punti</div>
@@ -468,7 +472,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                   ) : (
                     <div className="grid gap-4">
                       {previousSeasons.map((season) => {
-                        const scoring = getScoringDescription(season.scoringType)
+                        const scoring = getScoringDescription(season.scoringType, season.scoringConfig)
                         return (
                           <button
                             key={season.id}
@@ -506,7 +510,7 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
                   </div>
 
                   <div className="mb-4">
-                    <ScoringInfoBadge scoringType={selectedSeason.scoringType} />
+                    <ScoringInfoBadge scoringType={selectedSeason.scoringType} scoringConfig={selectedSeason.scoringConfig} />
                   </div>
 
                   {isLoading ? (

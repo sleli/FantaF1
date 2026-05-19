@@ -9,20 +9,40 @@ import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Badge from '@/components/ui/Badge'
+import {
+  DEFAULT_FULL_GRID_SCORING_CONFIG,
+  FullGridScoringConfig,
+  resolveFullGridScoringConfig,
+  validateFullGridScoringConfig,
+} from '@/lib/scoring'
+
+type SeasonWithScoringConfig = Season & {
+  scoringConfig?: unknown
+  _count?: { events: number }
+}
+
+function createDefaultScoringConfig(): FullGridScoringConfig {
+  return resolveFullGridScoringConfig(DEFAULT_FULL_GRID_SCORING_CONFIG)
+}
+
+function parseNumberInput(value: string): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 export default function SeasonsPage() {
-  const [seasons, setSeasons] = useState<Season[]>([])
+  const [seasons, setSeasons] = useState<SeasonWithScoringConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [processing, setProcessing] = useState(false)
-  
+
   // Driver Selector State
   const [showDriverSelector, setShowDriverSelector] = useState(false)
-  const [selectedSeasonForDrivers, setSelectedSeasonForDrivers] = useState<Season | null>(null)
+  const [selectedSeasonForDrivers, setSelectedSeasonForDrivers] = useState<SeasonWithScoringConfig | null>(null)
 
   // Edit Mode State
-  const [editingSeason, setEditingSeason] = useState<Season | null>(null)
-  
+  const [editingSeason, setEditingSeason] = useState<SeasonWithScoringConfig | null>(null)
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -31,6 +51,7 @@ export default function SeasonsPage() {
     scoringType: 'LEGACY_TOP3' as ScoringType,
     isActive: false,
     copyDriversFromSeasonId: '',
+    scoringConfig: createDefaultScoringConfig(),
     // F1 Import fields
     year: new Date().getFullYear(),
     importDriversFromF1: false,
@@ -63,17 +84,29 @@ export default function SeasonsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setProcessing(true)
-    
+
     try {
+      const scoringConfigValidation = validateFullGridScoringConfig(formData.scoringConfig)
+      if (formData.scoringType === 'FULL_GRID_DIFF' && !scoringConfigValidation.isValid) {
+        alert(scoringConfigValidation.errors.join('\n'))
+        return
+      }
+
       const url = editingSeason ? `/api/seasons/${editingSeason.id}` : '/api/seasons'
       const method = editingSeason ? 'PATCH' : 'POST'
+      const payload = {
+        ...formData,
+        scoringConfig: formData.scoringType === 'FULL_GRID_DIFF'
+          ? scoringConfigValidation.config
+          : null,
+      }
 
       const res = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
-      
+
       if (res.ok) {
         closeForm()
         fetchSeasons()
@@ -93,15 +126,16 @@ export default function SeasonsPage() {
     setShowForm(false)
     setEditingSeason(null)
     setFormData({
-        name: '',
-        startDate: '',
-        endDate: '',
-        scoringType: 'LEGACY_TOP3',
-        isActive: false,
-        copyDriversFromSeasonId: '',
-        year: new Date().getFullYear(),
-        importDriversFromF1: false,
-        importEventsFromF1: false
+      name: '',
+      startDate: '',
+      endDate: '',
+      scoringType: 'LEGACY_TOP3',
+      isActive: false,
+      copyDriversFromSeasonId: '',
+      scoringConfig: createDefaultScoringConfig(),
+      year: new Date().getFullYear(),
+      importDriversFromF1: false,
+      importEventsFromF1: false
     })
     // Reset preview state
     setPreviewDrivers([])
@@ -140,18 +174,19 @@ export default function SeasonsPage() {
     }
   }
 
-  const handleEdit = (season: Season & { year?: number | null }) => {
+  const handleEdit = (season: SeasonWithScoringConfig & { year?: number | null }) => {
     setEditingSeason(season)
     setFormData({
-        name: season.name,
-        startDate: new Date(season.startDate).toISOString().split('T')[0],
-        endDate: new Date(season.endDate).toISOString().split('T')[0],
-        scoringType: season.scoringType,
-        isActive: season.isActive,
-        copyDriversFromSeasonId: '',
-        year: season.year ?? new Date().getFullYear(),
-        importDriversFromF1: false,
-        importEventsFromF1: false
+      name: season.name,
+      startDate: new Date(season.startDate).toISOString().split('T')[0],
+      endDate: new Date(season.endDate).toISOString().split('T')[0],
+      scoringType: season.scoringType,
+      isActive: season.isActive,
+      copyDriversFromSeasonId: '',
+      scoringConfig: resolveFullGridScoringConfig(season.scoringConfig),
+      year: season.year ?? new Date().getFullYear(),
+      importDriversFromF1: false,
+      importEventsFromF1: false
     })
     setShowForm(true)
   }
@@ -181,7 +216,7 @@ export default function SeasonsPage() {
     }
   }
 
-  const openDriverSelector = (season: Season) => {
+  const openDriverSelector = (season: SeasonWithScoringConfig) => {
     setSelectedSeasonForDrivers(season)
     setShowDriverSelector(true)
   }
@@ -209,13 +244,13 @@ export default function SeasonsPage() {
 
   const handleDelete = async (seasonId: string) => {
     if (!confirm('Sei sicuro di voler eliminare questa stagione? QUESTA AZIONE È IRREVERSIBILE.\n\nVerranno eliminati:\n- La stagione\n- Tutti gli eventi associati\n- Tutti i pronostici associati\n- Tutti i piloti della stagione')) return;
-    
+
     setProcessing(true);
     try {
         const res = await fetch(`/api/seasons/${seasonId}`, {
             method: 'DELETE'
         });
-        
+
         if (res.ok) {
             fetchSeasons();
         } else {
@@ -236,15 +271,15 @@ export default function SeasonsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-secondary p-6 rounded-2xl border border-border shadow-lg relative overflow-hidden">
         {/* Decorative background element */}
         <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-f1-red/10 to-transparent pointer-events-none" />
-        
+
         <div>
           <h1 className="text-3xl font-black italic tracking-tighter text-foreground">
             GESTIONE <span className="text-f1-red">STAGIONI</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Configura le stagioni, le date e le regole di punteggio.</p>
         </div>
-        
-        <Button 
+
+        <Button
             variant="primary"
             onClick={() => {
                 setEditingSeason(null)
@@ -256,7 +291,7 @@ export default function SeasonsPage() {
             {showForm ? 'Chiudi Form' : <><span className="hidden sm:inline">Nuova Stagione</span><span className="sm:hidden">Nuova</span></>}
         </Button>
       </div>
-      
+
       {showForm && (
         <Card variant="default" className="p-6 border-f1-red/30">
             <h2 className="text-xl font-bold mb-6 text-foreground flex items-center gap-2">
@@ -265,24 +300,24 @@ export default function SeasonsPage() {
             </h2>
             <form onSubmit={handleCreate} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input 
+                    <Input
                         label="Nome Stagione"
-                        type="text" 
+                        type="text"
                         required
                         value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
                         placeholder="es. 2025"
                     />
-                    <Input 
+                    <Input
                         label="Data Inizio"
-                        type="date" 
+                        type="date"
                         required
                         value={formData.startDate}
                         onChange={e => setFormData({...formData, startDate: e.target.value})}
                     />
-                    <Input 
+                    <Input
                         label="Data Fine"
-                        type="date" 
+                        type="date"
                         required
                         value={formData.endDate}
                         onChange={e => setFormData({...formData, endDate: e.target.value})}
@@ -296,15 +331,153 @@ export default function SeasonsPage() {
                             <option value="LEGACY_TOP3">TOP 3 (Classico)</option>
                             <option value="FULL_GRID_DIFF">Differenza Punti (Griglia Completa)</option>
                         </Select>
-                        <p className="text-xs text-muted-foreground mt-2 ml-1 flex items-center gap-2">
-                            <span className="w-1 h-1 rounded-full bg-primary inline-block" />
-                            {formData.scoringType === 'LEGACY_TOP3' 
-                                ? 'I partecipanti pronosticano i primi 3 classificati. Punteggio basato su accuratezza.' 
-                                : 'Pronostico intera griglia. Punteggio basato sulla differenza assoluta tra posizione pronosticata e reale.'}
-                        </p>
-                    </div>
+                          <p className="text-xs text-muted-foreground mt-2 ml-1 flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-primary inline-block" />
+                              {formData.scoringType === 'LEGACY_TOP3'
+                                  ? 'I partecipanti pronosticano i primi 3 classificati. Punteggio basato su accuratezza.'
+                                  : 'Pronostico intera griglia. Punteggio basato sulla differenza assoluta tra posizione pronosticata e reale.'}
+                          </p>
+                      </div>
 
-                    {!editingSeason && seasons.length > 0 && !formData.importDriversFromF1 && (
+                      {formData.scoringType === 'FULL_GRID_DIFF' && (
+                          <div className="md:col-span-2 border-t border-border pt-6 mt-2">
+                              <h3 className="font-bold text-foreground mb-4">
+                                  Costanti Differenza Griglia
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <Input
+                                      label="Soglia top grid"
+                                      type="number"
+                                      min={1}
+                                      step={1}
+                                      value={formData.scoringConfig.topGridThreshold}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              topGridThreshold: Math.trunc(parseNumberInput(e.target.value))
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Peso top grid"
+                                      type="number"
+                                      min={0.1}
+                                      step={0.1}
+                                      value={formData.scoringConfig.topGridWeight}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              topGridWeight: parseNumberInput(e.target.value)
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Peso resto griglia"
+                                      type="number"
+                                      min={0.1}
+                                      step={0.1}
+                                      value={formData.scoringConfig.lowerGridWeight}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              lowerGridWeight: parseNumberInput(e.target.value)
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Bonus 1° esatto"
+                                      type="number"
+                                      max={0}
+                                      step={1}
+                                      value={formData.scoringConfig.podiumBonusExact.first}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              podiumBonusExact: {
+                                                  ...formData.scoringConfig.podiumBonusExact,
+                                                  first: parseNumberInput(e.target.value)
+                                              }
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Bonus 1°+2° esatti"
+                                      type="number"
+                                      max={0}
+                                      step={1}
+                                      value={formData.scoringConfig.podiumBonusExact.firstSecond}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              podiumBonusExact: {
+                                                  ...formData.scoringConfig.podiumBonusExact,
+                                                  firstSecond: parseNumberInput(e.target.value)
+                                              }
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Bonus podio esatto"
+                                      type="number"
+                                      max={0}
+                                      step={1}
+                                      value={formData.scoringConfig.podiumBonusExact.topThree}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              podiumBonusExact: {
+                                                  ...formData.scoringConfig.podiumBonusExact,
+                                                  topThree: parseNumberInput(e.target.value)
+                                              }
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Soglia catch-up"
+                                      type="number"
+                                      min={1}
+                                      step={1}
+                                      value={formData.scoringConfig.catchup.gapThreshold}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              catchup: {
+                                                  ...formData.scoringConfig.catchup,
+                                                  gapThreshold: parseNumberInput(e.target.value)
+                                              }
+                                          }
+                                      })}
+                                  />
+                                  <Input
+                                      label="Moltiplicatore catch-up"
+                                      type="number"
+                                      min={0.1}
+                                      max={1}
+                                      step={0.1}
+                                      value={formData.scoringConfig.catchup.multiplier}
+                                      onChange={e => setFormData({
+                                          ...formData,
+                                          scoringConfig: {
+                                              ...formData.scoringConfig,
+                                              catchup: {
+                                                  ...formData.scoringConfig.catchup,
+                                                  multiplier: parseNumberInput(e.target.value)
+                                              }
+                                          }
+                                      })}
+                                  />
+                              </div>
+                          </div>
+                      )}
+
+                      {!editingSeason && seasons.length > 0 && !formData.importDriversFromF1 && (
                         <div className="md:col-span-2 border-t border-border pt-6 mt-2">
                             <Select
                                 label="Copia Piloti da Stagione Esistente"
@@ -477,15 +650,15 @@ export default function SeasonsPage() {
                     )}
                 </div>
                 <div className="flex justify-end pt-4 gap-3 border-t border-border">
-                    <Button 
+                    <Button
                         type="button"
                         variant="ghost"
                         onClick={closeForm}
                     >
                         Annulla
                     </Button>
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         variant="primary"
                         isLoading={processing}
                     >
@@ -514,64 +687,72 @@ export default function SeasonsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {seasons.map((season) => (
-                  <tr key={season.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap font-bold text-foreground text-lg">{season.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {new Date(season.startDate).toLocaleDateString()} - {new Date(season.endDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium text-foreground">
-                            {season.scoringType === 'FULL_GRID_DIFF' ? 'Differenza Griglia' : 'Legacy Top 3'}
-                        </span>
-                      </div>
-                    </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {season.isActive ? (
-                          <Badge variant="success">Attiva</Badge>
-                      ) : (
-                          <Badge variant="neutral">Archiviata</Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                          <button
-                              onClick={() => openDriverSelector(season)}
-                              className="text-muted-foreground hover:text-blue-400 p-2 rounded-lg hover:bg-blue-900/20 transition-colors"
-                              title="Gestisci Piloti"
-                          >
-                              <UserGroupIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                              onClick={() => handleEdit(season)}
-                              className="text-muted-foreground hover:text-foreground p-2 rounded-lg hover:bg-muted transition-colors"
-                              title="Modifica Stagione"
-                          >
-                              <PencilSquareIcon className="h-5 w-5" />
-                          </button>
-                          {!season.isActive && (
-                              <button 
-                                  onClick={() => handleSetActive(season.id)}
-                                  disabled={processing}
-                                  className="text-muted-foreground hover:text-green-400 p-2 rounded-lg hover:bg-green-900/20 transition-colors"
-                                  title="Imposta come Attiva"
-                              >
-                                  <CheckCircleIcon className="h-5 w-5" />
-                              </button>
+                {seasons.map((season) => {
+                  const config = resolveFullGridScoringConfig(season.scoringConfig)
+                  return (
+                    <tr key={season.id} className="hover:bg-muted/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap font-bold text-foreground text-lg">{season.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        {new Date(season.startDate).toLocaleDateString()} - {new Date(season.endDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-medium text-foreground">
+                              {season.scoringType === 'FULL_GRID_DIFF' ? 'Differenza Griglia' : 'Legacy Top 3'}
+                          </span>
+                          {season.scoringType === 'FULL_GRID_DIFF' && (
+                            <span className="text-xs">
+                              Top {config.topGridThreshold} x{config.topGridWeight} · resto x{config.lowerGridWeight} · catch-up x{config.catchup.multiplier}
+                            </span>
                           )}
-                          <button 
-                              onClick={() => handleDelete(season.id)}
-                              disabled={processing}
-                              className="text-muted-foreground hover:text-destructive p-2 rounded-lg hover:bg-destructive/20 transition-colors"
-                              title="Elimina Stagione"
-                          >
-                              <TrashIcon className="h-5 w-5" />
-                          </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {season.isActive ? (
+                            <Badge variant="success">Attiva</Badge>
+                        ) : (
+                            <Badge variant="neutral">Archiviata</Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => openDriverSelector(season)}
+                                className="text-muted-foreground hover:text-blue-400 p-2 rounded-lg hover:bg-blue-900/20 transition-colors"
+                                title="Gestisci Piloti"
+                            >
+                                <UserGroupIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => handleEdit(season)}
+                                className="text-muted-foreground hover:text-foreground p-2 rounded-lg hover:bg-muted transition-colors"
+                                title="Modifica Stagione"
+                            >
+                                <PencilSquareIcon className="h-5 w-5" />
+                            </button>
+                            {!season.isActive && (
+                                <button
+                                    onClick={() => handleSetActive(season.id)}
+                                    disabled={processing}
+                                    className="text-muted-foreground hover:text-green-400 p-2 rounded-lg hover:bg-green-900/20 transition-colors"
+                                    title="Imposta come Attiva"
+                                >
+                                    <CheckCircleIcon className="h-5 w-5" />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleDelete(season.id)}
+                                disabled={processing}
+                                className="text-muted-foreground hover:text-destructive p-2 rounded-lg hover:bg-destructive/20 transition-colors"
+                                title="Elimina Stagione"
+                            >
+                                <TrashIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
                 {seasons.length === 0 && (
                   <tr>
                       <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">

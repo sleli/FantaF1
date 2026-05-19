@@ -3,23 +3,27 @@ import { withAuthAPI, apiResponse } from '@/lib/auth/api-auth';
 import { prisma } from '@/lib/prisma';
 import { ScoringType } from '@prisma/client';
 import { revalidateTag } from 'next/cache';
+import { validateFullGridScoringConfig } from '@/lib/scoring';
 
 // PATCH: Update season (e.g., set active)
 async function patchHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: seasonId } = await params;
     const body = await req.json();
-    const { isActive, name, startDate, endDate, driverCount, scoringType, driverIds } = body;
+    const { isActive, name, startDate, endDate, driverCount, scoringType, scoringConfig, driverIds } = body;
+    const needsCurrentSeason = isActive === true || scoringType !== undefined || scoringConfig !== undefined;
+    const currentSeason = needsCurrentSeason
+      ? await prisma.season.findUnique({ where: { id: seasonId } })
+      : null;
+
+    if (needsCurrentSeason && !currentSeason) {
+      return apiResponse({ error: 'Season not found' }, 404);
+    }
 
     // If setting to active, validate and deactivate all other seasons first
     if (isActive === true) {
-      const currentSeason = await prisma.season.findUnique({ where: { id: seasonId } });
-      if (!currentSeason) {
-        return apiResponse({ error: 'Season not found' }, 404);
-      }
-
-      const effectiveStartDate = startDate ? new Date(startDate) : currentSeason.startDate;
-      const effectiveEndDate = endDate ? new Date(endDate) : currentSeason.endDate;
+      const effectiveStartDate = startDate ? new Date(startDate) : currentSeason!.startDate;
+      const effectiveEndDate = endDate ? new Date(endDate) : currentSeason!.endDate;
 
       if (!effectiveStartDate || !effectiveEndDate) {
         return apiResponse({ error: 'Cannot activate a season without start and end dates' }, 400);
@@ -42,6 +46,21 @@ async function patchHandler(req: NextRequest, { params }: { params: Promise<{ id
     if (endDate) updateData.endDate = new Date(endDate);
     if (scoringType) updateData.scoringType = scoringType as ScoringType;
 
+    if (scoringType !== undefined || scoringConfig !== undefined) {
+      const effectiveScoringType = (scoringType as ScoringType | undefined) || currentSeason!.scoringType;
+      if (effectiveScoringType === ScoringType.FULL_GRID_DIFF) {
+        const validation = validateFullGridScoringConfig(
+          scoringConfig !== undefined ? scoringConfig : currentSeason!.scoringConfig
+        );
+        if (!validation.isValid) {
+          return apiResponse({ error: validation.errors.join(', ') }, 400);
+        }
+        updateData.scoringConfig = validation.config;
+      } else {
+        updateData.scoringConfig = null;
+      }
+    }
+
     // Handle drivers update
     if (driverIds && Array.isArray(driverIds)) {
         updateData.drivers = {
@@ -54,7 +73,7 @@ async function patchHandler(req: NextRequest, { params }: { params: Promise<{ id
       data: updateData
     });
 
-    if (isActive !== undefined) {
+    if (isActive !== undefined || scoringType !== undefined || scoringConfig !== undefined) {
       revalidateTag('active-season', { expire: 0 });
     }
 

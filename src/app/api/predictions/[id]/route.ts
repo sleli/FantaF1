@@ -20,7 +20,16 @@ export async function GET(
     const prediction = await prisma.prediction.findUnique({
       where: { id: params.id },
       include: {
-        event: true,
+        event: {
+          include: {
+            season: {
+              select: {
+                scoringType: true,
+                scoringConfig: true
+              }
+            }
+          }
+        },
         firstPlace: true,
         secondPlace: true,
         thirdPlace: true

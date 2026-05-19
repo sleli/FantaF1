@@ -18,7 +18,7 @@ type EventWithCount = Event & {
   secondPlace?: Driver;
   thirdPlace?: Driver;
   _count: { predictions: number };
-  season?: { scoringType: string };
+  season?: { scoringType: string; scoringConfig?: unknown };
 };
 
 type UserWithPrediction = {
