@@ -5,6 +5,7 @@ import DriverAvatar from '@/components/ui/DriverAvatar';
 import PositionBadge from '@/components/ui/PositionBadge';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { calculateFullGridScoreBreakdown } from '@/lib/scoring';
+import BonusBadges from '@/components/events/BonusBadges';
 
 interface CompletedEvent {
   id: string;
@@ -184,33 +185,15 @@ function FullGridComparison({
           </table>
         </div>
         {hasPrediction && (
-          <div className="mt-3 rounded-lg border border-border/50 bg-muted/20 p-3 text-xs">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Penalità base</span>
-              <span className="font-medium text-foreground tabular-nums">+{formatScore(breakdown.baseScore)}</span>
-            </div>
-            {breakdown.podiumBonus !== 0 && (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Bonus podio</span>
-                <span className="font-medium text-accent-green tabular-nums">{formatScore(breakdown.podiumBonus)}</span>
-              </div>
-            )}
-            {breakdown.sprintMultiplier !== 1 && (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Sprint</span>
-                <span className="font-medium text-foreground tabular-nums">x{breakdown.sprintMultiplier}</span>
-              </div>
-            )}
-            {(prediction?.multiplier ?? 1) < 1 && (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <span className="text-muted-foreground">Catch-up</span>
-                <span className="font-medium text-amber-400 tabular-nums">
-                  x{prediction?.multiplier?.toFixed(1)}
-                </span>
-              </div>
-            )}
-            <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
-              <span className="font-semibold text-foreground">Totale</span>
+          <div className="mt-3 rounded-lg border border-border/50 bg-muted/20 p-3">
+            <BonusBadges
+              baseScore={breakdown.baseScore}
+              podiumBonus={breakdown.podiumBonus}
+              sprintMultiplier={breakdown.sprintMultiplier}
+              catchupMultiplier={prediction?.multiplier ?? 1}
+            />
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
+              <span className="font-semibold text-foreground text-sm">Totale</span>
               <span className="font-bold text-foreground tabular-nums">
                 {formatScore(prediction?.points ?? breakdown.finalScore)} pt
               </span>

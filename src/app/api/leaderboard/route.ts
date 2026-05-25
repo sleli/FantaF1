@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { calculateLeaderboard, sortPredictions } from '@/lib/scoring'
+import { calculateLeaderboard, sortPredictions, calculateFullGridScoreBreakdown } from '@/lib/scoring'
+import { ScoringType } from '@prisma/client'
 import { getActiveSeason } from '@/lib/season'
 
 // GET /api/leaderboard - Ottieni classifica generale
@@ -63,21 +64,42 @@ export async function GET(request: NextRequest) {
       // Nota: Ora includiamo TUTTI i pronostici per questo evento, non solo quelli degli utenti abilitati.
       const sortedPredictions = sortPredictions(event.predictions, scoringType);
 
-      const eventLeaderboard = sortedPredictions.map(prediction => ({
-        user: prediction.user,
-        prediction: {
-          id: prediction.id,
-          firstPlace: prediction.firstPlace,
-          secondPlace: prediction.secondPlace,
-          thirdPlace: prediction.thirdPlace,
+      const isFullGrid = scoringType === ScoringType.FULL_GRID_DIFF;
+      const resultGrid = Array.isArray(event.results) ? (event.results as string[]) : [];
+
+      const eventLeaderboard = sortedPredictions.map(prediction => {
+        let breakdown: { baseScore: number; podiumBonus: number; sprintMultiplier: number } | null = null;
+        if (isFullGrid && resultGrid.length > 0 && Array.isArray(prediction.rankings) && (prediction.rankings as string[]).length > 0) {
+          const b = calculateFullGridScoreBreakdown(
+            prediction.rankings as string[],
+            resultGrid,
+            event.type,
+            event.season?.scoringConfig
+          );
+          breakdown = {
+            baseScore: b.baseScore,
+            podiumBonus: b.podiumBonus,
+            sprintMultiplier: b.sprintMultiplier,
+          };
+        }
+
+        return {
+          user: prediction.user,
+          prediction: {
+            id: prediction.id,
+            firstPlace: prediction.firstPlace,
+            secondPlace: prediction.secondPlace,
+            thirdPlace: prediction.thirdPlace,
+            points: prediction.points,
+            multiplier: prediction.multiplier,
+            createdAt: prediction.createdAt,
+            updatedAt: prediction.updatedAt
+          },
           points: prediction.points,
           multiplier: prediction.multiplier,
-          createdAt: prediction.createdAt,
-          updatedAt: prediction.updatedAt
-        },
-        points: prediction.points,
-        multiplier: prediction.multiplier
-      }))
+          breakdown,
+        };
+      })
 
       return NextResponse.json({
         event: {
